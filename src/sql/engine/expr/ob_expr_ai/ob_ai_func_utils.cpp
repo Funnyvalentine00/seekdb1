@@ -234,18 +234,44 @@ int ObOpenAIUtils::ObOpenAIEmbed::parse_output(common::ObIAllocator &allocator,
     if (OB_FAIL(ObAIFuncJsonUtils::get_json_array(allocator, result_array))) {
     } else if (OB_ISNULL(data_node = http_response->get_value("data"))) {
       ret = OB_INVALID_DATA;
+    } else if (data_node->json_type() != ObJsonNodeType::J_ARRAY) {
+      ret = OB_INVALID_DATA;
     } else {
       ObJsonArray *data_array = static_cast<ObJsonArray *>(data_node);
-      ObJsonNode *embedding_node = nullptr;
-      for (int64_t i = 0; OB_SUCC(ret) && i < data_array->element_count(); i++) {
-        if (OB_ISNULL(embedding_node = data_array->get_value(i))) {
+      const int64_t item_count = data_array->element_count();
+      // 按 data[].index 复位：允许 provider 乱序返回，响应位置不能直接当输入顺序
+      ObSEArray<ObJsonArray *, 8> slots;
+      if (OB_FAIL(slots.prepare_allocate(item_count))) {
+      }
+      for (int64_t i = 0; OB_SUCC(ret) && i < item_count; i++) {
+        ObJsonNode *embedding_node = data_array->get_value(i);
+        if (OB_ISNULL(embedding_node)) {
           ret = OB_INVALID_DATA;
         } else if (embedding_node->json_type() != ObJsonNodeType::J_OBJECT) {
           ret = OB_INVALID_DATA;
         } else {
           ObJsonObject *embedding_obj = static_cast<ObJsonObject *>(embedding_node);
           ObJsonNode *embedding = embedding_obj->get_value("embedding");
-          if (OB_ISNULL(embedding)) {
+          ObJsonNode *index_node = embedding_obj->get_value("index");
+          int64_t index = i;
+          if (OB_NOT_NULL(index_node)) {
+            if (index_node->json_type() == ObJsonNodeType::J_INT) {
+              index = static_cast<ObJsonInt *>(index_node)->get_int();
+            } else if (index_node->json_type() == ObJsonNodeType::J_UINT) {
+              index = static_cast<ObJsonUint *>(index_node)->value();
+            } else {
+              ret = OB_INVALID_DATA;
+              LOG_WARN("ai_embed, invalid result index type", K(ret), K(i));
+            }
+          }
+          if (OB_FAIL(ret)) {
+          } else if (index < 0 || index >= item_count) {
+            ret = OB_INVALID_DATA;
+            LOG_WARN("ai_embed, result index out of range", K(ret), K(index), K(item_count));
+          } else if (OB_NOT_NULL(slots.at(index))) {
+            ret = OB_INVALID_DATA;
+            LOG_WARN("ai_embed, duplicated result index", K(ret), K(index));
+          } else if (OB_ISNULL(embedding)) {
             ret = OB_INVALID_DATA;
           } else if (embedding->json_type() != ObJsonNodeType::J_ARRAY) {
             ret = OB_INVALID_DATA;
@@ -264,9 +290,19 @@ int ObOpenAIUtils::ObOpenAIEmbed::parse_output(common::ObIAllocator &allocator,
               }
             }
             if (OB_FAIL(ret)) {
-            } else if (OB_FAIL(result_array->append(embedding_array))) {
+            } else {
+              slots.at(index) = embedding_array;
             }
           }
+        }
+      }
+      // 条数与 index 覆盖必须完整，缺失或重复都视为非法响应
+      for (int64_t i = 0; OB_SUCC(ret) && i < item_count; i++) {
+        ObJsonArray *embedding_array = slots.at(i);
+        if (OB_ISNULL(embedding_array)) {
+          ret = OB_INVALID_DATA;
+          LOG_WARN("ai_embed, missing result index", K(ret), K(i), K(item_count));
+        } else if (OB_FAIL(result_array->append(embedding_array))) {
         }
       }
       if (OB_SUCC(ret)) {
