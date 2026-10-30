@@ -242,7 +242,25 @@ int ObOpenAIUtils::ObOpenAIEmbed::parse_output(common::ObIAllocator &allocator,
           ObJsonNode *embedding = embedding_obj->get_value("embedding");
           if (OB_ISNULL(embedding)) {
             ret = OB_INVALID_DATA;
-          } else if (OB_FAIL(result_array->append(embedding))) {
+          } else if (embedding->json_type() != ObJsonNodeType::J_ARRAY) {
+            ret = OB_INVALID_DATA;
+          } else {
+            ObJsonArray *embedding_array = static_cast<ObJsonArray *>(embedding);
+            // 返回向量必须是非空数组，且每个元素都是数值，非法响应不允许静默放过
+            if (embedding_array->element_count() <= 0) {
+              ret = OB_INVALID_DATA;
+              LOG_WARN("ai_embed, result embedding is empty", K(ret));
+            }
+            for (int64_t j = 0; OB_SUCC(ret) && j < embedding_array->element_count(); ++j) {
+              ObJsonNode *element = embedding_array->get_value(j);
+              if (OB_ISNULL(element) || !share::ObJsonHelper::is_number_type(element)) {
+                ret = OB_INVALID_DATA;
+                LOG_WARN("ai_embed, invalid embedding element", K(ret), K(j));
+              }
+            }
+            if (OB_FAIL(ret)) {
+            } else if (OB_FAIL(result_array->append(embedding_array))) {
+            }
           }
         }
       }
@@ -1486,17 +1504,40 @@ int ObAIFuncModel::call_dense_embedding_vector_v2(ObArray<ObString> &content, Ob
     if (content.count() != count) {
       ret = OB_ERR_UNEXPECTED;
     } else {
+      int64_t expected_dimension = dimension;
       for (int64_t i = 0; OB_SUCC(ret) && i < count; i++) {
         ObIJsonBase *j_base = result_array->get_value(i);
         if (OB_ISNULL(j_base)) {
           ret = OB_ERR_UNEXPECTED;
-        } else if (dimension > 0 && static_cast<ObJsonArray *>(j_base)->element_count() != dimension) {
-          ret = OB_INVALID_ARGUMENT;
-          LOG_USER_ERROR(OB_INVALID_ARGUMENT, "ai_embed, result dimension is not equal to dimension");
-        } else if (OB_FAIL(ObAIFuncJsonUtils::print_json_to_str(*allocator_, j_base, result_str))) {
+        } else if (!share::ObJsonHelper::is_array_type(j_base)) {
+          ret = OB_INVALID_DATA;
+          LOG_WARN("ai_embed, result embedding is not a json array", K(ret));
         } else {
-          results.push_back(result_str);
-        } 
+          ObJsonArray *vector_array = static_cast<ObJsonArray *>(j_base);
+          int64_t vector_dimension = vector_array->element_count();
+          if (vector_dimension <= 0) {
+            ret = OB_INVALID_DATA;
+            LOG_WARN("ai_embed, result embedding is empty", K(ret));
+          } else if (0 == expected_dimension) {
+            // 未显式指定 dimension 时，以本次返回的模型原生维度作为默认维度
+            expected_dimension = vector_dimension;
+          } else if (vector_dimension != expected_dimension) {
+            ret = OB_INVALID_ARGUMENT;
+            LOG_USER_ERROR(OB_INVALID_ARGUMENT, "ai_embed, result dimension is not equal to dimension");
+          }
+          for (int64_t j = 0; OB_SUCC(ret) && j < vector_dimension; ++j) {
+            ObIJsonBase *element = vector_array->get_value(j);
+            if (OB_ISNULL(element) || !share::ObJsonHelper::is_number_type(element)) {
+              ret = OB_INVALID_DATA;
+              LOG_WARN("ai_embed, invalid embedding element", K(ret), K(j));
+            }
+          }
+          if (OB_FAIL(ret)) {
+          } else if (OB_FAIL(ObAIFuncJsonUtils::print_json_to_str(*allocator_, j_base, result_str))) {
+          } else {
+            results.push_back(result_str);
+          }
+        }
       }
     }
   }
