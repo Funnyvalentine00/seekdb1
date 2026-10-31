@@ -826,6 +826,22 @@ protected:
   // while create table can garentee some table info is behind the index arg, which will not be
   // reset
   void reset_index();
+  // resolve the "AI COLUMN ( ... ) WITH (...)" clause of an ai column definition.
+  // column: the ai column schema, already resolved (name/type/attributes)
+  // ai_clause_node: parse node of type T_AI_COLUMN_CLAUSE
+  // type_node: parse node of the column data type, used to check vector dimension
+  // ai_column_names: names of the ai columns declared before this one in the same ddl
+  // aux_columns: output, the hidden columns(state/request/result_spec) of this ai column
+  int resolve_ai_column_clause(share::schema::ObColumnSchemaV2 &column,
+                               const ParseNode &ai_clause_node,
+                               const ParseNode *type_node,
+                               const common::ObIArray<common::ObString> &ai_column_names,
+                               common::ObIArray<share::schema::ObColumnSchemaV2> &aux_columns);
+  int check_ai_column_dependency(const ParseNode *node,
+                                 const common::ObIArray<common::ObString> &ai_column_names);
+  int resolve_ai_column_options(const ParseNode *options_node,
+                                int64_t &sync_mode,
+                                int64_t &max_retries);
   static int trim_space_for_default_value(
       const bool is_char_type,
       const ObCollationType &collation_type,

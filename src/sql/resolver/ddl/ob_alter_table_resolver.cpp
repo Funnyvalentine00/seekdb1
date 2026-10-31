@@ -3391,6 +3391,40 @@ int ObAlterTableResolver::process_timestamp_column(ObColumnResolveStat &stat,
   return ret;
 }
 
+int ObAlterTableResolver::resolve_ai_column_for_alter(AlterColumnSchema &column,
+                                                      const ParseNode *column_definition_node)
+{
+  int ret = OB_SUCCESS;
+  ObSEArray<ObString, 4> ai_column_names;
+  ObSEArray<ObColumnSchemaV2, 3> aux_columns;
+  if (OB_ISNULL(column_definition_node) || 5 != column_definition_node->num_child_
+      || OB_ISNULL(column_definition_node->children_)
+      || OB_ISNULL(column_definition_node->children_[4])
+      || OB_ISNULL(table_schema_)) {
+    ret = OB_ERR_UNEXPECTED;
+    LOG_WARN("invalid ai column definition node", K(ret));
+  } else {
+    for (int64_t i = 0; OB_SUCC(ret) && i < table_schema_->get_column_count(); ++i) {
+      const ObColumnSchemaV2 *tmp_column = table_schema_->get_column_schema_by_idx(i);
+      if (OB_ISNULL(tmp_column)) {
+        ret = OB_ERR_UNEXPECTED;
+      } else if (tmp_column->is_ai_column()) {
+        if (OB_FAIL(ai_column_names.push_back(tmp_column->get_column_name_str()))) {
+          LOG_WARN("failed to record ai column name", K(ret));
+        }
+      }
+    }
+    if (OB_SUCC(ret) && OB_FAIL(resolve_ai_column_clause(column,
+                                                        *column_definition_node->children_[4],
+                                                        column_definition_node->children_[1],
+                                                        ai_column_names,
+                                                        aux_columns))) {
+      LOG_WARN("failed to resolve ai column clause", K(ret));
+    }
+  }
+  return ret;
+}
+
 int ObAlterTableResolver::resolve_add_column(const ParseNode &node, ObColumnNameSet &add_column_names_set)
 {
   int ret = OB_SUCCESS;
@@ -3422,6 +3456,11 @@ int ObAlterTableResolver::resolve_add_column(const ParseNode &node, ObColumnName
                                                           is_modify_column_visibility,
                                                           resolved_cols,
                                                           false))) {
+        } else if (5 == node.children_[i]->num_child_
+                   && OB_NOT_NULL(node.children_[i]->children_)
+                   && OB_NOT_NULL(node.children_[i]->children_[4])
+                   && OB_FAIL(resolve_ai_column_for_alter(alter_column_schema, node.children_[i]))) {
+          LOG_WARN("failed to resolve ai column for alter", K(ret));
         } else if (OB_FAIL(fill_column_schema_according_stat(stat, alter_column_schema))) {
         } else if (OB_FAIL(set_column_collation(alter_column_schema))) {
         }

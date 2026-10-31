@@ -69,6 +69,8 @@ private:
 private:
   // disallow copy
   DISALLOW_COPY_AND_ASSIGN(ObCreateTableResolver);
+  // names of the ai columns declared in the current create table statement
+  common::ObSEArray<common::ObString, 4> ai_column_names_;
   // function members
   uint64_t gen_column_id();
   uint64_t gen_udt_set_id();
@@ -84,6 +86,9 @@ private:
                              const int resolve_rule);
   int resolve_insert_mode(const ParseNode *parse_tree);
   int resolve_table_elements_from_select(const ParseNode &parse_tree);
+  int resolve_ai_column_definition(share::schema::ObColumnSchemaV2 &column,
+                                   const ParseNode *column_definition_node,
+                                   common::ObIArray<share::schema::ObColumnSchemaV2> &resolved_cols);
   int set_temp_table_info(share::schema::ObTableSchema &table_schema, ParseNode *commit_option_node);
 
   int resolve_table_charset_info(const ParseNode *node);

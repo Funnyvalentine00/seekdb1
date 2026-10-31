@@ -194,6 +194,29 @@ int assign(const ObColumnSchemaV2 &src_schema);
   inline bool is_zero_fill() const { return is_zero_fill_; }
   inline bool is_autoincrement() const { return is_autoincrement_; }
   inline bool is_hidden() const { return is_hidden_; }
+
+  // ai column metadata. These fields are only used by the ddl phase and are
+  // intentionally not part of the schema serialization yet.
+  inline bool is_ai_column() const { return is_ai_column_; }
+  inline void set_ai_column(const bool is_ai_column) { is_ai_column_ = is_ai_column; }
+  inline int64_t get_ai_max_retries() const { return ai_max_retries_; }
+  inline void set_ai_max_retries(const int64_t max_retries) { ai_max_retries_ = max_retries; }
+  inline int64_t get_ai_sync_mode() const { return ai_sync_mode_; }
+  inline void set_ai_sync_mode(const int64_t sync_mode) { ai_sync_mode_ = sync_mode; }
+  inline uint64_t get_ai_state_column_id() const { return ai_state_column_id_; }
+  inline void set_ai_state_column_id(const uint64_t column_id) { ai_state_column_id_ = column_id; }
+  inline uint64_t get_ai_request_column_id() const { return ai_request_column_id_; }
+  inline void set_ai_request_column_id(const uint64_t column_id) { ai_request_column_id_ = column_id; }
+  inline uint64_t get_ai_result_spec_column_id() const { return ai_result_spec_column_id_; }
+  inline void set_ai_result_spec_column_id(const uint64_t column_id) { ai_result_spec_column_id_ = column_id; }
+  inline const common::ObString &get_ai_model_name() const { return ai_model_name_; }
+  inline const common::ObString &get_ai_normalized_expr() const { return ai_normalized_expr_; }
+  inline const common::ObString &get_ai_prompt_expr() const { return ai_prompt_expr_; }
+  inline const common::ObString &get_ai_dependency_columns() const { return ai_dependency_columns_; }
+  int set_ai_model_name(const common::ObString &model_name);
+  int set_ai_normalized_expr(const common::ObString &expr);
+  int set_ai_prompt_expr(const common::ObString &expr);
+  int set_ai_dependency_columns(const common::ObString &columns);
   inline bool is_string_type() const { return meta_type_.is_string_type(); }
   inline bool is_json() const { return meta_type_.is_json(); }
   inline bool is_geometry() const { return meta_type_.is_geometry(); }
@@ -398,6 +421,16 @@ private:
   ObSkipIndexColumnAttr skip_index_attr_;
   int64_t lob_chunk_size_;
   share::ObLocalSessionVar local_session_vars_;
+  bool is_ai_column_;
+  int64_t ai_max_retries_;
+  int64_t ai_sync_mode_;
+  uint64_t ai_state_column_id_;
+  uint64_t ai_request_column_id_;
+  uint64_t ai_result_spec_column_id_;
+  common::ObString ai_model_name_;
+  common::ObString ai_normalized_expr_;
+  common::ObString ai_prompt_expr_;
+  common::ObString ai_dependency_columns_;
 };
 
 inline int32_t ObColumnSchemaV2::get_data_length() const

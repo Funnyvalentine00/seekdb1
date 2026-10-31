@@ -55,6 +55,47 @@ ObCreateTableResolver::~ObCreateTableResolver()
 {
 }
 
+int ObCreateTableResolver::resolve_ai_column_definition(
+    ObColumnSchemaV2 &column,
+    const ParseNode *column_definition_node,
+    ObIArray<ObColumnSchemaV2> &resolved_cols)
+{
+  int ret = OB_SUCCESS;
+  ObSEArray<ObColumnSchemaV2, 3> aux_columns;
+  if (OB_ISNULL(column_definition_node) || 5 != column_definition_node->num_child_
+      || OB_ISNULL(column_definition_node->children_)
+      || OB_ISNULL(column_definition_node->children_[4])) {
+    ret = OB_ERR_UNEXPECTED;
+    LOG_WARN("invalid ai column definition node", K(ret));
+  } else if (OB_FAIL(resolve_ai_column_clause(column,
+                                              *column_definition_node->children_[4],
+                                              column_definition_node->children_[1],
+                                              ai_column_names_,
+                                              aux_columns))) {
+    LOG_WARN("failed to resolve ai column clause", K(ret));
+  } else if (OB_UNLIKELY(aux_columns.count() != 3)) {
+    ret = OB_ERR_UNEXPECTED;
+    LOG_WARN("unexpected ai column aux column count", K(ret), K(aux_columns.count()));
+  } else {
+    for (int64_t i = 0; OB_SUCC(ret) && i < aux_columns.count(); ++i) {
+      ObColumnSchemaV2 &aux_column = aux_columns.at(i);
+      aux_column.set_column_id(gen_column_id());
+      if (OB_FAIL(resolved_cols.push_back(aux_column))) {
+        LOG_WARN("failed to push ai aux column", K(ret));
+      }
+    }
+    if (OB_SUCC(ret)) {
+      column.set_ai_state_column_id(aux_columns.at(0).get_column_id());
+      column.set_ai_request_column_id(aux_columns.at(1).get_column_id());
+      column.set_ai_result_spec_column_id(aux_columns.at(2).get_column_id());
+      if (OB_FAIL(ai_column_names_.push_back(column.get_column_name_str()))) {
+        LOG_WARN("failed to record ai column name", K(ret));
+      }
+    }
+  }
+  return ret;
+}
+
 uint64_t ObCreateTableResolver::gen_column_id()
 {
   return ++cur_column_id_;
@@ -695,6 +736,9 @@ int ObCreateTableResolver::resolve_table_elements(const ParseNode *node,
                                                 table_schema,
                                                 false,
                                                 is_create_table_as))) {
+          } else if (5 == element->num_child_ && OB_NOT_NULL(element->children_[4])
+                     && OB_FAIL(resolve_ai_column_definition(column, element, resolved_cols))) {
+            LOG_WARN("failed to resolve ai column definition", K(ret));
           } else if (OB_FAIL(check_default_value(column.get_cur_default_value(),
                                           session_info_->get_tz_info_wrap(),
                                           NULL,
