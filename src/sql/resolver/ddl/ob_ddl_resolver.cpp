@@ -3558,9 +3558,10 @@ int ObDDLResolver::resolve_ai_column_clause(ObColumnSchemaV2 &column,
     // check data type and dimension
     if (OB_SUCC(ret)) {
       if (!is_embed) {
-        if (!column.is_json() && !column.is_string_type()) {
+        if (!column.is_json() && !column.is_string_type()
+            && !ob_is_integer_type(column.get_data_type())) {
           ret = OB_INVALID_ARGUMENT;
-          LOG_USER_ERROR(OB_INVALID_ARGUMENT, "ai_complete result column type must be json or string");
+          LOG_USER_ERROR(OB_INVALID_ARGUMENT, "ai_complete result column type must be json, string or integer");
         }
       } else {
         bool is_vector = (NULL != type_node && T_COLLECTION == type_node->type_

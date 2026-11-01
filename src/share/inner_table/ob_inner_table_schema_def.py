@@ -2494,6 +2494,36 @@ all_ai_column_def = dict(
 def_table_schema(**all_ai_column_def)
 def_table_schema(**gen_history_table_def(1201, all_ai_column_def))
 
+all_ai_column_task_def = dict(
+    owner = 'seekdb.ai',
+    table_name = '__all_ai_column_task',
+    table_id = '1202',
+    table_type = 'SYSTEM_TABLE',
+    gm_columns = ['gmt_create', 'gmt_modified'],
+    rowkey_columns = [
+      ('table_id', 'int'),
+      ('column_id', 'int'),
+      ('rowkey_predicate', 'varchar:1024')
+  ],
+
+    is_cluster_private = False,
+    meta_record_in_sys = False,
+    normal_columns = [
+        ('request_id', 'int', 'false', '-1'),
+        ('state', 'int', 'false', '0'),
+        ('retry_count', 'int', 'false', '0'),
+        ('max_retries', 'int', 'false', '0'),
+        ('eligible_ts', 'timestamp:6'),
+        ('update_ts', 'timestamp:6'),
+        ('ai_model_name', 'varchar:128', 'true'),
+        ('system_prompt', 'varchar:2048', 'true'),
+        ('prompt_expr', 'varchar:1024', 'true'),
+        ('result_type', 'int', 'true')
+    ]
+)
+def_table_schema(**all_ai_column_task_def)
+def_table_schema(**gen_history_table_def(1203, all_ai_column_task_def))
+
 
 # Reserved position (placeholder before this line)
 # Placeholder suggestion for this section: Use actual table names for placeholders

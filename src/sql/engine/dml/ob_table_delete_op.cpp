@@ -18,6 +18,7 @@
 #include "config_bridge.h"
 #include "sql/engine/dml/ob_table_delete_op.h"
 #include "sql/engine/dml/ob_dml_service.h"
+#include "sql/engine/dml/ob_ai_column_task_helper.h"
 
 namespace oceanbase
 {
@@ -112,6 +113,9 @@ int ObTableDeleteOp::inner_open()
     ret = OB_ERR_UNEXPECTED;
   } else if (OB_UNLIKELY(iter_end_)) {
     //do nothing
+  } else if (OB_FAIL(init_ai_column_task_elem(
+                 MY_SPEC.del_ctdefs_.at(0).at(0)->das_base_ctdef_.index_tid_,
+                 aicolumn::AI_COL_EVENT_DELETE))) {
   } else if (OB_FAIL(inner_open_with_das())) {
   }
   return ret;
@@ -249,6 +253,7 @@ OB_INLINE int ObTableDeleteOp::delete_row_to_das()
       } else if (OB_FAIL(calc_tablet_loc(del_ctdef, del_rtdef, tablet_loc))) {
       } else if (OB_FAIL(ObDMLService::delete_row(del_ctdef, del_rtdef, tablet_loc, dml_rtctx_, modify_row.old_row_))) {
       } else if (need_after_row_process(del_ctdef) && OB_FAIL(dml_modify_rows_.push_back(modify_row))) {
+      } else if (OB_FAIL(accumulate_ai_column_change(del_ctdef, del_ctdef.old_row_, del_ctdef.new_row_))) {
       } else {
         ++del_rtdef.cur_row_num_;
       }
@@ -275,6 +280,9 @@ int ObTableDeleteOp::write_rows_post_proc(int last_errno)
     if (OB_SUCC(ret) && (config::_enable_defensive_check() > 0)) {
       if (OB_FAIL(check_delete_affected_row())) {
       }
+    }
+    if (OB_SUCC(ret)) {
+      ret = process_ai_column_tasks();
     }
   }
   return ret;

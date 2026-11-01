@@ -682,6 +682,9 @@ public:
   }
   void set_is_online_stats_gathering(bool v) { is_online_stats_gathering_ = v; }
   bool is_online_stats_gathering() const { return is_online_stats_gathering_; }
+  // mark the nested sql issued by the ai column task generation
+  void set_is_ai_column_task_nested(bool v) { is_ai_column_task_nested_ = v; }
+  bool is_ai_column_task_nested() const { return is_ai_column_task_nested_; }
   void set_ddl_idempotent_autoinc_params(const int64_t slice_count,
                                          const int64_t slice_idx,
                                          const int64_t slice_row_idx,
@@ -933,6 +936,8 @@ protected:
   ObUserLoggingCtx user_logging_ctx_;
   // for online stats gathering
   bool is_online_stats_gathering_;
+  // for ai column task generation nested sql
+  bool is_ai_column_task_nested_;
   
   // for calculating idempotent auto increment value in DDL
   bool is_ddl_idempotent_auto_inc_;

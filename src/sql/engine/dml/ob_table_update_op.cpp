@@ -19,6 +19,7 @@
 #include "config_bridge.h"
 #include "ob_table_update_op.h"
 #include "sql/engine/dml/ob_dml_service.h"
+#include "sql/engine/dml/ob_ai_column_task_helper.h"
 
 namespace oceanbase
 {
@@ -141,6 +142,9 @@ int ObTableUpdateOp::inner_open()
     ret = OB_ERR_UNEXPECTED;
   } else if (OB_UNLIKELY(iter_end_)) {
     //do nothing
+  } else if (OB_FAIL(init_ai_column_task_elem(
+                 MY_SPEC.upd_ctdefs_.at(0).at(0)->das_base_ctdef_.index_tid_,
+                 aicolumn::AI_COL_EVENT_UPDATE))) {
   } else if (OB_FAIL(inner_open_with_das())) {
   }
   NG_TRACE(update_end);
@@ -333,6 +337,9 @@ OB_INLINE int ObTableUpdateOp::update_row_to_das()
       } else if (OB_FAIL(ObDMLService::update_row(upd_ctdef, upd_rtdef, old_tablet_loc, new_tablet_loc, dml_rtctx_,
                                                  modify_row.old_row_, modify_row.new_row_, modify_row.full_row_))) {
       } else if (need_after_row_process(upd_ctdef) && OB_FAIL(dml_modify_rows_.push_back(modify_row))) {
+      } else if (upd_rtdef.is_row_changed_
+                 && OB_FAIL(accumulate_ai_column_change(upd_ctdef, upd_ctdef.old_row_,
+                             upd_ctdef.new_row_, &upd_ctdef.dupd_ctdef_.updated_column_ids_))) {
       } else {
         ++upd_rtdef.found_rows_;
       }
@@ -436,6 +443,9 @@ int ObTableUpdateOp::write_rows_post_proc(int last_errno)
     if (OB_SUCC(ret) && (config::_enable_defensive_check() > 0)) {
       if (OB_FAIL(check_update_affected_row())) {
       }
+    }
+    if (OB_SUCC(ret)) {
+      ret = process_ai_column_tasks();
     }
   }
 

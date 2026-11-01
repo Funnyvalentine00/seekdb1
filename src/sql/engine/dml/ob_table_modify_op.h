@@ -22,6 +22,7 @@
 #include "sql/session/ob_inner_sql_connection.h"
 #include "sql/engine/ob_exec_context.h"
 #include "sql/engine/dml/ob_fk_checker.h"
+#include "share/schema/ob_table_schema.h"
 
 namespace oceanbase
 {
@@ -252,6 +253,14 @@ public:
   ObDMLModifyRowsList& get_dml_modify_row_list() { return dml_modify_rows_;}
   int submit_all_dml_task();
 
+  // ai column task support, see ob_ai_column_task_helper.h
+  int init_ai_column_task_elem(uint64_t table_id, int64_t dml_event);
+  int accumulate_ai_column_change(const ObDMLBaseCtDef &dml_ctdef,
+                                  const ExprFixedArray &old_row,
+                                  const ExprFixedArray &new_row,
+                                  const common::ObIArray<uint64_t> *updated_column_ids = nullptr);
+  int process_ai_column_tasks();
+
   int perform_batch_fk_check();
 protected:
   OperatorOpenOrder get_operator_open_order() const;
@@ -311,6 +320,13 @@ public:
   bool execute_single_row_;
   ObSEArray<ObExpr *, 4> trigger_clear_exprs_;
   ObDMLModifyRowsList dml_modify_rows_;
+  bool ai_column_enabled_;
+  uint64_t ai_table_id_;
+  int64_t ai_dml_event_;
+  const share::schema::ObTableSchema *ai_table_schema_;
+  ObSEArray<common::ObString, 8> ai_old_predicates_;
+  ObSEArray<common::ObString, 8> ai_new_predicates_;
+  ObSEArray<uint64_t, 16> ai_updated_column_ids_;
   ObSEArray<ObForeignKeyChecker *, 4> fk_checkers_;
   ObChunkDatumStore::ShadowStoredRow last_store_row_;
 private:

@@ -19,6 +19,7 @@
 #include "config_bridge.h"
 #include "sql/engine/dml/ob_table_insert_op.h"
 #include "sql/engine/dml/ob_dml_service.h"
+#include "sql/engine/dml/ob_ai_column_task_helper.h"
 
 
 namespace oceanbase
@@ -227,6 +228,7 @@ OB_INLINE int ObTableInsertOp::insert_row_to_das()
                                                                 eval_ctx_))) {
       } else if (OB_FAIL(ObDMLService::insert_row(ins_ctdef, ins_rtdef, tablet_loc, dml_rtctx_, modify_row.new_row_))) {
       } else if (need_after_row_process(ins_ctdef) && OB_FAIL(dml_modify_rows_.push_back(modify_row))) {
+      } else if (OB_FAIL(accumulate_ai_column_change(ins_ctdef, ins_ctdef.old_row_, ins_ctdef.new_row_))) {
       }
       if (OB_FAIL(ret)) {
         record_err_for_load_data(ret, ins_rtdef.cur_row_num_);
@@ -281,6 +283,9 @@ int ObTableInsertOp::write_rows_post_proc(int last_errno)
     if (OB_SUCC(ret) && (config::_enable_defensive_check() > 0)) {
       if (OB_FAIL(check_insert_affected_row())) {
       }
+    }
+    if (OB_SUCC(ret)) {
+      ret = process_ai_column_tasks();
     }
   }
   return ret;
@@ -345,6 +350,9 @@ int ObTableInsertOp::inner_open()
     ret = OB_ERR_UNEXPECTED;
   } else if (OB_UNLIKELY(iter_end_)) {
     //do nothing
+  } else if (OB_FAIL(init_ai_column_task_elem(
+                 MY_SPEC.ins_ctdefs_.at(0).at(0)->das_base_ctdef_.index_tid_,
+                 aicolumn::AI_COL_EVENT_INSERT))) {
   } else if (OB_FAIL(inner_open_with_das())) {
   }
   return ret;

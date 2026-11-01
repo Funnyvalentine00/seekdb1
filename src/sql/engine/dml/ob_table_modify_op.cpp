@@ -21,6 +21,7 @@
 #include "query/session/ob_inner_sql_connection_access.h"
 #include "sql/engine/ob_physical_plan.h"
 #include "sql/engine/dml/ob_dml_service.h"
+#include "sql/engine/dml/ob_ai_column_task_helper.h"
 
 namespace oceanbase
 {
@@ -622,6 +623,13 @@ ObTableModifyOp::ObTableModifyOp(ObExecContext &ctx,
     dml_rtctx_(eval_ctx_, ctx, *this),
     execute_single_row_(false),
     dml_modify_rows_(ctx.get_allocator()),
+    ai_column_enabled_(false),
+    ai_table_id_(common::OB_INVALID_ID),
+    ai_dml_event_(0),
+    ai_table_schema_(NULL),
+    ai_old_predicates_(),
+    ai_new_predicates_(),
+    ai_updated_column_ids_(),
     last_store_row_(),
     saved_session_(NULL)
 {
@@ -1140,6 +1148,104 @@ int ObTableModifyOp::inner_get_next_row()
   return ret;
 }
 
+int ObTableModifyOp::init_ai_column_task_elem(uint64_t table_id, int64_t dml_event)
+{
+  int ret = OB_SUCCESS;
+  ObSqlCtx *sql_ctx = ctx_.get_sql_ctx();
+  share::schema::ObSchemaGetterGuard *guard = NULL == sql_ctx ? NULL : sql_ctx->schema_guard_;
+  const share::schema::ObTableSchema *table = NULL;
+  ai_column_enabled_ = false;
+  ai_table_schema_ = NULL;
+  ai_table_id_ = table_id;
+  ai_dml_event_ = dml_event;
+  ObExecContext *parent_ctx = ctx_.get_parent_ctx();
+  if (OB_NOT_NULL(parent_ctx) && parent_ctx->is_ai_column_task_nested()) {
+    // the maintenance sql of ai column task must not generate tasks again
+  } else if (!aicolumn::ob_ai_user_table(table_id) || OB_ISNULL(guard)) {
+    // nothing to do for the tables without ai column support
+  } else if (OB_FAIL(guard->get_table_schema(table_id, table)) || OB_ISNULL(table)) {
+    LOG_INFO("failed to get table schema for ai column task", K(ret), K(table_id));
+  } else if (!aicolumn::ob_ai_table_has_ai_column(*table)) {
+    ai_column_enabled_ = false;
+  } else if (OB_FAIL(open_inner_conn())) {
+    LOG_INFO("failed to open inner conn for ai column task", K(ret), K(table_id));
+  } else {
+    ai_column_enabled_ = true;
+    ai_table_schema_ = table;
+  }
+  return ret;
+}
+
+int ObTableModifyOp::accumulate_ai_column_change(const ObDMLBaseCtDef &dml_ctdef,
+                                                 const ExprFixedArray &old_row,
+                                                 const ExprFixedArray &new_row,
+                                                 const common::ObIArray<uint64_t> *updated_column_ids)
+{
+  int ret = OB_SUCCESS;
+  ObString old_predicate;
+  ObString new_predicate;
+  if (!ai_column_enabled_ || !dml_ctdef.is_primary_index_ || OB_ISNULL(ai_table_schema_)) {
+  } else if (!old_row.empty()
+             && OB_FAIL(aicolumn::ob_ai_build_rowkey_predicate(eval_ctx_, *ai_table_schema_,
+                         dml_ctdef, old_row, get_obj_print_params(), ctx_.get_allocator(),
+                         old_predicate))) {
+    LOG_INFO("failed to build old rowkey predicate for ai column task", K(ret));
+  } else if (!new_row.empty()
+             && OB_FAIL(aicolumn::ob_ai_build_rowkey_predicate(eval_ctx_, *ai_table_schema_,
+                         dml_ctdef, new_row, get_obj_print_params(), ctx_.get_allocator(),
+                         new_predicate))) {
+    LOG_INFO("failed to build new rowkey predicate for ai column task", K(ret));
+  } else if (OB_FAIL(ai_old_predicates_.push_back(old_predicate))) {
+  } else if (OB_FAIL(ai_new_predicates_.push_back(new_predicate))) {
+  } else {
+    if (OB_NOT_NULL(updated_column_ids) && ai_updated_column_ids_.empty()) {
+      for (int64_t i = 0; OB_SUCC(ret) && i < updated_column_ids->count(); ++i) {
+        if (OB_FAIL(ai_updated_column_ids_.push_back(updated_column_ids->at(i)))) {
+        }
+      }
+    }
+  }
+  return ret;
+}
+
+int ObTableModifyOp::process_ai_column_tasks()
+{
+  int ret = OB_SUCCESS;
+  if (!ai_column_enabled_ || ai_old_predicates_.empty()) {
+  } else if (OB_ISNULL(inner_conn_)) {
+    ret = OB_ERR_UNEXPECTED;
+    LOG_INFO("inner conn is null when processing ai column task", K(ret));
+  } else {
+    ctx_.set_is_ai_column_task_nested(true);
+    if (OB_FAIL(begin_nested_session(true))) {
+      LOG_INFO("failed to begin nested session for ai column task", K(ret));
+    } else {
+      for (int64_t i = 0; OB_SUCC(ret) && i < ai_old_predicates_.count(); ++i) {
+        if (OB_FAIL(aicolumn::ob_ai_process_row(ctx_, inner_conn_, ai_table_id_,
+                                                ai_old_predicates_.at(i),
+                                                ai_new_predicates_.at(i),
+                                                ai_dml_event_,
+                                                &ai_updated_column_ids_))) {
+          LOG_INFO("failed to process ai column task", K(ret), K(i), K(ai_table_id_));
+        }
+      }
+      int end_ret = end_nested_session();
+      if (OB_SUCCESS != end_ret) {
+        LOG_INFO("failed to end nested session for ai column task", K(end_ret));
+        if (OB_SUCC(ret)) {
+          ret = end_ret;
+        }
+      }
+      LOG_INFO("ai column task processed", K(ret), K(ai_dml_event_), K(ai_old_predicates_.count()));
+    }
+    ctx_.set_is_ai_column_task_nested(false);
+  }
+  ai_old_predicates_.reset();
+  ai_new_predicates_.reset();
+  ai_updated_column_ids_.reset();
+  return ret;
+}
+
 int ObTableModifyOp::perform_batch_fk_check()
 {
   DEBUG_SYNC(BEFORE_FOREIGN_KEY_CONSTRAINT_CHECK);
@@ -1156,5 +1262,6 @@ int ObTableModifyOp::perform_batch_fk_check()
   }
   return ret;
 }
+
 }  // namespace sql
 }  // namespace oceanbase
