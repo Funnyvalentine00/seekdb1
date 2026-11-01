@@ -1,0 +1,19 @@
+Issue1 read-only capture, 2026-11-01 +08:00.
+COMMAND:
+wsl -d Ubuntu-22.04 -- python3 '/mnt/c/Users/xiaziihan/Documents/ChatGPT/ocean base数据库大赛/seekdb1/coordination/issue-1/20261101/capture_evidence.py'
+exit_code=0
+captured_at=2026-11-01T18:00:10.520607+08:00
+head=dade8da47eacc6522f4ab165a251f49335e21775
+branch=feat/file-sql
+committed_source_files=38
+working_source_files=5
+head_before_equals_after=true
+working_patch_stable=true
+protected_manifest_entries_unchanged=53/53
+Unique-file count is not asserted: manifests may overlap.
+Full captured facts, hashes and paths: ../NATIVE_EVIDENCE.json.
+Full captured handoff/source artifacts: ../native-snapshot/, preserved in archive.
+No native writes, SQL, compiler, restart, Git fetch, merge, push or remote comment.
+Online issue fetches: GitHub connector fetch_issue for issues1/2/6, state open.
+Online comment fetches: GitHub connector fetch_issue_comments for issues2/6, both empty.
+Raw online issue/comment JSON responses are preserved in this packet.

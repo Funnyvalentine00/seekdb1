@@ -1,0 +1,24 @@
+{
+  "url": "https://github.com/Funnyvalentine00/seekdb1/issues/2",
+  "title": "[file-sql] 文件即数据库（50 分）· @XIAZIHAN001 · feat/file-sql",
+  "issue_number": 2,
+  "body": "## 负责人 / 仓库 / 分支\n\n- 负责人：@XIAZIHAN001\n- 仓库：`Funnyvalentine00/seekdb1`\n- 分支：`feat/file-sql`（基于 `2026-competition` @ `5bce9e0`）\n- 总分：50（8 个评分项：SQL 接口与文件发现 7 / CSV 10 / JSONL 7 / Parquet 6 / 类型推断 6 / 单文件 SQL 6 / 双文件 JOIN 4 / 安全与工程 4）\n\n## 第一步：先跑基线（不要先改代码）\n\n```bash\ngit clone https://github.com/Funnyvalentine00/seekdb1.git && cd seekdb1\ngit checkout feat/file-sql\n./build.sh release --init && cd build_release && make -j6\ncd ../tools/deploy\n./obd.sh prepare -p /tmp/obtest && ./obd.sh deploy -c ./single.yaml\n./obd.sh mysqltest -n <cluster> --suite file_sql 2>&1 | tee ../handoff/file-sql/logs/verify-baseline.log\n```\n\n全红是正常起点，把输出存成 `verify.log` 第一版。\n\n## 实现顺序（每步都能单独验证）\n\n1. 表函数最小闭环：`read_csv()` 能被 parser 识别并返回一行（参照 `src/sql/engine/basic/ob_json_table_op.h:39`、`src/sql/optimizer/ob_log_json_table.h:25`、`src/sql/resolver/dml/ob_dml_resolver.cpp:7635`）\n2. CSV 解码（10 分）\n3. JSONL（7 分）\n4. Parquet（6 分）\n5. 类型推断（6 分）：BIGINT/DOUBLE/BOOLEAN/VARCHAR/DATE/DATETIME/NULL、全 NULL 列、重名列 `id__2`、`2026-08-03T12:13:14`→DATETIME\n6. 单文件 SQL（6 分）+ 双文件 JOIN（4 分）\n7. 安全与工程（4 分）：`SET GLOBAL secure_file_priv`、`SET SESSION enable_file_sql=ON`、错误码 1235/1064\n8. `COPY (query) TO ...`（参照 `src/sql/engine/basic/ob_select_into_op.cpp:98 ObSelectIntoOp`）\n\n## 必须复用的既有代码\n\n- `ObResolverUtils::check_secure_path`：`src/sql/resolver/ob_resolver_utils.cpp:6050`\n- `get_secure_file_priv`：`src/sql/session/ob_basic_session_info.cpp:4081`\n- 变量定义：`src/share/system_variable/ob_system_variable_init.json`，改后跑 `gen_ob_sys_variables.py` 生成 cpp\n- 新增 .cpp/.h 必须登记：`src/sql/sql_source_inventory.bzl`、`src/sql/sql_header_inventory.bzl`（见 `CMakeLists.txt:81-108`）\n\n## 验收\n\n```bash\ncd tools/deploy && ./obd.sh mysqltest -n <cluster> --suite file_sql\n```\n\n金样只读：`tools/deploy/mysql_test/test_suite/file_sql/r/mysql/file_sql_basic.result`（约 40 行期望输出）。\n\n## 交付\n\n`handoff/file-sql/` 下：`README.md`（8 节契约模板，见总 issue 第 5 节）、`changes.patch`、`logs/{build,verify,test,notes}.log`，并在本 issue 评论里贴摘要与日志路径。\n\n## 禁止\n\n- 用 DuckDB/SQLite/Polars 代执行（整题 0 分）\n- 绕过 `secure_file_priv`（安全项 0 分）\n- 全表读入内存（1GB 容器会 OOM）\n- 修改测试金样、输入文件或硬编码输出\n",
+  "state": "open",
+  "user": {
+    "login": "Funnyvalentine00",
+    "name": "Funnyvalentine00",
+    "email": null,
+    "avatar_url": "https://avatars.githubusercontent.com/u/248676501?v=4",
+    "id": 248676501
+  },
+  "assignees": null,
+  "labels": null,
+  "milestone": null,
+  "state_reason": null,
+  "comments": 0,
+  "created_at": "2026-10-30T09:27:06Z",
+  "updated_at": "2026-10-30T09:27:06Z",
+  "closed_at": null,
+  "display_url": "https://github.com/Funnyvalentine00/seekdb1/issues/2",
+  "display_title": "[file-sql] 文件即数据库（50 分）· @XIAZIHAN001 · feat/file-sql"
+}

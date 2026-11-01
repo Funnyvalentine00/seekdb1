@@ -1,0 +1,55 @@
+{
+  "verified_at": "2026-11-01T18:06:57.306637+08:00",
+  "scope": "issue1 local coordination complete; issues2/6 implementation not accepted",
+  "official_inputs_unchanged": {
+    "manifest_entries": 53,
+    "duplicates_possible": true
+  },
+  "native_snapshot_head": "dade8da47eacc6522f4ab165a251f49335e21775",
+  "native_snapshot_stable": true,
+  "historical_archives": [
+    {
+      "label": "CSV",
+      "commit": "a888a899df811914c0562dd5c5773741b222f531",
+      "archive": "C:\\Users\\xiaziihan\\Documents\\ChatGPT\\ocean base\u6570\u636e\u5e93\u5927\u8d5b\\artifacts\\file-sql\\csv-checkpoint-20261101T124220+0800.zip",
+      "sha256": "b8ce141c46ced81450812f0dc077567c8a65410be1c1b49724e0295a0c8c19b6",
+      "members": 422,
+      "crc_and_sha256_reverified": true
+    },
+    {
+      "label": "JSONL",
+      "commit": "e0c9b140310d5d7cd6d053c25bbb8bcde85209a0",
+      "archive": "C:\\Users\\xiaziihan\\Documents\\ChatGPT\\ocean base\u6570\u636e\u5e93\u5927\u8d5b\\artifacts\\file-sql\\jsonl-checkpoint-20261101T130819+0800.zip",
+      "sha256": "ad7306cfdcd9894392b62dae0e7543e5c7d4add5b620175eb29137d96f20ee8d",
+      "members": 717,
+      "crc_and_sha256_reverified": true
+    }
+  ],
+  "parked_source_files": [
+    {
+      "path": "src/sql/parser/sql_parser_mysql_mode.y",
+      "sha256_raw": "66b858b9256ce94dea88a76aed593ff783b640e18728b39d31575ba9ffbd4706"
+    },
+    {
+      "path": "src/sql/resolver/ddl/ob_explain_resolver.cpp",
+      "sha256_raw": "585efe1214ccf7a343f60003c34345b03c38793709cdebf29fb5fd77d9325a1c"
+    },
+    {
+      "path": "src/sql/rewrite/ob_transform_utils.cpp",
+      "sha256_raw": "5908b20910619c364bfff90fa4439939882c3df604701483d4d48306ca8238e0"
+    }
+  ],
+  "old_fts_handoff_sha256": "e1db1cd20d5063546b5615ddce65e071d26cad9b4aac7e4b8a9b4a700db30dae",
+  "old_fts_required_logs_present": {
+    "build.log": true,
+    "verify.log": true,
+    "test.log": true,
+    "notes.log": true
+  },
+  "runtime_tests_this_round": 0,
+  "native_builds_this_round": 0,
+  "native_writes_this_round": 0,
+  "remote_writes_this_round": 0,
+  "product_changes_this_round": 0,
+  "stop_after_delivery": true
+}
