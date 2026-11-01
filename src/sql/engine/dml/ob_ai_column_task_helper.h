@@ -20,6 +20,7 @@
 #include "sql/engine/expr/ob_expr.h"
 #include "common/mysqlclient/ob_mysql_proxy.h"
 #include "common/mysqlclient/ob_mysql_result.h"
+#include "sql/session/ob_sql_session_info.h"
 #include "share/schema/ob_schema_getter_guard.h"
 #include "share/schema/ob_table_schema.h"
 #include "share/schema/ob_column_schema.h"
@@ -484,6 +485,125 @@ static inline int ob_ai_process_row(ObExecContext &ctx,
         } else if (OB_FAIL(ob_ai_exec_sql(conn, task_sql))) {
         } else {
           LOG_INFO("ai task trace inserted", K(task_sql.string()));
+        }
+      }
+    }
+  }
+  return ret;
+}
+
+// strict read support: a statement that references an ai column is rejected
+// when any row of that column has no published result yet.
+static inline int ob_ai_query_int(common::ObMySQLProxy *proxy, const char *sql, int64_t &value)
+{
+  int ret = OB_SUCCESS;
+  value = 0;
+  if (OB_ISNULL(proxy)) {
+    ret = OB_ERR_UNEXPECTED;
+  } else {
+    SMART_VAR(common::ObMySQLProxy::MySQLResult, result) {
+      if (OB_FAIL(proxy->read(result, sql))) {
+        LOG_INFO("failed to read ai column task info", K(ret), K(sql));
+      } else if (OB_ISNULL(result.get_result())) {
+        ret = OB_ERR_UNEXPECTED;
+      } else {
+        common::sqlclient::ObMySQLResult *res = result.get_result();
+        if (OB_FAIL(res->next())) {
+        } else if (OB_FAIL(res->get_int(static_cast<int64_t>(0), value))) {
+        }
+        if (OB_ITER_END == ret) {
+          ret = OB_SUCCESS;
+          value = 0;
+        }
+      }
+    }
+  }
+  return ret;
+}
+
+static inline int ob_ai_check_strict_read(ObExecContext &ctx,
+                                          uint64_t table_id,
+                                          const common::ObIArray<uint64_t> *referenced_column_ids)
+{
+  int ret = OB_SUCCESS;
+  bool strict_read = false;
+  ObSQLSessionInfo *session = ctx.get_my_session();
+  ObMySQLProxy *proxy = ctx.get_sql_proxy();
+  ObSqlCtx *sql_ctx = ctx.get_sql_ctx();
+  ObExecContext *parent_ctx = ctx.get_parent_ctx();
+  share::schema::ObSchemaGetterGuard *guard = NULL == sql_ctx ? NULL : sql_ctx->schema_guard_;
+  const share::schema::ObTableSchema *table = NULL;
+  const share::schema::ObDatabaseSchema *db = NULL;
+  if (!ob_ai_user_table(table_id) || (NULL != parent_ctx && parent_ctx->is_ai_column_task_nested())) {
+    // internal maintenance sql of ai column task must not be rejected
+  } else if (OB_ISNULL(session) || OB_ISNULL(proxy)) {
+    ret = OB_ERR_UNEXPECTED;
+  } else if (OB_FAIL(session->get_ai_column_strict_read(strict_read))) {
+  } else if (!strict_read) {
+  } else if (OB_ISNULL(guard)) {
+    ret = OB_ERR_UNEXPECTED;
+  } else if (OB_FAIL(guard->get_table_schema(table_id, table))) {
+  } else if (OB_ISNULL(table)) {
+    ret = OB_ERR_UNEXPECTED;
+  } else if (OB_FAIL(guard->get_database_schema(table->get_database_id(), db))) {
+  } else if (OB_ISNULL(db)) {
+    ret = OB_ERR_UNEXPECTED;
+  } else {
+    ObSqlString sql;
+    if (OB_FAIL(sql.append("select column_id from oceanbase.__all_ai_column where table_id = "))) {
+    } else if (OB_FAIL(sql.append_fmt("%lu", table_id))) {
+    } else {
+      SMART_VAR(common::ObMySQLProxy::MySQLResult, result) {
+        if (OB_FAIL(proxy->read(result, sql.ptr()))) {
+          LOG_INFO("failed to read ai column metadata", K(ret), K(sql.string()));
+        } else if (OB_ISNULL(result.get_result())) {
+          ret = OB_ERR_UNEXPECTED;
+        } else {
+          common::sqlclient::ObMySQLResult *res = result.get_result();
+          while (OB_SUCC(ret) && OB_SUCC(res->next())) {
+            int64_t int_value = 0;
+            uint64_t column_id = common::OB_INVALID_ID;
+            bool referenced = true;
+            if (OB_FAIL(res->get_int("column_id", int_value))) {
+            } else {
+              column_id = static_cast<uint64_t>(int_value);
+              if (NULL != referenced_column_ids && !referenced_column_ids->empty()) {
+                referenced = false;
+                for (int64_t i = 0; i < referenced_column_ids->count(); ++i) {
+                  if (column_id == referenced_column_ids->at(i)) {
+                    referenced = true;
+                    break;
+                  }
+                }
+              }
+            }
+            const share::schema::ObColumnSchemaV2 *column = OB_ISNULL(table)
+                ? NULL : table->get_column_schema(column_id);
+            if (OB_SUCC(ret) && referenced && OB_NOT_NULL(column)) {
+              ObSqlString count_sql;
+              int64_t null_cnt = 0;
+              if (OB_FAIL(count_sql.append("select count(*) from `")) ||
+                  OB_FAIL(count_sql.append(db->get_database_name_str())) ||
+                  OB_FAIL(count_sql.append("`.`")) ||
+                  OB_FAIL(count_sql.append(table->get_table_name_str())) ||
+                  OB_FAIL(count_sql.append("` where `")) ||
+                  OB_FAIL(count_sql.append(column->get_column_name_str())) ||
+                  OB_FAIL(count_sql.append("` is null"))) {
+              } else if (OB_FAIL(ob_ai_query_int(proxy, count_sql.ptr(), null_cnt))) {
+                LOG_INFO("failed to count unfinished ai column rows", K(ret), K(count_sql.string()));
+              } else if (null_cnt > 0) {
+                ret = OB_AI_COLUMN_UNFINISHED_TASK;
+                LOG_USER_ERROR(OB_AI_COLUMN_UNFINISHED_TASK,
+                               static_cast<unsigned long>(table_id),
+                               static_cast<unsigned long>(column_id));
+                LOG_INFO("ai column strict read rejected", K(table_id), K(column_id), K(null_cnt));
+                break;
+              }
+            }
+          }
+          if (OB_ITER_END == ret) {
+            ret = OB_SUCCESS;
+          }
         }
       }
     }

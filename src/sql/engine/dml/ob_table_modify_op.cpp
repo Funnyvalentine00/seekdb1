@@ -1167,6 +1167,9 @@ int ObTableModifyOp::init_ai_column_task_elem(uint64_t table_id, int64_t dml_eve
     LOG_INFO("failed to get table schema for ai column task", K(ret), K(table_id));
   } else if (!aicolumn::ob_ai_table_has_ai_column(*table)) {
     ai_column_enabled_ = false;
+  } else if ((aicolumn::AI_COL_EVENT_UPDATE == dml_event || aicolumn::AI_COL_EVENT_DELETE == dml_event)
+             && OB_FAIL(aicolumn::ob_ai_check_strict_read(ctx_, table_id, NULL))) {
+    LOG_INFO("ai column strict read rejected for dml", K(ret), K(table_id), K(dml_event));
   } else if (OB_FAIL(open_inner_conn())) {
     LOG_INFO("failed to open inner conn for ai column task", K(ret), K(table_id));
   } else {

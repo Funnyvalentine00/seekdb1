@@ -69,6 +69,7 @@ public:
   int resolve_add_column(const ParseNode &node, ObColumnNameSet &resolve_add_column);
   int resolve_ai_column_for_alter(share::schema::AlterColumnSchema &column,
                                   const ParseNode *column_definition_node);
+  int resolve_ai_column_retry(const ParseNode &node);
   int resolve_alter_column(const ParseNode &node);
   int resolve_change_column(const ParseNode &node);
   int check_modify_column_allowed(const share::schema::AlterColumnSchema &alter_column_schema,

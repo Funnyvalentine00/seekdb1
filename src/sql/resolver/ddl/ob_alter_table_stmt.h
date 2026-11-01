@@ -23,6 +23,7 @@
 #include "sql/resolver/ob_stmt_resolver.h"
 #include "common/sql_mode/ob_sql_mode.h"
 #include "lib/hash/ob_placement_hashset.h"
+#include "lib/string/ob_string.h"
 
 namespace oceanbase
 {
@@ -53,6 +54,21 @@ public:
 
   bool is_alter_triggers() const { return is_alter_triggers_; }
   void set_is_alter_triggers(const bool flag) { is_alter_triggers_ = flag; }
+
+  bool is_ai_column_retry() const { return is_ai_column_retry_; }
+  const common::ObString &get_ai_column_retry_column() const { return ai_column_retry_column_; }
+  const common::ObString &get_ai_column_retry_where() const { return ai_column_retry_where_; }
+  int set_ai_column_retry(common::ObIAllocator &allocator,
+                          const common::ObString &column_name,
+                          const common::ObString &where_text)
+  {
+    int ret = OB_SUCCESS;
+    is_ai_column_retry_ = true;
+    if (OB_FAIL(common::ob_write_string(allocator, column_name, ai_column_retry_column_))) {
+    } else if (OB_FAIL(common::ob_write_string(allocator, where_text, ai_column_retry_where_))) {
+    }
+    return ret;
+  }
 
   int set_origin_database_name(const common::ObString &origin_db_name);
   int set_origin_table_name(const common::ObString &origin_table_name);
@@ -114,6 +130,9 @@ private:
   obcall::ObAlterTriggerArg tg_arg_;
   uint64_t alter_table_action_count_;
   obcall::ObExchangePartitionArg exchange_partition_arg_;
+  bool is_ai_column_retry_;
+  common::ObString ai_column_retry_column_;
+  common::ObString ai_column_retry_where_;
 };
 
 inline int ObAlterTableStmt::set_tz_info_wrap(const common::ObTimeZoneInfoWrap &tz_info_wrap)

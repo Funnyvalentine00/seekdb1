@@ -39,6 +39,7 @@
 #include "sql/resolver/ddl/ob_optimize_stmt.h"
 #include "sql/resolver/dml/ob_delete_resolver.h"
 #include "sql/engine/cmd/ob_partition_executor_utils.h"
+#include "sql/engine/dml/ob_ai_column_task_helper.h"
 
 #include "sql/printer/ob_select_stmt_printer.h"
 #include "share/ob_structured_event_logger.h"
@@ -751,9 +752,238 @@ int ObAlterTableExecutor::alter_table_exchange_partition_rpc(obcall::ObExchangeP
   return ret;
 }
 
+namespace {
+
+int ai_retry_append_predicate(const ObString &where,
+                              const ObString &column_name,
+                              ObSqlString &predicate)
+{
+  int ret = OB_SUCCESS;
+  const char *p = where.ptr();
+  const int32_t len = where.length();
+  int32_t i = 0;
+  while (OB_SUCC(ret) && i < len) {
+    const char c = p[i];
+    if ('`' == c) {
+      int32_t j = i + 1;
+      while (j < len && '`' != p[j]) { ++j; }
+      j = (j < len) ? j + 1 : len;
+      if (OB_FAIL(predicate.append(p + i, j - i))) {
+      }
+      i = j;
+    } else if ('\'' == c || '"' == c) {
+      int32_t j = i + 1;
+      while (j < len) {
+        if (c == p[j]) {
+          if (j + 1 < len && c == p[j + 1]) {
+            j += 2;
+            continue;
+          }
+          ++j;
+          break;
+        }
+        ++j;
+      }
+      if (OB_FAIL(predicate.append(p + i, j - i))) {
+      }
+      i = j;
+    } else if (isalpha(static_cast<unsigned char>(c)) || '_' == c) {
+      int32_t j = i + 1;
+      while (j < len && (isalnum(static_cast<unsigned char>(p[j])) || '_' == p[j])) { ++j; }
+      if (6 == j - i && 0 == strncasecmp(p + i, "status", 6)) {
+        if (OB_FAIL(predicate.append("(case when `")) ||
+            OB_FAIL(predicate.append(column_name)) ||
+            OB_FAIL(predicate.append("` is null then 'FAILED' else 'READY' end)"))) {
+        }
+      } else if (OB_FAIL(predicate.append(p + i, j - i))) {
+      }
+      i = j;
+    } else {
+      if (OB_FAIL(predicate.append(p + i, 1))) {
+      }
+      ++i;
+    }
+  }
+  return ret;
+}
+
+int ai_retry_append_rowkey_expr(const ObTableSchema &table, ObSqlString &expr)
+{
+  int ret = OB_SUCCESS;
+  const ObRowkeyInfo &rowkey_info = table.get_rowkey_info();
+  if (OB_FAIL(expr.append("concat("))) {
+  }
+  for (int64_t i = 0; OB_SUCC(ret) && i < rowkey_info.get_size(); ++i) {
+    uint64_t column_id = OB_INVALID_ID;
+    const ObColumnSchemaV2 *column = NULL;
+    if (OB_FAIL(rowkey_info.get_column_id(i, column_id)) ||
+        OB_ISNULL(column = table.get_column_schema(column_id))) {
+      ret = OB_ERR_UNEXPECTED;
+    } else if (OB_FAIL(expr.append(0 == i ? "'`" : ", '`")) ||
+               OB_FAIL(expr.append(column->get_column_name_str())) ||
+               OB_FAIL(expr.append("` = '")) ||
+               OB_FAIL(expr.append(", "))) {
+    } else if (ob_is_string_type(column->get_data_type())) {
+      if (OB_FAIL(expr.append("concat('''', `")) ||
+          OB_FAIL(expr.append(column->get_column_name_str())) ||
+          OB_FAIL(expr.append("`, '''')"))) {
+      }
+    } else if (OB_FAIL(expr.append("cast(`")) ||
+               OB_FAIL(expr.append(column->get_column_name_str())) ||
+               OB_FAIL(expr.append("` as char)"))) {
+    }
+  }
+  if (OB_SUCC(ret) && OB_FAIL(expr.append(")"))) {
+  }
+  return ret;
+}
+
+// ALTER TABLE ... RETRY AI COLUMN <col> [WHERE <pred>]
+// re-queues the ai column tasks of the rows selected by the predicate and
+// invalidates their published results.
+int do_ai_column_retry(ObExecContext &ctx, ObAlterTableStmt &stmt)
+{
+  int ret = OB_SUCCESS;
+  ObMySQLProxy *proxy = ctx.get_sql_proxy();
+  const ObString &column_name = stmt.get_ai_column_retry_column();
+  const ObString &where = stmt.get_ai_column_retry_where();
+  const ObString &db_name = stmt.get_database_name();
+  const ObString &table_name = stmt.get_table_name();
+  const ObColumnSchemaV2 *column = NULL;
+  const ObTableSchema *table = NULL;
+  ObSchemaGetterGuard schema_guard;
+  int64_t table_id = stmt.get_alter_table_schema().get_table_id();
+  int64_t column_id = -1;
+  int64_t max_retries = 0;
+  int64_t result_type = 0;
+  ObString model;
+  ObString normalized;
+  ObSqlString predicate;
+  ObSqlString rowkey_expr;
+  ObSqlString target_table;
+  if (OB_ISNULL(proxy) || OB_UNLIKELY(db_name.empty() || table_name.empty())) {
+    ret = OB_ERR_UNEXPECTED;
+    LOG_INFO("invalid ai column retry argument", K(ret), K(table_id), K(column_name),
+             K(db_name), K(table_name), K(where));
+  } else if (OB_FAIL(GCTX.schema_service_->get_runtime_schema_guard(schema_guard))) {
+  } else if (OB_FAIL(schema_guard.get_table_schema(table_id, table)) || OB_ISNULL(table)) {
+    ret = OB_ERR_UNEXPECTED;
+  } else if (OB_ISNULL(column = table->get_column_schema(column_name))) {
+    ret = OB_NOT_SUPPORTED;
+    LOG_USER_ERROR(OB_NOT_SUPPORTED, "retrying a column that is not an AI column");
+  } else if (OB_FAIL(ai_retry_append_predicate(where, column_name, predicate))) {
+  } else if (predicate.empty() && OB_FAIL(predicate.append("1=1"))) {
+  } else if (OB_FAIL(ai_retry_append_rowkey_expr(*table, rowkey_expr))) {
+  } else if (OB_FAIL(target_table.append("`")) ||
+             OB_FAIL(target_table.append(db_name)) ||
+             OB_FAIL(target_table.append("`.`")) ||
+             OB_FAIL(target_table.append(table_name)) ||
+             OB_FAIL(target_table.append("`"))) {
+  } else {
+    ObSqlString meta_sql;
+    if (OB_FAIL(meta_sql.append("select column_id, max_retries, ai_model_name, normalized_expr"
+                                " from oceanbase.__all_ai_column where table_id = "))) {
+    } else if (OB_FAIL(meta_sql.append_fmt("%ld and column_id = %lu",
+                                           table_id, column->get_column_id()))) {
+    } else {
+      SMART_VAR(ObMySQLProxy::MySQLResult, result) {
+        if (OB_FAIL(proxy->read(result, meta_sql.ptr()))) {
+          LOG_INFO("failed to read ai column metadata for retry", K(ret), K(meta_sql.string()));
+        } else if (OB_ISNULL(result.get_result())) {
+          ret = OB_ERR_UNEXPECTED;
+        } else {
+          common::sqlclient::ObMySQLResult *res = result.get_result();
+          ObString tmp;
+          if (OB_FAIL(res->next())) {
+            if (OB_ITER_END == ret) {
+              ret = OB_NOT_SUPPORTED;
+              LOG_USER_ERROR(OB_NOT_SUPPORTED, "retrying a column that is not an AI column");
+            }
+          } else if (OB_FAIL(res->get_int("column_id", column_id))) {
+          } else if (OB_FAIL(res->get_int("max_retries", max_retries))) {
+          } else if (OB_FAIL(res->get_varchar("ai_model_name", tmp)) ||
+                     OB_FAIL(ob_write_string(ctx.get_allocator(), tmp, model))) {
+          } else if (OB_FAIL(res->get_varchar("normalized_expr", tmp)) ||
+                     OB_FAIL(ob_write_string(ctx.get_allocator(), tmp, normalized))) {
+          }
+        }
+      }
+    }
+  }
+  if (OB_SUCC(ret) && (column_id < 0 || model.empty() || normalized.empty())) {
+    ret = OB_ERR_UNEXPECTED;
+    LOG_INFO("ai column metadata not found for retry", K(ret), K(table_id), K(column_id), K(model),
+             K(normalized), K(column->get_column_id()), K(column_name));
+  }
+  ObString prompt_expr;
+  ObSqlString system_prompt;
+  ObSqlString insert_sql;
+  ObSqlString delete_sql;
+  ObSqlString update_sql;
+  if (OB_SUCC(ret)) {
+    result_type = static_cast<int64_t>(column->get_data_type());
+    if (OB_FAIL(aicolumn::ob_ai_extract_prompt(normalized, prompt_expr))) {
+    } else if (ob_is_integer_type(static_cast<ObObjType>(result_type))
+               && OB_FAIL(system_prompt.append("Return the result as a base-10 integer. "))) {
+    } else if (OB_FAIL(system_prompt.append(normalized))) {
+    } else if (OB_FAIL(delete_sql.append("delete from oceanbase.__all_ai_column_task"
+                                         " where table_id = ")) ||
+               OB_FAIL(delete_sql.append_fmt("%ld and column_id = %ld", table_id, column_id)) ||
+               OB_FAIL(delete_sql.append(" and rowkey_predicate in (select ")) ||
+               OB_FAIL(delete_sql.append(rowkey_expr.string())) ||
+               OB_FAIL(delete_sql.append(" from ")) ||
+               OB_FAIL(delete_sql.append(target_table.string())) ||
+               OB_FAIL(delete_sql.append(" where ")) ||
+               OB_FAIL(delete_sql.append(predicate.string())) ||
+               OB_FAIL(delete_sql.append(")"))) {
+    } else if (OB_FAIL(insert_sql.append("insert into oceanbase.__all_ai_column_task"
+                     "(table_id, column_id, rowkey_predicate, request_id, state, retry_count,"
+                     " max_retries, eligible_ts, update_ts, ai_model_name, system_prompt,"
+                     " prompt_expr, result_type, gmt_create, gmt_modified) select "))) {
+    } else if (OB_FAIL(insert_sql.append_fmt("%ld, %ld, ", table_id, column_id))) {
+    } else if (OB_FAIL(insert_sql.append(rowkey_expr.string())) ||
+               OB_FAIL(insert_sql.append_fmt(", %ld, 0, 0, %ld, now(6), now(6), ",
+                                             aicolumn::ob_ai_next_request_id(), max_retries)) ||
+               OB_FAIL(aicolumn::ob_ai_quote_append(insert_sql, model)) ||
+               OB_FAIL(insert_sql.append(", ")) ||
+               OB_FAIL(aicolumn::ob_ai_quote_append(insert_sql, system_prompt.string())) ||
+               OB_FAIL(insert_sql.append(", ")) ||
+               OB_FAIL(aicolumn::ob_ai_quote_append(insert_sql, prompt_expr)) ||
+               OB_FAIL(insert_sql.append_fmt(", %ld, now(6), now(6) from ", result_type)) ||
+               OB_FAIL(insert_sql.append(target_table.string())) ||
+               OB_FAIL(insert_sql.append(" where ")) ||
+               OB_FAIL(insert_sql.append(predicate.string()))) {
+    } else if (OB_FAIL(update_sql.append("update ")) ||
+               OB_FAIL(update_sql.append(target_table.string())) ||
+               OB_FAIL(update_sql.append(" set `")) ||
+               OB_FAIL(update_sql.append(column_name)) ||
+               OB_FAIL(update_sql.append("` = null where ")) ||
+               OB_FAIL(update_sql.append(predicate.string()))) {
+    }
+  }
+  if (OB_SUCC(ret)) {
+    int64_t affected_rows = 0;
+    if (OB_FAIL(proxy->write(delete_sql.ptr(), 0, affected_rows))) {
+      LOG_INFO("failed to clear ai column tasks for retry", K(ret), K(delete_sql.string()));
+    } else if (OB_FAIL(proxy->write(insert_sql.ptr(), 0, affected_rows))) {
+      LOG_INFO("failed to create ai column tasks for retry", K(ret), K(insert_sql.string()));
+    } else if (OB_FAIL(proxy->write(update_sql.ptr(), 0, affected_rows))) {
+      LOG_INFO("failed to invalidate ai column results for retry", K(ret), K(update_sql.string()));
+    }
+  }
+  return ret;
+}
+
+}  // namespace
+
 int ObAlterTableExecutor::execute(ObExecContext &ctx, ObAlterTableStmt &stmt)
 {
   int ret = OB_SUCCESS;
+  LOG_INFO("alter table executor enter", K(stmt.is_ai_column_retry()));
+  if (stmt.is_ai_column_retry()) {
+    return do_ai_column_retry(ctx, stmt);
+  }
+
   ObSqlExecutorCtx *task_exec_ctx = NULL;
   obcall::ObAlterTableArg &alter_table_arg = stmt.get_alter_table_arg();
   obcall::ObExchangePartitionArg &exchange_partition_arg = stmt.get_exchange_partition_arg();

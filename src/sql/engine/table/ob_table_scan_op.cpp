@@ -18,7 +18,8 @@
 #include "data_plane/transaction/ob_transaction_version.h"
 
 
-#include "ob_table_scan_op.h"
+#include "sql/engine/table/ob_table_scan_op.h"
+#include "sql/engine/dml/ob_ai_column_task_helper.h"
 #include "common/json_type/ob_json_bin.h"
 #include "data_plane/blocksstable/ob_datum_row.h"
 #include "sql/engine/ob_physical_plan.h"
@@ -1436,6 +1437,9 @@ int ObTableScanOp::inner_open()
   if (OB_ISNULL(my_session = GET_MY_SESSION(ctx_))) {
     ret = OB_ERR_UNEXPECTED;
   } else if (OB_FAIL(ObDASUtils::check_nested_sql_mutating(MY_SPEC.ref_table_id_, ctx_, true))) {
+  } else if ((!MY_SPEC.should_scan_index() || MY_SPEC.is_index_back())
+             && OB_FAIL(aicolumn::ob_ai_check_strict_read(ctx_, MY_SPEC.ref_table_id_,
+                        &MY_SPEC.tsc_ctdef_.get_full_acccess_cids()))) {
   } else if (OB_FAIL(init_table_scan_rtdef())) {
   } else if (MY_SPEC.is_fts_ddl_ && OB_FAIL(fts_index_.init(MY_SPEC.is_fts_index_aux_, MY_SPEC.parser_name_,
           MY_SPEC.parser_properties_))) {

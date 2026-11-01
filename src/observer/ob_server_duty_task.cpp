@@ -414,8 +414,13 @@ int ObAiColumnWorkerTask::call_model(const AiColumnTaskItem &item,
     } else if (OB_FAIL(resolver->resolve_by_model_name(model, allocator, endpoint_info))) {
     } else {
       ObAIFuncModel model_caller(allocator, *info, endpoint_info);
-      if (OB_FAIL(model_caller.call_completion_with_system(system_prompt, user_prompt, NULL, result))) {
-      } else if (OB_FAIL(ob_write_string(allocator_, result, value))) {
+      if (ObAIFuncUtils::is_dense_embedding_type(info)) {
+        // embedding models take the prompt value as the text to embed
+        if (OB_FAIL(model_caller.call_dense_embedding(user_prompt, NULL, result))) {
+        }
+      } else if (OB_FAIL(model_caller.call_completion_with_system(system_prompt, user_prompt, NULL, result))) {
+      }
+      if (OB_SUCC(ret) && OB_FAIL(ob_write_string(allocator_, result, value))) {
       }
     }
   }
