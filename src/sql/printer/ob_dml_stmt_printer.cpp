@@ -319,6 +319,21 @@ int ObDMLStmtPrinter::print_table(const TableItem *table_item,
           DATA_PRINTF(" %.*s", LEN_AND_PTR(table_item->alias_name_));
           break;
         }
+        case MulModeTableType::OB_FILE_CSV_TABLE_TYPE :
+        case MulModeTableType::OB_FILE_JSONL_TABLE_TYPE :
+        case MulModeTableType::OB_FILE_PARQUET_TABLE_TYPE :
+        case MulModeTableType::OB_FILE_GLOB_TABLE_TYPE : {
+          const int table_type = table_item->json_table_def_->table_type_;
+          if (OB_FILE_PARQUET_TABLE_TYPE == table_type) DATA_PRINTF("read_parquet(");
+          else if (OB_FILE_GLOB_TABLE_TYPE == table_type) DATA_PRINTF("glob(");
+          else DATA_PRINTF(OB_FILE_JSONL_TABLE_TYPE == table_type ? "read_json(" : "read_csv(");
+          OZ (expr_printer_.do_print(table_item->json_table_def_->doc_exprs_.at(0), T_FROM_SCOPE));
+          if (OB_FILE_JSONL_TABLE_TYPE == table_type) DATA_PRINTF(",format='newline_delimited') ");
+          else if (OB_FILE_CSV_TABLE_TYPE == table_type) DATA_PRINTF(",header=%s,sample_size=-1) ", table_item->json_table_def_->namespace_arr_.at(2) == ObString("1") ? "true" : "false");
+          else DATA_PRINTF(") ");
+          PRINT_IDENT_WITH_QUOT(table_item->alias_name_);
+          break;
+        }
         case MulModeTableType::OB_UNNEST_TABLE_TYPE : {
           DATA_PRINTF("UNNEST(");
           for (int64_t i = 0; OB_SUCC(ret) && i < table_item->json_table_def_->doc_exprs_.count(); ++i) {
