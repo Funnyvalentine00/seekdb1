@@ -1,0 +1,273 @@
+Integrated full original test drivers; complete raw outputs in evidence ZIP.
+
+control-a source=fdb8363f64363819fcf2307be95bcd10a5a7e4ba binary=c93470673e5a5e911e0418877078d370fc9ff6c5cb3d1061867762f6f7d31b6c
+alter system set _enable_add_fulltext_index_to_existing_table = true;
+case=basic_dml exit_code=0
+alter system set _enable_add_fulltext_index_to_existing_table = true;
+case=basic_dml_sequel exit_code=0
+DROP TABLE IF EXISTS cn_word_table;
+case=cn_word exit_code=0
+DROP TABLE IF EXISTS fts_table_3;
+case=create_fts_index_afterward exit_code=0
+DROP TABLE IF EXISTS fts_table_1;
+case=create_table_with_fts_index exit_code=0
+drop table if exists t_first;
+case=domain_id_merge_with_compare_null exit_code=0
+result_format: 3
+case=drop_index exit_code=0
+CREATE DATABASE IF NOT EXISTS fts_index_view_test;
+case=index_view exit_code=0
+result_format: 3
+case=load_data exit_code=0
+DROP TABLE IF EXISTS fts_table_1;
+case=offline_ddl_with_fts_index exit_code=0
+drop database if exists fts_online_ddl;
+case=online_ddl_on_table_with_fts_index exit_code=0
+drop database if exists fts_parser_properies;
+case=parser_properties exit_code=0
+drop database if exists fts;
+case=partitioned_simple_query exit_code=0
+drop database if exists fts;
+case=simple_query exit_code=0
+drop database if exists fts;
+case=tokenize_function exit_code=0
+# enable_file_sql defaults to OFF
+file_sql_passed=True
+
+control-b source=fdb8363f64363819fcf2307be95bcd10a5a7e4ba binary=c93470673e5a5e911e0418877078d370fc9ff6c5cb3d1061867762f6f7d31b6c
+alter system set _enable_add_fulltext_index_to_existing_table = true;
+case=basic_dml exit_code=0
+alter system set _enable_add_fulltext_index_to_existing_table = true;
+case=basic_dml_sequel exit_code=0
+DROP TABLE IF EXISTS cn_word_table;
+case=cn_word exit_code=0
+DROP TABLE IF EXISTS fts_table_3;
+case=create_fts_index_afterward exit_code=0
+DROP TABLE IF EXISTS fts_table_1;
+case=create_table_with_fts_index exit_code=0
+drop table if exists t_first;
+case=domain_id_merge_with_compare_null exit_code=0
+result_format: 3
+case=drop_index exit_code=0
+CREATE DATABASE IF NOT EXISTS fts_index_view_test;
+case=index_view exit_code=0
+result_format: 3
+case=load_data exit_code=0
+DROP TABLE IF EXISTS fts_table_1;
+case=offline_ddl_with_fts_index exit_code=0
+drop database if exists fts_online_ddl;
+case=online_ddl_on_table_with_fts_index exit_code=0
+drop database if exists fts_parser_properies;
+case=parser_properties exit_code=0
+drop database if exists fts;
+case=partitioned_simple_query exit_code=0
+drop database if exists fts;
+case=simple_query exit_code=0
+drop database if exists fts;
+case=tokenize_function exit_code=0
+# enable_file_sql defaults to OFF
+file_sql_passed=True
+
+trial-before-01 source=fdb8363f64363819fcf2307be95bcd10a5a7e4ba binary=c93470673e5a5e911e0418877078d370fc9ff6c5cb3d1061867762f6f7d31b6c
+alter system set _enable_add_fulltext_index_to_existing_table = true;
+case=basic_dml exit_code=0
+alter system set _enable_add_fulltext_index_to_existing_table = true;
+case=basic_dml_sequel exit_code=0
+DROP TABLE IF EXISTS cn_word_table;
+case=cn_word exit_code=0
+DROP TABLE IF EXISTS fts_table_3;
+case=create_fts_index_afterward exit_code=0
+DROP TABLE IF EXISTS fts_table_1;
+case=create_table_with_fts_index exit_code=0
+drop table if exists t_first;
+case=domain_id_merge_with_compare_null exit_code=0
+result_format: 3
+case=drop_index exit_code=0
+CREATE DATABASE IF NOT EXISTS fts_index_view_test;
+case=index_view exit_code=0
+result_format: 3
+case=load_data exit_code=0
+DROP TABLE IF EXISTS fts_table_1;
+case=offline_ddl_with_fts_index exit_code=0
+drop database if exists fts_online_ddl;
+case=online_ddl_on_table_with_fts_index exit_code=0
+drop database if exists fts_parser_properies;
+case=parser_properties exit_code=0
+drop database if exists fts;
+case=partitioned_simple_query exit_code=0
+drop database if exists fts;
+case=simple_query exit_code=0
+drop database if exists fts;
+case=tokenize_function exit_code=0
+# enable_file_sql defaults to OFF
+file_sql_passed=True
+
+trial-after-01 source=9ed8c5f5b59e9ad48c17a695b64f681b5ccbf6f6 binary=5d9a18895b8d1f7d4606f46308bc40203a108ada94934115948d7cf4c0fff5cd
+alter system set _enable_add_fulltext_index_to_existing_table = true;
+case=basic_dml exit_code=0
+alter system set _enable_add_fulltext_index_to_existing_table = true;
+case=basic_dml_sequel exit_code=0
+DROP TABLE IF EXISTS cn_word_table;
+case=cn_word exit_code=0
+DROP TABLE IF EXISTS fts_table_3;
+case=create_fts_index_afterward exit_code=0
+DROP TABLE IF EXISTS fts_table_1;
+case=create_table_with_fts_index exit_code=0
+drop table if exists t_first;
+case=domain_id_merge_with_compare_null exit_code=0
+result_format: 3
+case=drop_index exit_code=0
+CREATE DATABASE IF NOT EXISTS fts_index_view_test;
+case=index_view exit_code=0
+result_format: 3
+case=load_data exit_code=0
+DROP TABLE IF EXISTS fts_table_1;
+case=offline_ddl_with_fts_index exit_code=0
+drop database if exists fts_online_ddl;
+case=online_ddl_on_table_with_fts_index exit_code=0
+drop database if exists fts_parser_properies;
+case=parser_properties exit_code=0
+drop database if exists fts;
+case=partitioned_simple_query exit_code=0
+drop database if exists fts;
+case=simple_query exit_code=0
+drop database if exists fts;
+case=tokenize_function exit_code=0
+# enable_file_sql defaults to OFF
+file_sql_passed=True
+
+trial-after-02 source=9ed8c5f5b59e9ad48c17a695b64f681b5ccbf6f6 binary=5d9a18895b8d1f7d4606f46308bc40203a108ada94934115948d7cf4c0fff5cd
+alter system set _enable_add_fulltext_index_to_existing_table = true;
+case=basic_dml exit_code=0
+alter system set _enable_add_fulltext_index_to_existing_table = true;
+case=basic_dml_sequel exit_code=0
+DROP TABLE IF EXISTS cn_word_table;
+case=cn_word exit_code=0
+DROP TABLE IF EXISTS fts_table_3;
+case=create_fts_index_afterward exit_code=0
+DROP TABLE IF EXISTS fts_table_1;
+case=create_table_with_fts_index exit_code=0
+drop table if exists t_first;
+case=domain_id_merge_with_compare_null exit_code=0
+result_format: 3
+case=drop_index exit_code=0
+CREATE DATABASE IF NOT EXISTS fts_index_view_test;
+case=index_view exit_code=0
+result_format: 3
+case=load_data exit_code=0
+DROP TABLE IF EXISTS fts_table_1;
+case=offline_ddl_with_fts_index exit_code=0
+drop database if exists fts_online_ddl;
+case=online_ddl_on_table_with_fts_index exit_code=0
+drop database if exists fts_parser_properies;
+case=parser_properties exit_code=0
+drop database if exists fts;
+case=partitioned_simple_query exit_code=0
+drop database if exists fts;
+case=simple_query exit_code=0
+drop database if exists fts;
+case=tokenize_function exit_code=0
+# enable_file_sql defaults to OFF
+file_sql_passed=True
+
+trial-before-02 source=fdb8363f64363819fcf2307be95bcd10a5a7e4ba binary=c93470673e5a5e911e0418877078d370fc9ff6c5cb3d1061867762f6f7d31b6c
+alter system set _enable_add_fulltext_index_to_existing_table = true;
+case=basic_dml exit_code=0
+alter system set _enable_add_fulltext_index_to_existing_table = true;
+case=basic_dml_sequel exit_code=0
+DROP TABLE IF EXISTS cn_word_table;
+case=cn_word exit_code=0
+DROP TABLE IF EXISTS fts_table_3;
+case=create_fts_index_afterward exit_code=0
+DROP TABLE IF EXISTS fts_table_1;
+case=create_table_with_fts_index exit_code=0
+drop table if exists t_first;
+case=domain_id_merge_with_compare_null exit_code=0
+result_format: 3
+case=drop_index exit_code=0
+CREATE DATABASE IF NOT EXISTS fts_index_view_test;
+case=index_view exit_code=0
+result_format: 3
+case=load_data exit_code=0
+DROP TABLE IF EXISTS fts_table_1;
+case=offline_ddl_with_fts_index exit_code=0
+drop database if exists fts_online_ddl;
+case=online_ddl_on_table_with_fts_index exit_code=0
+drop database if exists fts_parser_properies;
+case=parser_properties exit_code=0
+drop database if exists fts;
+case=partitioned_simple_query exit_code=0
+drop database if exists fts;
+case=simple_query exit_code=0
+drop database if exists fts;
+case=tokenize_function exit_code=0
+# enable_file_sql defaults to OFF
+file_sql_passed=True
+
+trial-before-03 source=fdb8363f64363819fcf2307be95bcd10a5a7e4ba binary=c93470673e5a5e911e0418877078d370fc9ff6c5cb3d1061867762f6f7d31b6c
+alter system set _enable_add_fulltext_index_to_existing_table = true;
+case=basic_dml exit_code=0
+alter system set _enable_add_fulltext_index_to_existing_table = true;
+case=basic_dml_sequel exit_code=0
+DROP TABLE IF EXISTS cn_word_table;
+case=cn_word exit_code=0
+DROP TABLE IF EXISTS fts_table_3;
+case=create_fts_index_afterward exit_code=0
+DROP TABLE IF EXISTS fts_table_1;
+case=create_table_with_fts_index exit_code=0
+drop table if exists t_first;
+case=domain_id_merge_with_compare_null exit_code=0
+result_format: 3
+case=drop_index exit_code=0
+CREATE DATABASE IF NOT EXISTS fts_index_view_test;
+case=index_view exit_code=0
+result_format: 3
+case=load_data exit_code=0
+DROP TABLE IF EXISTS fts_table_1;
+case=offline_ddl_with_fts_index exit_code=0
+drop database if exists fts_online_ddl;
+case=online_ddl_on_table_with_fts_index exit_code=0
+drop database if exists fts_parser_properies;
+case=parser_properties exit_code=0
+drop database if exists fts;
+case=partitioned_simple_query exit_code=0
+drop database if exists fts;
+case=simple_query exit_code=0
+drop database if exists fts;
+case=tokenize_function exit_code=0
+# enable_file_sql defaults to OFF
+file_sql_passed=True
+
+trial-after-03 source=9ed8c5f5b59e9ad48c17a695b64f681b5ccbf6f6 binary=5d9a18895b8d1f7d4606f46308bc40203a108ada94934115948d7cf4c0fff5cd
+alter system set _enable_add_fulltext_index_to_existing_table = true;
+case=basic_dml exit_code=0
+alter system set _enable_add_fulltext_index_to_existing_table = true;
+case=basic_dml_sequel exit_code=0
+DROP TABLE IF EXISTS cn_word_table;
+case=cn_word exit_code=0
+DROP TABLE IF EXISTS fts_table_3;
+case=create_fts_index_afterward exit_code=0
+DROP TABLE IF EXISTS fts_table_1;
+case=create_table_with_fts_index exit_code=0
+drop table if exists t_first;
+case=domain_id_merge_with_compare_null exit_code=0
+result_format: 3
+case=drop_index exit_code=0
+CREATE DATABASE IF NOT EXISTS fts_index_view_test;
+case=index_view exit_code=0
+result_format: 3
+case=load_data exit_code=0
+DROP TABLE IF EXISTS fts_table_1;
+case=offline_ddl_with_fts_index exit_code=0
+drop database if exists fts_online_ddl;
+case=online_ddl_on_table_with_fts_index exit_code=0
+drop database if exists fts_parser_properies;
+case=parser_properties exit_code=0
+drop database if exists fts;
+case=partitioned_simple_query exit_code=0
+drop database if exists fts;
+case=simple_query exit_code=0
+drop database if exists fts;
+case=tokenize_function exit_code=0
+# enable_file_sql defaults to OFF
+file_sql_passed=True
