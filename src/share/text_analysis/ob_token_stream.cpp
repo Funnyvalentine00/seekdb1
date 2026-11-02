@@ -220,12 +220,14 @@ int ObTokenStopWordNormalizer::filter_special_marks(const ObDatum &check_token, 
 
 ObBasicEnglishNormalizer::ObBasicEnglishNormalizer()
   : ObTokenNormalizer(),
-    norm_allocator_("TxtTokGrpFilter", OB_MALLOC_NORMAL_BLOCK_SIZE)
+    norm_allocator_("TxtTokGrpFilter", OB_MALLOC_NORMAL_BLOCK_SIZE),
+    output_allocator_(nullptr)
 {
 }
 
 void ObBasicEnglishNormalizer::reset()
 {
+  output_allocator_ = nullptr;
   norm_allocator_.reset();
   ObTokenNormalizer::reset();
 }
@@ -244,6 +246,7 @@ int ObBasicEnglishNormalizer::get_next(ObDatum &next_token, int64_t &token_freq)
   } else {
     next_token.reset();
     token_freq = 0;
+    // Non-ASCII output uses scratch storage before its exact-size caller copy.
     norm_allocator_.reuse();
     ObDatum tmp_datum;
     bool found_alnum = false;
@@ -295,7 +298,22 @@ int ObBasicEnglishNormalizer::get_next(ObDatum &next_token, int64_t &token_freq)
     } else {
       ObString norm_alnum_token(norm_token_len, norm_token_ptr);
       ObString norm_lower_token;
-      if (OB_FAIL(ObCharset::tolower(cs_, norm_alnum_token, norm_lower_token, norm_allocator_))) {
+      // Only ASCII in a one-byte-minimum charset guarantees unchanged byte
+      // length here. Unicode lowercasing can shrink a token (e.g. Kelvin sign),
+      // so retaining its input-sized allocation would waste caller-arena space.
+      bool direct_output = nullptr != output_allocator_
+          && 1 == cs_->mbminlen && 1 == cs_->casedn_multiply;
+      for (uint32_t i = 0; direct_output && i < norm_token_len; ++i) {
+        direct_output = static_cast<unsigned char>(norm_token_ptr[i]) < 0x80;
+      }
+      ObIAllocator &normalize_allocator = direct_output ? *output_allocator_ : norm_allocator_;
+      if (OB_FAIL(ObCharset::tolower(cs_, norm_alnum_token, norm_lower_token, normalize_allocator))) {
+      } else if (nullptr != output_allocator_ && !direct_output) {
+        ObString stable_token;
+        if (OB_FAIL(ob_write_string(*output_allocator_, norm_lower_token, stable_token))) {
+        } else {
+          next_token.set_string(stable_token);
+        }
       } else {
         next_token.set_string(norm_lower_token);
       }
