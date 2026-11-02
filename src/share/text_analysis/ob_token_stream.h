@@ -130,8 +130,12 @@ public:
   virtual void reset() override;
   virtual void reuse() override;
   virtual int get_next(ObDatum &next_token, int64_t &token_freq) override;
+  // The caller owns this allocator and must retain it while consuming tokens.
+  // Reuse/reset never reset or free caller-owned output storage.
+  void set_output_allocator(ObIAllocator &allocator) { output_allocator_ = &allocator; }
 private:
   ObArenaAllocator norm_allocator_;
+  ObIAllocator *output_allocator_;
 };
 
 // group (deduplicate) and count

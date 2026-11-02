@@ -1,0 +1,121 @@
+# FTS integration qualification and PR closeout
+
+> Execute inline with executing-plans. User approved integration validation and explicitly requested a prompt PR to try the optimization. This authorizes a dedicated branch push and PR creation; it does not authorize merging or platform submission. No further optimization iterations.
+
+**Goal:** Deliver a #6-only PR against feat/seekdb-all with honest integrated correctness and fixed-workload performance evidence.
+**Architecture:** Pin targetfdb8363f64363819fcf2307be95bcd10a5a7e4ba; reuse clean native experimental checkout with new codex/fts-beng-pr-20261102 branch. First build/seal unmodified integration baseline, then apply exact tested35a04a5 cumulative product+tests patch and build/seal candidate. Keep File SQL and AI code identical. Preserve all failures and old source/binaries/instances.
+**Tech Stack:** Existing native Release build, original mysqltest/FTS benchmark/scorer, serial Python harness and GitHub PR tools.
+**Spec:** handoff/fts-tuning/INTEGRATION_CONTRACT.md; Issue6 source snapshot; coordination/issue-6/20261102-beng-resource/SOURCE_RECORD.json.
+
+## Constraints and protocol
+
+Only five allowed FTS product files and the two existing ownership/capacity tests, plus handoff evidence. No #2 fixes or benchmark/input/golden edits. Old2881/PID7902 unchanged. New dedicated2891 instance/data retained; one compute-heavy task at a time. All logs use exclusive paths. Shared build_release changes identity deliberately; sealed binaries remain available.
+
+Build/runtime/performance have a90-minute bound from stage runner start. No repeated attempts seeking a favorable score. If target baseline cannot normally build, retain exact failure, report target blocker and open a Draft PR with prior standalone correctness and static integration evidence; do not repair unrelated AI/FileSQL code. If candidate fails, diagnose only #6-induced issues or publish a blocked Draft PR honestly.
+
+Correctness: final target/candidate FTS15/15, target/candidate File SQL1/1 as a no-regression comparison, ownership/capacity candidate tests, ordered semantic differential and file-text→TOKENIZE→storedFTS smoke. Use untouched official test SQL/data/goldens; fixture transport may be adapted locally with unchanged bytes and recorded environment.
+
+Performance is one bounded exploratory batch intended to test effect quickly: one same-baseline A/A control pair (diagnostic point estimate only), then three target±#6 pairs in AB/BA/AB order. Run complete fixed official workload ROWS20000 BATCH500 ROUNDS3000 QUERY_ROUNDS200 SAMPLES3 WARMUP30 SKIP_LOAD0; verify hits8001/11000/7332/20. Shared ERROR logging/20s cooldown/affinityserver0-3/client4, same boot; no other builds/profilers during timing. Record9metrics, category-weighted paired change,95% Student-t interval df2 factor4.302653, each control and server CPU/lifetime peak RSS. All samples retained, no pooling with previous windows. One A/A pair is not a validated noise interval; label results exploratory, not a qualification replacing earlier failed calibration. If control point>5% or SQL control>8%/rawload>15%, report noise as a limitation, but retain permitted exploratory A/B to answer the user's trial request. Do not present noisy data as proven speedup.
+
+PR is Draft unless integrated correctness passes and evidence supports a useful comprehensive gain with uncertainty and resource limits stated. Minimum useful point2%, lower95% bound>0, category mean regressions<=3%, individual metric regressions<=10%, per-pair select1<=8%/rawload<=15%, RSS mean regression<=5%; A/A is diagnostic only, so even satisfying these does not override lack of stronger calibration. No more optimization/retry/confirmation in this closeout. PR body must expose observed negative or inconclusive outcome, not old16.8%.
+
+## Tasks
+
+- [ ] Pin remote target, verify native clean state, protect old refs/binaries/data and create dedicated integration branch.
+- [ ] Normal baseline Release build with repository-required generated artifacts; seal binary or exact baseline build blocker.
+- [ ] Apply existing reviewed product+tests patch, commit #6-only candidate, normal build and candidate focused tests.
+- [ ] Fresh isolated integrated correctness and exploratory control/three pairs if builds permit; stop only new instances and verify inputs/identities.
+- [ ] One fresh read-only whole-PR review, resolve material #6 findings, write eight-section handoff/patch/fourlogs/before-after data with limitations.
+- [ ] Push only dedicated PR branch and create PR targeting feat/seekdb-all; verify URL/base/head/diff/status, preserve local evidence archive.
+
+## Review focus
+
+Exact #6 delta against integrated base; no stale generated variables or transplanted #2 fixes; caller token ownership and Unicode capacity fix; baseline build failures attributed to target, not hidden by changing other tasks; exploratory timing versus qualified gain explicit; original server and all data protected; no credentials or large native binaries in PR.
+
+# Whole-PR review and execution rulings
+
+Fresh read-only reviewer fts_pr_final_review independently verified fdb8363→9ed8c5f: exactly five FTS product files/two tests, product SHA d909d80f…09db and complete SHA d585a97c…246; no File SQL, AI, variables, benchmark/golden, credentials or binary delta. No confirmed Major/Blocker product finding.
+
+One confirmed Major test-evidence gap: basic file→FTS smoke searches only literal-added hello, not CSV-derived Alice/Bob/Chen; it could pass with no imported rows indexed. Ruling: valid, verified against fixture and SQL. Keep the frozen timed batch intact; add file_rows_check.py after timing, requiring nonempty TOKENIZE for every actual CSV name, exact expected indexed IDs per name, positive rounded scores equal to independently literal-loaded data, and identical baseline/candidate output. Final verify.py requires this supplement; basic-smoke flag alone cannot satisfy integration acceptance. This is the one focused fix pass, not a product change or new timing attempt.
+
+Port preflight: initial connect_ex had no timeout and waited before instance creation. A guarded attempted stop refused once the runner had advanced into validation, so no signal was sent and no sample discarded. Retain the actual batch and frozen scripts. Supplement uses a local bind probe. This was a startup delay, not a benchmark result or justification to repeat sampling.
+
+Rulings on declined behaviors:
+
+- Integrated runtime/builds were pending at review time. Accept only actual final logs and VERIFICATION.json, not reviewer inference. Both normal builds and focused tests completed before measurement; full trial/supplement must finish before publication claims.
+- Qualified gain is unsupported by this deliberately exploratory protocol. Keep performance_qualified=false and Draft PR, even with favorable point estimates; never use old16.8%.
+- Old-server preservation requires final hash/start-tick/protected-source/process checks in verify.py. Safeguards alone do not establish completion.
+- Final handoff/PR wording is written after results. Use raw paired mean/interval, controls and lifetime RSS with scope limits; do not claim an improvement from a local probe or clipped score.
+- Baseline File SQL/AI defects belong to their owners; only prove no product delta and record no-regression outcomes. Do not expand this PR into fixes for other tasks.
+
+No minor/nit backlog and no second reviewer requested.
+
+{
+  "pairs": 3,
+  "paired_weighted_changes": [
+    0.0035747898816514342,
+    0.017163653694294484,
+    0.008899169595170748
+  ],
+  "mean_improvement": 0.009879204390372221,
+  "student_t_95_interval": [
+    -0.007130276611306526,
+    0.02688868539205097
+  ],
+  "metric_improvements": {
+    "build_ik_all_sec": -0.03896438775225176,
+    "build_ik_content_sec": -0.009117893802664544,
+    "build_beng_en_sec": -0.09913910481754716,
+    "tokenize_ik_avg_ms": 0.026294163079952686,
+    "tokenize_beng_avg_ms": -0.00626025518061427,
+    "query_cn_avg_ms": 0.20075320592023568,
+    "query_beng_avg_ms": 0.015544801618781112,
+    "query_mixed_avg_ms": 0.034489258643373696,
+    "query_limit_avg_ms": 0.023990552533350605
+  },
+  "category_improvements": {
+    "build": -0.04907379545748782,
+    "tokenize": 0.010016953949669208,
+    "query": 0.06869445467893527
+  },
+  "controls": [
+    {
+      "select1_avg_ms": 0.006071645415907545,
+      "raw_load_sec": 0.005102040816326481
+    },
+    {
+      "select1_avg_ms": 0.13430012610340492,
+      "raw_load_sec": 0.016216216216216273
+    },
+    {
+      "select1_avg_ms": 0.005281690140845008,
+      "raw_load_sec": 0.005154639175257714
+    }
+  ],
+  "server_lifetime_peak_rss_kib": {
+    "before": [
+      858116,
+      1075484,
+      979552
+    ],
+    "after": [
+      975908,
+      1110216,
+      1076968
+    ]
+  },
+  "rss_mean_change": 0.08579710224526571,
+  "gates": {
+    "point_ge_2pct": false,
+    "interval_lower_positive": false,
+    "category_regression_le_3pct": false,
+    "metric_regression_le_10pct": true,
+    "controls": false,
+    "rss_mean_regression_le_5pct": false,
+    "file_sql_all_passed": true
+  },
+  "exploratory_only": true,
+  "performance_qualified": false,
+  "draft_pr": true,
+  "limitation": "Small exploratory sample and only one A/A diagnostic; not a replacement for failed historical calibration."
+}

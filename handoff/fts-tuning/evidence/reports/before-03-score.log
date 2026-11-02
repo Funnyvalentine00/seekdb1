@@ -1,0 +1,21 @@
+COMMAND python3 /opt/codex-seekdb-20261030/tools/benchmark/fts_large_bench_score.py '/mnt/c/Users/xiaziihan/Documents/ChatGPT/ocean base数据库大赛/seekdb1/coordination/issue-6/20261102-integration-pr/trial/before-03.txt'
+FTS Large Benchmark Score
+=========================
+score: 100.00 / 100
+mean_improvement: 79.36%
+full_score_improvement: 50.00%
+
+build_improvement: 86.34%
+  build_ik_all_sec: baseline=35.2836, current=4.733, improvement=86.59%
+  build_ik_content_sec: baseline=28.3764, current=3.729, improvement=86.86%
+  build_beng_en_sec: baseline=14.7578, current=2.128, improvement=85.58%
+tokenize_improvement: 61.45%
+  tokenize_ik_avg_ms: baseline=0.76478, current=0.2376, improvement=68.93%
+  tokenize_beng_avg_ms: baseline=0.42262, current=0.1945, improvement=53.98%
+query_improvement: 90.30%
+  query_cn_avg_ms: baseline=16.6628, current=2.5804, improvement=84.51%
+  query_beng_avg_ms: baseline=24.3042, current=1.6241, improvement=93.32%
+  query_mixed_avg_ms: baseline=17.5593, current=1.3409, improvement=92.36%
+  query_limit_avg_ms: baseline=16.2334, current=1.4625, improvement=90.99%
+
+exit_code=0

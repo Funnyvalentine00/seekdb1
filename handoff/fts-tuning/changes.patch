@@ -1,0 +1,279 @@
+diff --git a/src/share/text_analysis/ob_text_analyzer.cpp b/src/share/text_analysis/ob_text_analyzer.cpp
+index 4a0ff4d..84a5a06 100644
+--- a/src/share/text_analysis/ob_text_analyzer.cpp
++++ b/src/share/text_analysis/ob_text_analyzer.cpp
+@@ -114,7 +114,12 @@ int ObITextAnalyzer::add_normalizer(
+     if (OB_SUCC(ret)) {
+       ObTokenNormalizer *normalizer = static_cast<ObTokenNormalizer *>(token_stream);
+       if (OB_FAIL(normalizer->init(ctx.cs_, *get_tail_token_stream()))) {
+-      } else if (OB_FAIL(analyze_pipeline_.push_back(normalizer))) {
++      } else {
++        if (ObTokenNormalizer::ENG_BASIC_NORM == type && ctx.stable_normalized_tokens_) {
++          static_cast<ObBasicEnglishNormalizer *>(normalizer)->set_output_allocator(*allocator_);
++        }
++        if (OB_FAIL(analyze_pipeline_.push_back(normalizer))) {
++        }
+       }
+     }
+   }
+diff --git a/src/share/text_analysis/ob_text_analyzer.h b/src/share/text_analysis/ob_text_analyzer.h
+index 6c394dd..ed4f9d5 100644
+--- a/src/share/text_analysis/ob_text_analyzer.h
++++ b/src/share/text_analysis/ob_text_analyzer.h
+@@ -29,7 +29,8 @@ public:
+   ObTextAnalysisCtx()
+     : cs_(nullptr),
+       filter_stopword_(true),
+-      need_grouping_(false)
++      need_grouping_(false),
++      stable_normalized_tokens_(false)
+   {}
+   ~ObTextAnalysisCtx() = default;
+   bool is_valid() const { return nullptr != cs_; }
+@@ -38,12 +39,15 @@ public:
+     cs_ = nullptr;
+     filter_stopword_ = true;
+     need_grouping_ = false;
++    stable_normalized_tokens_ = false;
+   }
+-  TO_STRING_KV(KP_(cs), K_(filter_stopword), K_(need_grouping));
++  TO_STRING_KV(KP_(cs), K_(filter_stopword), K_(need_grouping), K_(stable_normalized_tokens));
+ public:
+   const ObCharsetInfo *cs_;
+   bool filter_stopword_;
+   bool need_grouping_;
++  // Keep basic-English normalized bytes in the analyzer caller allocator.
++  bool stable_normalized_tokens_;
+   // language type
+   // word segmentation parser type
+   // specified normalization tricks
+diff --git a/src/share/text_analysis/ob_token_stream.cpp b/src/share/text_analysis/ob_token_stream.cpp
+index 5ceb869..a8032ee 100644
+--- a/src/share/text_analysis/ob_token_stream.cpp
++++ b/src/share/text_analysis/ob_token_stream.cpp
+@@ -220,12 +220,14 @@ int ObTokenStopWordNormalizer::filter_special_marks(const ObDatum &check_token,
+ 
+ ObBasicEnglishNormalizer::ObBasicEnglishNormalizer()
+   : ObTokenNormalizer(),
+-    norm_allocator_("TxtTokGrpFilter", OB_MALLOC_NORMAL_BLOCK_SIZE)
++    norm_allocator_("TxtTokGrpFilter", OB_MALLOC_NORMAL_BLOCK_SIZE),
++    output_allocator_(nullptr)
+ {
+ }
+ 
+ void ObBasicEnglishNormalizer::reset()
+ {
++  output_allocator_ = nullptr;
+   norm_allocator_.reset();
+   ObTokenNormalizer::reset();
+ }
+@@ -244,6 +246,7 @@ int ObBasicEnglishNormalizer::get_next(ObDatum &next_token, int64_t &token_freq)
+   } else {
+     next_token.reset();
+     token_freq = 0;
++    // Non-ASCII output uses scratch storage before its exact-size caller copy.
+     norm_allocator_.reuse();
+     ObDatum tmp_datum;
+     bool found_alnum = false;
+@@ -295,7 +298,22 @@ int ObBasicEnglishNormalizer::get_next(ObDatum &next_token, int64_t &token_freq)
+     } else {
+       ObString norm_alnum_token(norm_token_len, norm_token_ptr);
+       ObString norm_lower_token;
+-      if (OB_FAIL(ObCharset::tolower(cs_, norm_alnum_token, norm_lower_token, norm_allocator_))) {
++      // Only ASCII in a one-byte-minimum charset guarantees unchanged byte
++      // length here. Unicode lowercasing can shrink a token (e.g. Kelvin sign),
++      // so retaining its input-sized allocation would waste caller-arena space.
++      bool direct_output = nullptr != output_allocator_
++          && 1 == cs_->mbminlen && 1 == cs_->casedn_multiply;
++      for (uint32_t i = 0; direct_output && i < norm_token_len; ++i) {
++        direct_output = static_cast<unsigned char>(norm_token_ptr[i]) < 0x80;
++      }
++      ObIAllocator &normalize_allocator = direct_output ? *output_allocator_ : norm_allocator_;
++      if (OB_FAIL(ObCharset::tolower(cs_, norm_alnum_token, norm_lower_token, normalize_allocator))) {
++      } else if (nullptr != output_allocator_ && !direct_output) {
++        ObString stable_token;
++        if (OB_FAIL(ob_write_string(*output_allocator_, norm_lower_token, stable_token))) {
++        } else {
++          next_token.set_string(stable_token);
++        }
+       } else {
+         next_token.set_string(norm_lower_token);
+       }
+diff --git a/src/share/text_analysis/ob_token_stream.h b/src/share/text_analysis/ob_token_stream.h
+index 8db7f94..9538ad5 100644
+--- a/src/share/text_analysis/ob_token_stream.h
++++ b/src/share/text_analysis/ob_token_stream.h
+@@ -130,8 +130,12 @@ public:
+   virtual void reset() override;
+   virtual void reuse() override;
+   virtual int get_next(ObDatum &next_token, int64_t &token_freq) override;
++  // The caller owns this allocator and must retain it while consuming tokens.
++  // Reuse/reset never reset or free caller-owned output storage.
++  void set_output_allocator(ObIAllocator &allocator) { output_allocator_ = &allocator; }
+ private:
+   ObArenaAllocator norm_allocator_;
++  ObIAllocator *output_allocator_;
+ };
+ 
+ // group (deduplicate) and count
+diff --git a/src/storage/fts/ob_beng_ft_parser.cpp b/src/storage/fts/ob_beng_ft_parser.cpp
+index 54bc9fe..5c7d9fa 100644
+--- a/src/storage/fts/ob_beng_ft_parser.cpp
++++ b/src/storage/fts/ob_beng_ft_parser.cpp
+@@ -35,7 +35,6 @@ int ObBEngFTParser::get_next_token(
+   int ret = OB_SUCCESS;
+   ObDatum token;
+   int64_t token_freq = 0;
+-  char *buf = nullptr;
+   word = nullptr;
+   word_len = 0;
+   char_len = 0;
+@@ -49,11 +48,10 @@ int ObBEngFTParser::get_next_token(
+     }
+   } else if (OB_ISNULL(token.ptr_) || OB_UNLIKELY(0 >= token.len_ || 0 >= token_freq)) {
+     ret = OB_INVALID_ARGUMENT;
+-  } else if (OB_ISNULL(buf = static_cast<char *>(allocator_.alloc(token.len_)))) {
+-    ret = OB_ALLOCATE_MEMORY_FAILED;
+   } else {
+-    MEMCPY(buf, token.ptr_, token.len_);
+-    word = buf;
++    // init() requests stable normalized bytes in allocator_; they survive the
++    // next token and parser destruction, so no second allocation/copy is needed.
++    word = token.ptr_;
+     word_len = token.len_;
+     char_len = token.len_;
+     word_freq = token_freq;
+@@ -76,6 +74,7 @@ int ObBEngFTParser::init(ObFTParserParam *param)
+     analysis_ctx_.cs_ = param->cs_;
+     analysis_ctx_.filter_stopword_ = false;
+     analysis_ctx_.need_grouping_ = false;
++    analysis_ctx_.stable_normalized_tokens_ = true;
+     if (OB_FAIL(english_analyzer_.init(analysis_ctx_, *param->allocator_))) {
+     } else if (OB_FAIL(segment(doc_, token_stream_))) {
+     } else if (OB_ISNULL(token_stream_)) {
+diff --git a/unittest/storage/fts/test_beng_owned_capacity.cpp b/unittest/storage/fts/test_beng_owned_capacity.cpp
+new file mode 100644
+index 0000000..966f121
+--- /dev/null
++++ b/unittest/storage/fts/test_beng_owned_capacity.cpp
+@@ -0,0 +1,48 @@
++#include "share/text_analysis/ob_token_stream.h"
++#include "lib/charset/ob_charset.h"
++#include <cstdlib>
++#include <iostream>
++#include <string>
++#include <vector>
++using namespace oceanbase::common;
++using namespace oceanbase::share;
++class CapacityAllocator final : public ObIAllocator {
++public:
++  int64_t requested=0,calls=0;
++  std::vector<void *> blocks;
++  ~CapacityAllocator() { for(auto p:blocks)std::free(p); }
++  void *alloc(int64_t n) override { auto p=std::malloc(n);if(p){requested+=n;++calls;blocks.push_back(p);}return p; }
++  void *alloc(int64_t n,const ObMemAttr &) override { return alloc(n); }
++  void free(void *) override {}
++};
++#define CHECK(x) do { if(!(x)){std::cerr<<"FAIL line "<<__LINE__<<": "<<#x<<'\n';return 1;} }while(0)
++int main() {
++  ObCharset::init_charset();
++  for(auto col:{CS_TYPE_UTF8MB4_GENERAL_CI,CS_TYPE_UTF8MB4_BIN,CS_TYPE_UTF8MB4_UNICODE_CI}) {
++    CapacityAllocator caller;std::string input;
++    for(int i=0;i<4096;++i)input+="\xe2\x84\xaa";
++    input+=" ";for(int i=0;i<4096;++i)input+="\xc4\xb0";
++    input+=" HELLO world Résumé";
++    std::vector<ObDatum> kept;int64_t bytes=0;
++    {
++      ObDatum doc;doc.set_string(input.data(),input.size());
++      auto cs=ObCharset::get_charset(col);
++      ObTextWhitespaceTokenizer tokenizer;CHECK(tokenizer.open(doc,cs)==0);
++      ObBasicEnglishNormalizer normalizer;CHECK(normalizer.init(cs,tokenizer)==0);
++      normalizer.set_output_allocator(caller);int ret=0;int64_t freq=0;
++      while(ret==0) {
++        ObDatum token;ret=normalizer.get_next(token,freq);if(ret!=0)break;
++        CHECK(freq==1);bytes+=token.len_;kept.push_back(token);
++        CHECK(caller.requested==bytes);
++      }
++      CHECK(ret==OB_ITER_END);normalizer.reuse();normalizer.reset();
++    }
++    CHECK(kept.size()==5 && caller.calls==5 && caller.requested==bytes);
++    CHECK(std::string(kept[0].ptr_,kept[0].len_)==std::string(4096,'k'));
++    CHECK(std::string(kept[1].ptr_,kept[1].len_)==std::string(4096,'i'));
++    CHECK(std::string(kept[2].ptr_,kept[2].len_)=="hello");
++    CHECK(std::string(kept[3].ptr_,kept[3].len_)=="world");
++    CHECK(std::string(kept[4].ptr_,kept[4].len_)=="résumé");
++  }
++  std::cout<<"PASS exact retained bytes for ASCII/mixed/shrinking UTF8, three collations and post-reset lifetime\n";
++}
+diff --git a/unittest/storage/fts/test_beng_owned_output.cpp b/unittest/storage/fts/test_beng_owned_output.cpp
+new file mode 100755
+index 0000000..6b11ec4
+--- /dev/null
++++ b/unittest/storage/fts/test_beng_owned_output.cpp
+@@ -0,0 +1,66 @@
++#include "share/text_analysis/ob_token_stream.h"
++#include "lib/charset/ob_charset.h"
++#include <cstdlib>
++#include <cstdint>
++#include <iostream>
++#include <string>
++#include <vector>
++using namespace oceanbase::common;
++using namespace oceanbase::share;
++class TrackingAllocator final : public ObIAllocator {
++public:
++  std::vector<std::pair<char *,int64_t>> blocks;
++  bool fail=false;
++  ~TrackingAllocator() { for(auto p:blocks)std::free(p.first); }
++  void *alloc(const int64_t size) override {
++    if(fail)return nullptr;
++    auto p=static_cast<char *>(std::malloc(size));
++    if(p)blocks.emplace_back(p,size);
++    return p;
++  }
++  void *alloc(const int64_t size,const ObMemAttr &) override { return alloc(size); }
++  void free(void *) override {} // Retain until test arena lifetime ends.
++  bool owns(const char *p) const {
++    const auto value=reinterpret_cast<uintptr_t>(p);
++    for(auto b:blocks) { const auto begin=reinterpret_cast<uintptr_t>(b.first);if(value>=begin && value-begin<static_cast<uintptr_t>(b.second))return true; }
++    return false;
++  }
++};
++template<class T> auto configure(T &n, ObIAllocator &a,int) -> decltype(n.set_output_allocator(a),void()) { n.set_output_allocator(a); }
++template<class T> void configure(T &,ObIAllocator &,long) {} // Old code exercises the same real normalizer.
++#define CHECK(x) do { if(!(x)){std::cerr<<"FAIL line "<<__LINE__<<": "<<#x<<'\n';return 1;} }while(0)
++int main() {
++  ObCharset::init_charset();
++  auto cs=ObCharset::get_charset(CS_TYPE_UTF8MB4_GENERAL_CI);
++  std::string text="HELLO WORLD Résumé";
++  ObDatum document;document.set_string(text.data(),text.size());
++  ObTextWhitespaceTokenizer tokenizer;
++  CHECK(tokenizer.open(document,cs)==0);
++  TrackingAllocator arena;
++  ObBasicEnglishNormalizer normalizer;
++  CHECK(normalizer.init(cs,tokenizer)==0);
++  configure(normalizer,arena,0);
++  ObDatum first,second,third;int64_t frequency=0;
++  CHECK(normalizer.get_next(first,frequency)==0 && frequency==1);
++  CHECK(std::string(first.ptr_,first.len_)=="hello");
++  CHECK(arena.owns(first.ptr_));
++  CHECK(normalizer.get_next(second,frequency)==0);
++  CHECK(arena.owns(second.ptr_) && std::string(second.ptr_,second.len_)=="world");
++  CHECK(std::string(first.ptr_,first.len_)=="hello");
++  CHECK(normalizer.get_next(third,frequency)==0);
++  CHECK(arena.owns(third.ptr_) && std::string(third.ptr_,third.len_)=="résumé");
++  normalizer.reuse();normalizer.reset();
++  CHECK(std::string(first.ptr_,first.len_)=="hello");
++  CHECK(std::string(second.ptr_,second.len_)=="world");
++  CHECK(std::string(third.ptr_,third.len_)=="résumé");
++  ObTextWhitespaceTokenizer default_input;CHECK(default_input.open(document,cs)==0);
++  ObBasicEnglishNormalizer default_normalizer;CHECK(default_normalizer.init(cs,default_input)==0);
++  ObDatum default_token;CHECK(default_normalizer.get_next(default_token,frequency)==0);
++  CHECK(std::string(default_token.ptr_,default_token.len_)=="hello" && !arena.owns(default_token.ptr_));
++  ObTextWhitespaceTokenizer bad_input;CHECK(bad_input.open(document,cs)==0);
++  TrackingAllocator fail_arena;fail_arena.fail=true;
++  ObBasicEnglishNormalizer failed;CHECK(failed.init(cs,bad_input)==0);
++  configure(failed,fail_arena,0);
++  ObDatum output;CHECK(failed.get_next(output,frequency)==OB_ALLOCATE_MEMORY_FAILED);
++  std::cout<<"PASS caller-owned output, exact lowercase, multi-token/reuse/reset lifetime, allocation failure\n";
++}
