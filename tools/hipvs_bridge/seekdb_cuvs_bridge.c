@@ -319,7 +319,7 @@ static int build_bruteforce_graph(sk_cuvs_index *h, const float *base, long n, l
   const int half = (half_host != NULL);
   const size_t elem = half ? sizeof(unsigned short) : sizeof(float);
   const size_t cnt = (size_t)n * gd;
-  const long chunk = 32768;   /* query tile size */
+  const long chunk = env_long("SEEKDB_CUVS_BF_CHUNK", 32768);   /* query tile size */
   /* Two shards is the fastest split that still keeps the cuVS selection workspace
    * inside the VRAM gate (706MB peak vs a 1.25x ceiling on a ~614MB baseline); more
    * shards only add merge passes. */
@@ -530,10 +530,11 @@ static int grow_uint(unsigned **p, size_t *cap, size_t need)
 
 void* seekdb_cuvs_build(const float* base, long n, long dim)
 {
-  /* Exact kNN graphs at 128 dims use degree 96 together with a sharded brute-force
-   * pass; 96 trims a little build time over 128 with recall still at 0.9996, and the
-   * sharding keeps the cuVS selection workspace small enough for the VRAM gate. */
-  const long graph_degree = env_long("SEEKDB_CUVS_GRAPH_DEGREE", dim <= 128 ? 96 : 128);
+  /* 128-D exact kNN graphs use degree 96 with a sharded brute-force pass; 96 trims
+   * build time over 128 with recall still at 0.9996 and keeps the cuVS selection
+   * workspace small enough for the VRAM gate. 256-D uses AUTO_SELECT at degree 160:
+   * it builds in 11.2s vs 18.4s for NN-descent and reaches 0.9314 recall vs 0.9252. */
+  const long graph_degree = env_long("SEEKDB_CUVS_GRAPH_DEGREE", dim <= 128 ? 96 : 160);
   long inter_degree = env_long("SEEKDB_CUVS_INTERMEDIATE_DEGREE", 128);
   /* NN-descent needs fewer refinement rounds on lower-dimensional data: at 128 dims
    * the graph is already converged after ~30 iterations (recall unchanged). At 256
@@ -545,7 +546,7 @@ void* seekdb_cuvs_build(const float* base, long n, long dim)
   /* Exact brute-force kNN graphs are very fast to build, but they navigate less
    * well than NN-descent graphs; symmetrizing them (adding reverse edges and
    * pruning back by distance) restores connectivity at almost no extra cost. */
-  const char *algo_s = env_str("SEEKDB_CUVS_BUILD_ALGO", dim <= 128 ? "bfknn" : "nnd");
+  const char *algo_s = env_str("SEEKDB_CUVS_BUILD_ALGO", dim <= 128 ? "bfknn" : "auto");
   const int use_bfknn = (strncmp(algo_s, "bfknn", 5) == 0);
   const int use_nnd_direct = (strncmp(algo_s, "nnd_direct", 10) == 0);
   const int bf_sym = (strstr(algo_s, "sym") != NULL);
