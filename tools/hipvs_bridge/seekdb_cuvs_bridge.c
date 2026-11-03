@@ -15,6 +15,7 @@
 #include <string.h>
 #include <time.h>
 #include <pthread.h>
+#include <unistd.h>
 
 /* ---- tuning knobs (defaults keep the frozen-baseline behaviour) ---------- */
 static long env_long(const char *name, long def)
@@ -51,6 +52,53 @@ static double now_ms(void)
   struct timespec ts;
   clock_gettime(CLOCK_MONOTONIC, &ts);
   return ts.tv_sec * 1000.0 + ts.tv_nsec / 1e6;
+}
+
+static void log_vram(const char *tag)
+{
+  if (!env_on("SEEKDB_CUVS_TIME")) { return; }
+  size_t free_b = 0, total_b = 0;
+  if (cudaMemGetInfo(&free_b, &total_b) != cudaSuccess) { return; }
+  fprintf(stderr, "[seekdb_cuvs] vram %-22s used=%.1fMB\n",
+          tag, (double)(total_b - free_b) / 1048576.0);
+}
+
+/* Background sampler: catches transient peaks inside cuVS calls that the
+ * begin/end snapshots would miss (the VRAM gate compares peak vs baseline). */
+static volatile int g_vram_watch = 0;
+static volatile size_t g_vram_peak = 0;
+
+static void *vram_watcher(void *arg)
+{
+  (void)arg;
+  while (g_vram_watch) {
+    size_t free_b = 0, total_b = 0;
+    if (cudaMemGetInfo(&free_b, &total_b) == cudaSuccess) {
+      const size_t used = total_b - free_b;
+      if (used > g_vram_peak) { g_vram_peak = used; }
+    }
+    usleep(20000);
+  }
+  return NULL;
+}
+
+static void vram_watch_start(void)
+{
+  if (!env_on("SEEKDB_CUVS_TIME")) { return; }
+  g_vram_peak = 0;
+  g_vram_watch = 1;
+  pthread_t th;
+  pthread_create(&th, NULL, vram_watcher, NULL);
+  pthread_detach(th);
+}
+
+static void vram_watch_stop(const char *tag)
+{
+  if (!env_on("SEEKDB_CUVS_TIME")) { return; }
+  g_vram_watch = 0;
+  usleep(30000);
+  fprintf(stderr, "[seekdb_cuvs] vram peak %-16s used=%.1fMB\n",
+          tag, (double)g_vram_peak / 1048576.0);
 }
 
 /* IEEE float32 -> float16 (round-to-nearest-even-ish). Pure C so the bridge keeps
@@ -244,57 +292,74 @@ static int build_bruteforce_graph(sk_cuvs_index *h, const float *base, long n, l
 {
   void *d_data = NULL, *d_nbr = NULL, *d_dist = NULL, *d_graph = NULL;
   cuvsBruteForceIndex_t bf = NULL;
+  long long *hh = NULL;
+  unsigned *gg = NULL;
+  float *hd = NULL;
   const int half = (half_host != NULL);
   const size_t elem = half ? sizeof(unsigned short) : sizeof(float);
+  const size_t cnt = (size_t)n * gd;
+  const long chunk = 32768;   /* fewer brute-force calls; k<=64 keeps the workspace small */
   int rc = 1;
   if (gd <= 0 || gd > 512) { return 1; }
   if (gd > n) { gd = n; }
   if (cudaMalloc(&d_data, elem * (size_t)n * dim) != cudaSuccess) { goto done; }
   if (cudaMemcpy(d_data, half ? (const void *)half_host : (const void *)base,
                  elem * (size_t)n * dim, cudaMemcpyDefault) != cudaSuccess) { goto done; }
-  if (cudaMalloc(&d_nbr, sizeof(long long) * (size_t)n * gd) != cudaSuccess) { goto done; }
-  if (cudaMalloc(&d_dist, sizeof(float) * (size_t)n * gd) != cudaSuccess) { goto done; }
-  if (cudaMalloc(&d_graph, sizeof(unsigned) * (size_t)n * gd) != cudaSuccess) { goto done; }
+  hh = (long long *)malloc(cnt * sizeof(long long));
+  gg = (unsigned *)malloc(cnt * sizeof(unsigned));
+  if (hh == NULL || gg == NULL) { goto done; }
+  if (symmetrize) {
+    hd = (float *)malloc(cnt * sizeof(float));
+    if (hd == NULL) { goto done; }
+  }
 
   long dshape[2] = {n, dim};
   DLManagedTensor ds;
   set_tensor2(&ds, d_data, kDLCUDA, kDLFloat, half ? 16 : 32, dshape);
   if (cuvsBruteForceIndexCreate(&bf) != CUVS_SUCCESS) { goto done; }
   if (cuvsBruteForceBuild(h->res, &ds, L2Expanded, 0.f, bf) != CUVS_SUCCESS) { goto done; }
+  log_vram("after_bf_build");
 
-  long kshape[2] = {n, gd};
-  DLManagedTensor nb, dt;
-  set_tensor2(&nb, d_nbr, kDLCUDA, kDLInt, 64, kshape);
-  set_tensor2(&dt, d_dist, kDLCUDA, kDLFloat, 32, kshape);
-  cuvsFilter f;
-  f.type = NO_FILTER;
-  f.addr = (uintptr_t)0;
-  if (cuvsBruteForceSearch(h->res, bf, &ds, &nb, &dt, f) != CUVS_SUCCESS) { goto done; }
-
+  if (cudaMalloc(&d_nbr, sizeof(long long) * (size_t)chunk * gd) != cudaSuccess) { goto done; }
+  if (cudaMalloc(&d_dist, sizeof(float) * (size_t)chunk * gd) != cudaSuccess) { goto done; }
   {
-    const size_t cnt = (size_t)n * gd;
-    long long *hh = (long long *)malloc(cnt * sizeof(long long));
-    unsigned *gg = (unsigned *)malloc(cnt * sizeof(unsigned));
-    float *hd = NULL;
-    if (hh == NULL || gg == NULL) { free(hh); free(gg); goto done; }
-    if (cudaMemcpy(hh, d_nbr, cnt * sizeof(long long), cudaMemcpyDefault) != cudaSuccess) {
-      free(hh); free(gg); goto done;
+    cuvsFilter f;
+    f.type = NO_FILTER;
+    f.addr = (uintptr_t)0;
+    for (long off = 0; off < n; off += chunk) {
+      const long m = (n - off < chunk) ? (n - off) : chunk;
+      long qshape[2] = {m, dim};
+      long kshape[2] = {m, gd};
+      DLManagedTensor q, nb, dt;
+      set_tensor2(&q, (char *)d_data + (size_t)off * (size_t)dim * elem,
+                  kDLCUDA, kDLFloat, half ? 16 : 32, qshape);
+      set_tensor2(&nb, d_nbr, kDLCUDA, kDLInt, 64, kshape);
+      set_tensor2(&dt, d_dist, kDLCUDA, kDLFloat, 32, kshape);
+      if (cuvsBruteForceSearch(h->res, bf, &q, &nb, &dt, f) != CUVS_SUCCESS) { goto done; }
+      if (cudaMemcpy(hh + (size_t)off * gd, d_nbr,
+                     (size_t)m * gd * sizeof(long long), cudaMemcpyDefault) != cudaSuccess) { goto done; }
+      if (symmetrize &&
+          cudaMemcpy(hd + (size_t)off * gd, d_dist,
+                     (size_t)m * gd * sizeof(float), cudaMemcpyDefault) != cudaSuccess) { goto done; }
     }
-    if (symmetrize) {
-      hd = (float *)malloc(cnt * sizeof(float));
-      if (hd == NULL || cudaMemcpy(hd, d_dist, cnt * sizeof(float), cudaMemcpyDefault) != cudaSuccess ||
-          sk_symmetrize(gg, hh, hd, n, gd, dim) != 0) {
-        free(hh); free(gg); free(hd); goto done;
-      }
-    } else {
-      for (size_t i = 0; i < cnt; i++) { gg[i] = (unsigned)hh[i]; }
-    }
-    free(hh); free(hd);
-    if (cudaMemcpy(d_graph, gg, cnt * sizeof(unsigned), cudaMemcpyDefault) != cudaSuccess) {
-      free(gg); goto done;
-    }
-    free(gg);
   }
+  log_vram("after_bf_knn");
+  /* drop the kNN scratch before the CAGRA index takes its own copies */
+  cudaFree(d_nbr); d_nbr = NULL;
+  cudaFree(d_dist); d_dist = NULL;
+  cuvsBruteForceIndexDestroy(bf); bf = NULL;
+
+  if (symmetrize) {
+    if (sk_symmetrize(gg, hh, hd, n, gd, dim) != 0) { goto done; }
+  } else {
+    for (size_t i = 0; i < cnt; i++) { gg[i] = (unsigned)hh[i]; }
+  }
+  free(hh); hh = NULL;
+  free(hd); hd = NULL;
+
+  if (cudaMalloc(&d_graph, sizeof(unsigned) * cnt) != cudaSuccess) { goto done; }
+  if (cudaMemcpy(d_graph, gg, cnt * sizeof(unsigned), cudaMemcpyDefault) != cudaSuccess) { goto done; }
+  free(gg); gg = NULL;
 
   {
     DLManagedTensor g;
@@ -302,7 +367,9 @@ static int build_bruteforce_graph(sk_cuvs_index *h, const float *base, long n, l
     set_tensor2(&g, d_graph, kDLCUDA, kDLUInt, 32, gshape);
     if (cuvsCagraIndexFromArgs(h->res, L2Expanded, &g, &ds, h->idx) != CUVS_SUCCESS) { goto done; }
   }
-  h->bf = bf; bf = NULL;
+  log_vram("after_index_from_args");
+  /* cuvsCagraIndexFromArgs keeps views into the dataset/graph, so they must
+   * outlive the index (serialize and query both dereference them). */
   h->d_data = d_data; d_data = NULL;
   h->d_graph = d_graph; d_graph = NULL;
   rc = 0;
@@ -312,6 +379,7 @@ done:
   if (d_dist != NULL) { cudaFree(d_dist); }
   if (d_data != NULL) { cudaFree(d_data); }
   if (d_graph != NULL) { cudaFree(d_graph); }
+  free(hh); free(hd); free(gg);
   if (rc != 0) {
     fprintf(stderr, "[seekdb_cuvs] brute-force graph build failed: %s\n", cuvsGetLastErrorText());
   }
@@ -395,7 +463,9 @@ static int grow_uint(unsigned **p, size_t *cap, size_t need)
 
 void* seekdb_cuvs_build(const float* base, long n, long dim)
 {
-  const long graph_degree = env_long("SEEKDB_CUVS_GRAPH_DEGREE", 128);
+  /* 128-dim exact kNN graphs use degree 64: cuVS switches to a workspace-heavy
+   * selection kernel above k=64, which would break the 1.25x VRAM gate. */
+  const long graph_degree = env_long("SEEKDB_CUVS_GRAPH_DEGREE", dim <= 128 ? 64 : 128);
   long inter_degree = env_long("SEEKDB_CUVS_INTERMEDIATE_DEGREE", 128);
   /* NN-descent needs fewer refinement rounds on lower-dimensional data: at 128 dims
    * the graph is already converged after ~30 iterations (recall unchanged), while
@@ -443,6 +513,7 @@ void* seekdb_cuvs_build(const float* base, long n, long dim)
   h->ip->intermediate_graph_degree = inter_degree;
   h->ip->nn_descent_niter = nn_iter;
   if (cuvsCagraIndexCreate(&h->idx)      != CUVS_SUCCESS) goto fail_ip;
+  vram_watch_start();
   if (use_bfknn) {
     if (build_bruteforce_graph(h, base, n, dim, graph_degree, bf_sym, half_buf) != 0) { goto fail_idx; }
   } else if (use_nnd_direct) {
@@ -452,6 +523,7 @@ void* seekdb_cuvs_build(const float* base, long n, long dim)
     if (half_buf != NULL) { free(half_buf); half_buf = NULL; }
     if (st != CUVS_SUCCESS) goto fail_idx;
   }
+  vram_watch_stop(use_bfknn ? "bfknn" : (use_nnd_direct ? "nnd_direct" : "cuvs_build"));
   if (half_buf != NULL) { free(half_buf); half_buf = NULL; }
   h->n = n; h->dim = dim; h->half = use_half;
   if (env_on("SEEKDB_CUVS_TIME")) {
@@ -460,7 +532,7 @@ void* seekdb_cuvs_build(const float* base, long n, long dim)
   }
   return h;
 
-fail_idx: cuvsCagraIndexDestroy(h->idx);
+fail_idx: g_vram_watch = 0; cuvsCagraIndexDestroy(h->idx);
 fail_ip:  cuvsCagraIndexParamsDestroy(h->ip);
 fail_half: if (half_buf != NULL) { free(half_buf); }
 fail_res: cuvsResourcesDestroy(h->res); free(h);
@@ -509,13 +581,10 @@ int seekdb_cuvs_search(void* handle, const float* query, long nq, long topk,
     dt.dl_tensor.shape = dsh;
     if (c->sp == NULL && cuvsCagraSearchParamsCreate(&c->sp) != CUVS_SUCCESS) { rc = 14; goto done; }
     {
-      /* Single-row SQL queries: the per-call cost grows with itopk_size, so keep the
-       * candidate list just large enough. Two limits apply:
-       *  - large top-k needs a wide pool or recall@100 collapses;
-       *  - 256-dim single-row searches lose a lot of recall at a narrow pool
-       *    (measured 0.59 vs 0.93), so only the low-dimensional case may shrink it. */
-      const long itopk_min = env_long("SEEKDB_CUVS_ITOPK_MIN",
-                                      (topk <= 32 && h->dim <= 128) ? 128 : 512);
+      /* Single-row SQL queries: the per-call cost grows with itopk_size. The 64-degree
+       * exact graph needs a wide candidate pool to keep recall, and 256-dim graphs
+       * need it regardless, so 512 is the floor. */
+      const long itopk_min = env_long("SEEKDB_CUVS_ITOPK_MIN", 512);
       const long search_width = env_long("SEEKDB_CUVS_SEARCH_WIDTH", 4);
       size_t required_itopk = (size_t)topk * 4;
       if (required_itopk < (size_t)itopk_min) { required_itopk = (size_t)itopk_min; }
@@ -574,10 +643,12 @@ int seekdb_cuvs_serialize(void* handle, const char* filename)
 {
   sk_cuvs_index* index = (sk_cuvs_index*)handle;
   if (!index || !filename) return 1;
+  log_vram("serialize_begin");
   if (cuvsCagraSerialize(index->res, filename, index->idx, true) != CUVS_SUCCESS) {
     fprintf(stderr, "[seekdb_cuvs] serialize failed: %s\n", cuvsGetLastErrorText());
     return 1;
   }
+  log_vram("serialize_end");
   return 0;
 }
 
