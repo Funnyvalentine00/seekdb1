@@ -17,6 +17,7 @@
 #define USING_LOG_PREFIX STORAGE
 
 #include "ob_sparse_daat_iter.h"
+#include <string.h>
 
 namespace oceanbase
 {
@@ -25,6 +26,7 @@ namespace storage
 
 ObSRMergeCmp::ObSRMergeCmp()
   : cmp_func_(nullptr),
+    is_binary_(false),
     iter_ids_(nullptr),
     is_inited_(false)
 {
@@ -44,6 +46,7 @@ int ObSRMergeCmp::init(
     if (OB_ISNULL(cmp_func_)) {
       ret = OB_ERR_UNEXPECTED;
     } else {
+      is_binary_ = common::CS_TYPE_BINARY == id_meta.cs_type_ && ob_is_string_type(id_meta.type_);
       is_inited_ = true;
     }
   }
@@ -58,6 +61,25 @@ int ObSRMergeCmp::cmp(
   int ret = OB_SUCCESS;
   if (IS_NOT_INIT) {
     ret = OB_NOT_INIT;
+  } else if (is_binary_) {
+    const ObDatum &l_datum = get_id_datum(l.iter_idx_);
+    const ObDatum &r_datum = get_id_datum(r.iter_idx_);
+    if (OB_UNLIKELY(l_datum.is_null()) || OB_UNLIKELY(r_datum.is_null())) {
+      int tmp_ret = 0;
+      if (OB_FAIL(cmp_func_(l_datum, r_datum, tmp_ret, nullptr))) {
+      } else {
+        cmp_ret = tmp_ret;
+      }
+    } else {
+      const int64_t l_len = l_datum.len_;
+      const int64_t r_len = r_datum.len_;
+      const int64_t min_len = l_len < r_len ? l_len : r_len;
+      int c = min_len > 0 ? memcmp(l_datum.ptr_, r_datum.ptr_, min_len) : 0;
+      if (0 == c) {
+        c = l_len > r_len ? 1 : (l_len < r_len ? -1 : 0);
+      }
+      cmp_ret = c > 0 ? 1 : (c < 0 ? -1 : 0);
+    }
   } else {
     int tmp_ret = 0;
     if (OB_FAIL(cmp_func_(
@@ -275,10 +297,15 @@ int ObSRDaaTIterImpl::fill_merge_heap()
 {
   int ret = OB_SUCCESS;
   ObSRMergeItem item;
+  ObISRDaaTDimIter **dim_iters_data = dim_iters_->get_data();
+  const int64_t *next_round_iter_idxes_data = next_round_iter_idxes_.get_data();
+  const ObDatum **iter_domain_ids_data = iter_domain_ids_.get_data();
+  const double *dim_weights_data = OB_ISNULL(iter_param_->dim_weights_)
+      ? nullptr : iter_param_->dim_weights_->get_data();
   for (int64_t i = 0; OB_SUCC(ret) && i < next_round_cnt_; ++i) {
-    const int64_t iter_idx = next_round_iter_idxes_[i];
+    const int64_t iter_idx = next_round_iter_idxes_data[i];
     ObISRDaaTDimIter *dim_iter = nullptr;
-    if (OB_ISNULL(dim_iter = dim_iters_->at(iter_idx))) {
+    if (OB_ISNULL(dim_iter = dim_iters_data[iter_idx])) {
       ret = OB_ERR_UNEXPECTED;
     } else if (OB_FAIL(dim_iter->get_next_row())) {
       if (OB_UNLIKELY(OB_ITER_END != ret)) {
@@ -287,12 +314,12 @@ int ObSRDaaTIterImpl::fill_merge_heap()
         ret = OB_SUCCESS;
       }
     } else if (OB_FAIL(dim_iter->get_curr_score(item.relevance_))) {
-    } else if (OB_NOT_NULL(iter_param_->dim_weights_) && FALSE_IT(item.relevance_ = item.relevance_ * iter_param_->field_boost_ * iter_param_->dim_weights_->at(iter_idx))) {
-    } else if (OB_FAIL(dim_iter->get_curr_id(iter_domain_ids_[iter_idx]))) {
+    } else if (OB_NOT_NULL(dim_weights_data) && FALSE_IT(item.relevance_ = item.relevance_ * iter_param_->field_boost_ * dim_weights_data[iter_idx])) {
+    } else if (OB_FAIL(dim_iter->get_curr_id(iter_domain_ids_data[iter_idx]))) {
     } else if (FALSE_IT(item.iter_idx_ = iter_idx)) {
     } else if (OB_FAIL(merge_heap_->push(item))) {
     } else {
-      LOG_DEBUG("push item to merge heap", K(ret), K(i), K(iter_idx), K(next_round_cnt_), K(item), K(iter_domain_ids_[iter_idx]));
+      LOG_DEBUG("push item to merge heap", K(ret), K(i), K(iter_idx), K(next_round_cnt_), K(item), K(iter_domain_ids_data[iter_idx]));
     }
   }
 
