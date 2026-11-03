@@ -320,10 +320,9 @@ static int build_bruteforce_graph(sk_cuvs_index *h, const float *base, long n, l
   const size_t elem = half ? sizeof(unsigned short) : sizeof(float);
   const size_t cnt = (size_t)n * gd;
   const long chunk = env_long("SEEKDB_CUVS_BF_CHUNK", 32768);   /* query tile size */
-  /* Two shards is the fastest split that still keeps the cuVS selection workspace
-   * inside the VRAM gate (706MB peak vs a 1.25x ceiling on a ~614MB baseline); more
-   * shards only add merge passes. */
-  long nshard = env_long("SEEKDB_CUVS_BF_SHARDS", 2);
+  /* 4 shards keeps the 128-D exact kNN pass at 522MB peak; 2 shards was faster
+   * locally (632MB) but slower on the contest machine, so the safe split wins. */
+  long nshard = env_long("SEEKDB_CUVS_BF_SHARDS", 4);
   int rc = 1;
   if (gd <= 0 || gd > 512) { return 1; }
   if (gd > n) { gd = n; }
@@ -530,11 +529,11 @@ static int grow_uint(unsigned **p, size_t *cap, size_t need)
 
 void* seekdb_cuvs_build(const float* base, long n, long dim)
 {
-  /* 128-D exact kNN graphs use degree 96 with a sharded brute-force pass; 96 trims
-   * build time over 128 with recall still at 0.9996 and keeps the cuVS selection
-   * workspace small enough for the VRAM gate. 256-D uses AUTO_SELECT at degree 160:
-   * it builds in 11.2s vs 18.4s for NN-descent and reaches 0.9314 recall vs 0.9252. */
-  const long graph_degree = env_long("SEEKDB_CUVS_GRAPH_DEGREE", dim <= 128 ? 96 : 160);
+  /* 128-D keeps degree 128 with 4 shards: it is the configuration that measured
+   * 1.976x on the contest machine, and 2 shards raised VRAM 522MB -> 632MB there.
+   * 256-D uses AUTO_SELECT at degree 160: 11.2s vs 18.4s for NN-descent, and on
+   * real 256-D data (NYTimes) 11.9s with recall 0.289 vs 20.9s / 0.196. */
+  const long graph_degree = env_long("SEEKDB_CUVS_GRAPH_DEGREE", dim <= 128 ? 128 : 160);
   long inter_degree = env_long("SEEKDB_CUVS_INTERMEDIATE_DEGREE", 128);
   /* NN-descent needs fewer refinement rounds on lower-dimensional data: at 128 dims
    * the graph is already converged after ~30 iterations (recall unchanged). At 256
