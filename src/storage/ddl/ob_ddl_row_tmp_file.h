@@ -116,7 +116,7 @@ public:
                                 ObDDLChunk &output_chunk);
 
 public:
-  static const int64_t ROW_FILE_MEMORY_LIMIT = 512L * 1024L;
+  static const int64_t ROW_FILE_MEMORY_LIMIT = 8L * 1024L * 1024L;
 
 private:
   DISALLOW_COPY_AND_ASSIGN(ObDDLRowFileGenerator);
