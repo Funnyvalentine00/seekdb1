@@ -47,6 +47,11 @@ empty string, NULL, emoji, >4KB text, custom properties): byte-identical output,
 `checked=21 mismatches=0`
 ([`TOKENIZE_FASTPATH_2026-11-04.md`](TOKENIZE_FASTPATH_2026-11-04.md)).
 
+The MATCH path was checked separately: benchmark FULLTEXT indexes carry
+non-empty `parser_properties`, so MATCH does not take the empty-property fast
+path. See
+[`MATCH_PATH_ANALYSIS_2026-11-05.md`](MATCH_PATH_ANALYSIS_2026-11-05.md).
+
 ## Exact clean binary and regression
 
 Build: `./build.sh release --make -j10` on macOS arm64 from this branch.

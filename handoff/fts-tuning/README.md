@@ -10,6 +10,7 @@ Performance evidence:
 - [TOKENIZE_FASTPATH_2026-11-04.md](TOKENIZE_FASTPATH_2026-11-04.md)
 - [QOPT_BINCMP_RESULTS.md](QOPT_BINCMP_RESULTS.md)
 - [QOPT_DAATCMP_RESULTS.md](QOPT_DAATCMP_RESULTS.md)
+- [MATCH_PATH_ANALYSIS_2026-11-05.md](MATCH_PATH_ANALYSIS_2026-11-05.md)
 - [CODE_DIFF_6b29a178.patch](CODE_DIFF_6b29a178.patch) (exact submitted code diff)
 
 Raw per-case regression logs are under [regress/](regress/).
