@@ -2,9 +2,9 @@
 
 ## 结论
 
-**当前实现不可提交。** 只改 `generate_word_segment_column` 的 collation 会让 hidden word 列与 `WORD_SEGMENT` 表达式 meta 不一致，DDL 返回 4016；同时改 `ObExprWordSegment::calc_result_typeN` 后 DDL 可以通过，但多 token MATCH 在 memtable 行数估算阶段触发 `ObObjCmpFuncs::compare_nullsafe` abort。
+**当前时间盒内放弃 hidden word 列 collation 路线。** 只改 `generate_word_segment_column` 的 collation 会让 hidden word 列与 `WORD_SEGMENT` 表达式 meta 不一致，DDL 返回 4016；补表达式 meta 后 DDL 可以通过，但多 token MATCH 在 memtable 行数估算阶段 abort；再追加 query range meta 归一后，完整 `fts_index` 仍在点查路径 `ObMemtable::get` abort。DML/点查仍有 45/46 混用，安全落地需要更大范围的 word meta 归一。
 
-这验证了队长护栏第 1 条：build/scan/iterate 的 word 比较必须两侧成对一致，仅改 hidden 列 schema 不够。
+这验证了队长护栏第 1 条：build/scan/iterate/DML 的 word 比较必须两侧成对一致，仅改 hidden 列 schema 不够。
 
 ## 尝试 1：只改 `ob_fts_index_builder_util.cpp`
 
@@ -51,6 +51,25 @@ ObTextRetrievalTokenIter::get_next_batch
 ```
 
 完整报告：[`wordbin-crash-2026-11-05.ips`](wordbin-crash-2026-11-05.ips)
+
+## 追加归一后：点查仍 abort
+
+在 `ObTextRetrievalTokenIter::update_scan_param` / `estimate_token_doc_cnt` / `advance_to` 中把 word range meta 归一为 46 后：
+
+- 之前必崩的两索引 + 多 token 用例可以通过；
+- 但完整 `fts_index` 仍在 `simple_query` 阶段触发同类 abort，崩溃点转移到 `ObMemtable::get`：
+
+```text
+ObObjCmpFuncs::compare_nullsafe
+ObRowkey::fast_compare
+...
+ObMemtable::ObQueryEngine::get
+ObMemtable::ObMemtable::get
+ObMemtableSingleRowReader::get_next_row
+```
+
+说明 DML/点查路径仍会用源列 45 的 word meta 构造 rowkey；仅改 query scan range 不够。完整报告：
+[`wordbin-crash-pointget-2026-11-05.ips`](wordbin-crash-pointget-2026-11-05.ips)
 
 ## 根因判断
 
