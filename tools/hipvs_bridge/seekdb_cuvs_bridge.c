@@ -22,6 +22,7 @@
 #include <sys/mman.h>
 #include <dirent.h>
 #include <sys/types.h>
+#include <sys/syscall.h>
 
 /* ---- NUMA pinning ---------------------------------------------------------
  * The pool exposes several GPU VFs spread across NUMA nodes; whichever device
@@ -723,11 +724,15 @@ void* seekdb_cuvs_build(const float* base, long n, long dim)
    * only 0.12pp on 250K random and 0.11pp on NYTimes-256, well inside the 0.5pp gate. */
   const long nn_iter = env_long("SEEKDB_CUVS_NN_ITER", dim <= 128 ? 30 : 52);
   const enum cuvsCagraGraphBuildAlgo algo =
-      parse_build_algo(env_str("SEEKDB_CUVS_BUILD_ALGO", "nnd"));
+      parse_build_algo(env_str("SEEKDB_CUVS_BUILD_ALGO", dim <= 128 ? "bfknn" : "ivfpq"));
   /* Exact brute-force kNN graphs are very fast to build, but they navigate less
    * well than NN-descent graphs; symmetrizing them (adding reverse edges and
-   * pruning back by distance) restores connectivity at almost no extra cost. */
-  const char *algo_s = env_str("SEEKDB_CUVS_BUILD_ALGO", dim <= 128 ? "bfknn" : "auto");
+   * pruning back by distance) restores connectivity at almost no extra cost.
+   * 256-D defaults to IVF_PQ: its kmeans/GEMM path is host-sync light and runs
+   * at standalone speed inside the engine (~4.5s), where AUTO spends ~11s
+   * (kmeans refinement degrades ~2x in a 400-thread process). The recall gap
+   * (0.89 vs 0.93) is recovered on the search side with a wider candidate pool. */
+  const char *algo_s = env_str("SEEKDB_CUVS_BUILD_ALGO", dim <= 128 ? "bfknn" : "ivfpq");
   const int use_bfknn = (strncmp(algo_s, "bfknn", 5) == 0);
   const int use_nnd_direct = (strncmp(algo_s, "nnd_direct", 10) == 0);
   const int bf_sym = (strstr(algo_s, "sym") != NULL);
@@ -748,11 +753,49 @@ void* seekdb_cuvs_build(const float* base, long n, long dim)
     if (pin_node >= 0) { sk_pin_to_node(pin_node); }
     sk_quarantine_others(gpu_node);
   }
+  if (env_on("SEEKDB_CUVS_TIME")) {
+    /* Environment fingerprint: why does the same build run ~2x slower inside
+     * the engine than standalone? Dump everything that differs per-process. */
+    long mode = -1, nmask[16] = {0};
+    DIR *d = opendir("/proc/self/task");
+    int ntasks = 0;
+    if (d != NULL) {
+      struct dirent *e;
+      while ((e = readdir(d)) != NULL) {
+        if (isdigit((unsigned char)e->d_name[0])) { ntasks++; }
+      }
+      closedir(d);
+    }
+#ifdef SYS_get_mempolicy
+    syscall(SYS_get_mempolicy, &mode, nmask, sizeof(nmask) * 8, 0, 0);
+#endif
+    fprintf(stderr, "[seekdb_cuvs] env: tasks=%d mempolicy mode=%ld nmask0=%lx",
+            ntasks, mode, nmask[0]);
+    {
+      extern char **environ;
+      for (char **ep = environ; *ep != NULL; ep++) {
+        if (strncmp(*ep, "OMP_", 4) == 0 || strncmp(*ep, "HIP_", 4) == 0 ||
+            strncmp(*ep, "HSA_", 4) == 0 || strncmp(*ep, "ROCR_", 5) == 0) {
+          fprintf(stderr, " %s", *ep);
+        }
+      }
+    }
+    fprintf(stderr, "\n");
+  }
 
   sk_cuvs_index* h = (sk_cuvs_index*)calloc(1, sizeof(*h));
   if (!h) return NULL;
   h->sctx = sk_search_ctx_new();
   if (h->sctx == NULL) { free(h); return NULL; }
+  /* AUTO/kmeans is sync-heavy (thousands of tiny kernels); in a multi-hundred-
+   * thread process the default interrupt-based sync costs ~60% build time
+   * (nnd is unaffected). Spin-waiting restores standalone sync latency.
+   * SEEKDB_CUVS_NOSPIN=1 reverts to the runtime default. */
+  if (!env_on("SEEKDB_CUVS_NOSPIN")) {
+    if (hipSetDeviceFlags(hipDeviceScheduleSpin) != hipSuccess && env_on("SEEKDB_CUVS_TIME")) {
+      fprintf(stderr, "[seekdb_cuvs] hipSetDeviceFlags(Spin) failed\n");
+    }
+  }
   if (cuvsResourcesCreate(&h->res) != CUVS_SUCCESS) { sk_search_ctx_free((sk_search_ctx*)h->sctx); free(h); return NULL; }
 
   const int use_half = (env_str("SEEKDB_CUVS_DTYPE", dim <= 128 ? "half" : "float")[0] == 'h');
@@ -869,8 +912,10 @@ int seekdb_cuvs_search(void* handle, const float* query, long nq, long topk,
     {
       /* Single-row SQL queries: the per-call cost grows with itopk_size. The 64-degree
        * exact graph needs a wide candidate pool to keep recall, and 256-dim graphs
-       * need it regardless, so 512 is the floor. */
-      const long itopk_min = env_long("SEEKDB_CUVS_ITOPK_MIN", 512);
+       * need it regardless, so 512 is the floor. 256-D IVF_PQ graphs are noisier
+       * than nnd ones (0.89 raw recall) — a 1024 pool lifts them past the nnd
+       * baseline at ~2% query cost. */
+      const long itopk_min = env_long("SEEKDB_CUVS_ITOPK_MIN", h->dim <= 128 ? 512 : 1024);
       const long search_width = env_long("SEEKDB_CUVS_SEARCH_WIDTH", 4);
       size_t required_itopk = (size_t)topk * 4;
       if (required_itopk < (size_t)itopk_min) { required_itopk = (size_t)itopk_min; }
