@@ -1,0 +1,262 @@
+{
+ "platform": "linux x86_64 (legion WSL2)",
+ "date": "2026-11-05",
+ "base_commit_sha40": "558b4fccac944c0424a1b6edece798c05ff70a6e",
+ "candidate_commit_sha40": "3ffc4224e",
+ "base_binary_sha256": "dd6512dea5a75d8cfc231deb1cf6fdff434be00bd4488b193e77ad6fa899eb76",
+ "candidate_binary_sha256": "6fdfd58fef59a3b019fd3def94350c5332f7bfd4a22acddaee3b8de84dbb65fd",
+ "pairs": [
+  [
+   "c1-base",
+   "c1-parser"
+  ],
+  [
+   "c2-base",
+   "c2-parser"
+  ],
+  [
+   "c3-base",
+   "c3-parser"
+  ]
+ ],
+ "runs": {
+  "c1-base": {
+   "build_ik_all_sec": 3.345,
+   "build_ik_content_sec": 2.428,
+   "build_beng_en_sec": 1.427,
+   "build_total_sec": 7.208,
+   "tokenize_ik_avg_ms": 0.2413,
+   "tokenize_beng_avg_ms": 0.1947,
+   "query_cn_avg_ms": 1.1853,
+   "query_beng_avg_ms": 1.6021,
+   "query_mixed_avg_ms": 1.2932,
+   "query_limit_avg_ms": 1.385,
+   "query_cn_hits": 8001.0,
+   "query_beng_hits": 11000.0,
+   "query_mixed_hits": 7332.0,
+   "query_limit_hits": 20.0
+  },
+  "c1-parser": {
+   "build_ik_all_sec": 3.746,
+   "build_ik_content_sec": 2.828,
+   "build_beng_en_sec": 2.032,
+   "build_total_sec": 8.618,
+   "tokenize_ik_avg_ms": 0.2507,
+   "tokenize_beng_avg_ms": 0.1948,
+   "query_cn_avg_ms": 1.1883,
+   "query_beng_avg_ms": 1.5659,
+   "query_mixed_avg_ms": 1.3069,
+   "query_limit_avg_ms": 1.417,
+   "query_cn_hits": 8001.0,
+   "query_beng_hits": 11000.0,
+   "query_mixed_hits": 7332.0,
+   "query_limit_hits": 20.0
+  },
+  "c2-base": {
+   "build_ik_all_sec": 3.347,
+   "build_ik_content_sec": 2.428,
+   "build_beng_en_sec": 1.326,
+   "build_total_sec": 7.108,
+   "tokenize_ik_avg_ms": 0.2353,
+   "tokenize_beng_avg_ms": 0.2194,
+   "query_cn_avg_ms": 1.1572,
+   "query_beng_avg_ms": 1.6258,
+   "query_mixed_avg_ms": 1.296,
+   "query_limit_avg_ms": 1.353,
+   "query_cn_hits": 8001.0,
+   "query_beng_hits": 11000.0,
+   "query_mixed_hits": 7332.0,
+   "query_limit_hits": 20.0
+  },
+  "c2-parser": {
+   "build_ik_all_sec": 3.748,
+   "build_ik_content_sec": 2.828,
+   "build_beng_en_sec": 1.824,
+   "build_total_sec": 8.407,
+   "tokenize_ik_avg_ms": 0.2382,
+   "tokenize_beng_avg_ms": 0.1968,
+   "query_cn_avg_ms": 1.1317,
+   "query_beng_avg_ms": 1.5641,
+   "query_mixed_avg_ms": 1.2918,
+   "query_limit_avg_ms": 1.3694,
+   "query_cn_hits": 8001.0,
+   "query_beng_hits": 11000.0,
+   "query_mixed_hits": 7332.0,
+   "query_limit_hits": 20.0
+  },
+  "c3-base": {
+   "build_ik_all_sec": 3.347,
+   "build_ik_content_sec": 2.429,
+   "build_beng_en_sec": 1.424,
+   "build_total_sec": 7.211,
+   "tokenize_ik_avg_ms": 0.2602,
+   "tokenize_beng_avg_ms": 0.1889,
+   "query_cn_avg_ms": 1.1624,
+   "query_beng_avg_ms": 1.5923,
+   "query_mixed_avg_ms": 1.2641,
+   "query_limit_avg_ms": 1.403,
+   "query_cn_hits": 8001.0,
+   "query_beng_hits": 11000.0,
+   "query_mixed_hits": 7332.0,
+   "query_limit_hits": 20.0
+  },
+  "c3-parser": {
+   "build_ik_all_sec": 3.746,
+   "build_ik_content_sec": 2.828,
+   "build_beng_en_sec": 1.827,
+   "build_total_sec": 8.408,
+   "tokenize_ik_avg_ms": 0.2483,
+   "tokenize_beng_avg_ms": 0.2072,
+   "query_cn_avg_ms": 1.1607,
+   "query_beng_avg_ms": 1.58,
+   "query_mixed_avg_ms": 1.3061,
+   "query_limit_avg_ms": 1.3769,
+   "query_cn_hits": 8001.0,
+   "query_beng_hits": 11000.0,
+   "query_mixed_hits": 7332.0,
+   "query_limit_hits": 20.0
+  }
+ },
+ "median": {
+  "build_ik_all_sec": {
+   "base": 3.347,
+   "candidate": 3.746,
+   "delta_pct": 11.921123394084256,
+   "pair_delta_pct": [
+    11.9880418535127,
+    11.980878398565887,
+    11.921123394084256
+   ]
+  },
+  "build_ik_content_sec": {
+   "base": 2.428,
+   "candidate": 2.828,
+   "delta_pct": 16.474464579901152,
+   "pair_delta_pct": [
+    16.474464579901152,
+    16.474464579901152,
+    16.426512968299715
+   ]
+  },
+  "build_beng_en_sec": {
+   "base": 1.424,
+   "candidate": 1.827,
+   "delta_pct": 28.300561797752813,
+   "pair_delta_pct": [
+    42.39663629992992,
+    37.556561085972845,
+    28.300561797752813
+   ]
+  },
+  "build_total_sec": {
+   "base": 7.208,
+   "candidate": 8.408,
+   "delta_pct": 16.64816870144283,
+   "pair_delta_pct": [
+    19.56159822419534,
+    18.27518289251548,
+    16.599639439744823
+   ]
+  },
+  "tokenize_ik_avg_ms": {
+   "base": 0.2413,
+   "candidate": 0.2483,
+   "delta_pct": 2.900953170327396,
+   "pair_delta_pct": [
+    3.8955656858682106,
+    1.2324691882702872,
+    -4.573405073020751
+   ]
+  },
+  "tokenize_beng_avg_ms": {
+   "base": 0.1947,
+   "candidate": 0.1968,
+   "delta_pct": 1.078582434514633,
+   "pair_delta_pct": [
+    0.05136106831021519,
+    -10.300820419325435,
+    9.687665431445199
+   ]
+  },
+  "query_cn_avg_ms": {
+   "base": 1.1624,
+   "candidate": 1.1607,
+   "delta_pct": -0.14624913971094586,
+   "pair_delta_pct": [
+    0.25310048089090453,
+    -2.2035948842032558,
+    -0.14624913971094586
+   ]
+  },
+  "query_beng_avg_ms": {
+   "base": 1.6021,
+   "candidate": 1.5659,
+   "delta_pct": -2.25953436115099,
+   "pair_delta_pct": [
+    -2.25953436115099,
+    -3.7950547422807155,
+    -0.772467499842993
+   ]
+  },
+  "query_mixed_avg_ms": {
+   "base": 1.2932,
+   "candidate": 1.3061,
+   "delta_pct": 0.9975255180946593,
+   "pair_delta_pct": [
+    1.0593875657284293,
+    -0.3240740740740726,
+    3.3225219523771883
+   ]
+  },
+  "query_limit_avg_ms": {
+   "base": 1.385,
+   "candidate": 1.3769,
+   "delta_pct": -0.5848375451263536,
+   "pair_delta_pct": [
+    2.3104693140794246,
+    1.21212121212121,
+    -1.8602993585174634
+   ]
+  },
+  "query_cn_hits": {
+   "base": 8001.0,
+   "candidate": 8001.0,
+   "delta_pct": 0.0,
+   "pair_delta_pct": [
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  "query_beng_hits": {
+   "base": 11000.0,
+   "candidate": 11000.0,
+   "delta_pct": 0.0,
+   "pair_delta_pct": [
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  "query_mixed_hits": {
+   "base": 7332.0,
+   "candidate": 7332.0,
+   "delta_pct": 0.0,
+   "pair_delta_pct": [
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  "query_limit_hits": {
+   "base": 20.0,
+   "candidate": 20.0,
+   "delta_pct": 0.0,
+   "pair_delta_pct": [
+    0.0,
+    0.0,
+    0.0
+   ]
+  }
+ }
+}
