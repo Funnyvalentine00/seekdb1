@@ -17,6 +17,7 @@
 #define USING_LOG_PREFIX STORAGE
 
 #include "ob_sparse_daat_iter.h"
+#include <string.h>
 
 namespace oceanbase
 {
@@ -25,6 +26,7 @@ namespace storage
 
 ObSRMergeCmp::ObSRMergeCmp()
   : cmp_func_(nullptr),
+    is_binary_(false),
     iter_ids_(nullptr),
     is_inited_(false)
 {
@@ -44,6 +46,7 @@ int ObSRMergeCmp::init(
     if (OB_ISNULL(cmp_func_)) {
       ret = OB_ERR_UNEXPECTED;
     } else {
+      is_binary_ = common::CS_TYPE_BINARY == id_meta.cs_type_ && ob_is_string_type(id_meta.type_);
       is_inited_ = true;
     }
   }
@@ -58,6 +61,25 @@ int ObSRMergeCmp::cmp(
   int ret = OB_SUCCESS;
   if (IS_NOT_INIT) {
     ret = OB_NOT_INIT;
+  } else if (is_binary_) {
+    const ObDatum &l_datum = get_id_datum(l.iter_idx_);
+    const ObDatum &r_datum = get_id_datum(r.iter_idx_);
+    if (OB_UNLIKELY(l_datum.is_null()) || OB_UNLIKELY(r_datum.is_null())) {
+      int tmp_ret = 0;
+      if (OB_FAIL(cmp_func_(l_datum, r_datum, tmp_ret, nullptr))) {
+      } else {
+        cmp_ret = tmp_ret;
+      }
+    } else {
+      const int64_t l_len = l_datum.len_;
+      const int64_t r_len = r_datum.len_;
+      const int64_t min_len = l_len < r_len ? l_len : r_len;
+      int c = min_len > 0 ? memcmp(l_datum.ptr_, r_datum.ptr_, min_len) : 0;
+      if (0 == c) {
+        c = l_len > r_len ? 1 : (l_len < r_len ? -1 : 0);
+      }
+      cmp_ret = c > 0 ? 1 : (c < 0 ? -1 : 0);
+    }
   } else {
     int tmp_ret = 0;
     if (OB_FAIL(cmp_func_(

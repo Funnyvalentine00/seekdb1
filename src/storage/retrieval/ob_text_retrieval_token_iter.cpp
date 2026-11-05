@@ -17,6 +17,7 @@
 #define USING_LOG_PREFIX STORAGE
 
 #include "ob_text_retrieval_token_iter.h"
+#include <string.h>
 #include "query/das/ob_das_iter_access.h"
 #include "share/rc/ob_server_runtime.h"
 #include "query/engine/expr/ob_expr_bm25.h"
@@ -413,6 +414,7 @@ ObTextRetrievalDaaTTokenIter::ObTextRetrievalDaaTTokenIter()
     relevance_(),
     doc_id_(),
     cmp_func_(nullptr),
+    cmp_is_binary_(false),
     is_inited_(false)
 {
 }
@@ -436,6 +438,7 @@ int ObTextRetrievalDaaTTokenIter::init(const ObTextRetrievalScanIterParam &iter_
       max_batch_size_ = OB_MAX(iter_param.eval_ctx_->max_batch_size_, 1);
       common::ObDatumBasicFuncs *basic_funcs = ObDatumFuncs::get_basic_func(inv_scan_domain_id_col_->datum_meta_.type_, CS_TYPE_BINARY);
       cmp_func_ = basic_funcs->null_first_cmp_;
+      cmp_is_binary_ = nullptr != cmp_func_ && ob_is_string_type(inv_scan_domain_id_col_->datum_meta_.type_);
       if (OB_ISNULL(cmp_func_)) {
         ret = OB_ERR_UNEXPECTED;
       } else if (FALSE_IT(relevance_.set_allocator(allocator_))) {
@@ -545,14 +548,29 @@ int ObTextRetrievalDaaTTokenIter::advance_to(const ObDatum &id_datum)
   int ret = OB_SUCCESS;
   int result = 0;
   bool find = false;
+  auto cmp_ids = [this](const ObDatum &lhs, const ObDatum &rhs, int &cmp_ret) -> int {
+    int ret = OB_SUCCESS;
+    if (OB_LIKELY(cmp_is_binary_) && OB_LIKELY(!lhs.is_null()) && OB_LIKELY(!rhs.is_null())) {
+      const int64_t lhs_len = lhs.len_;
+      const int64_t rhs_len = rhs.len_;
+      const int64_t min_len = lhs_len < rhs_len ? lhs_len : rhs_len;
+      int c = min_len > 0 ? memcmp(lhs.ptr_, rhs.ptr_, min_len) : 0;
+      if (0 == c) {
+        c = lhs_len > rhs_len ? 1 : (lhs_len < rhs_len ? -1 : 0);
+      }
+      cmp_ret = c > 0 ? 1 : (c < 0 ? -1 : 0);
+    } else {
+      ret = cmp_func_(lhs, rhs, cmp_ret, nullptr);
+    }
+    return ret;
+  };
 
   if (cur_idx_ < 0) {
     ret = OB_ERR_UNEXPECTED;
   }
   while (OB_SUCC(ret) && !find) {
     if (cur_idx_ < count_) {
-      if (OB_FAIL(cmp_func_(
-              id_datum, doc_id_[cur_idx_].get_datum(), result, nullptr))) {
+      if (OB_FAIL(cmp_ids(id_datum, doc_id_[cur_idx_].get_datum(), result))) {
       } else if (result <= 0) {
         find = true;
       } else {
@@ -566,8 +584,7 @@ int ObTextRetrievalDaaTTokenIter::advance_to(const ObDatum &id_datum)
       }
     } else if (cur_idx_ != 0) {
       ret = OB_ERR_UNEXPECTED;
-    } else if (OB_FAIL(cmp_func_(
-                   id_datum, doc_id_[cur_idx_].get_datum(), result, nullptr))) {
+    } else if (OB_FAIL(cmp_ids(id_datum, doc_id_[cur_idx_].get_datum(), result))) {
     } else if (result <= 0) {
       find = true;
     } else {
