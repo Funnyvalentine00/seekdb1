@@ -4,6 +4,7 @@
 #include <cuvs/core/c_api.h>
 #include <cuvs/neighbors/cagra.h>
 #include <cuvs/neighbors/brute_force.h>
+#include <cuvs/neighbors/ivf_pq.h>
 #include <cuvs/neighbors/nn_descent.h>
 #include <dlpack/dlpack.h>
 #ifdef __HIP_PLATFORM_AMD__
@@ -319,6 +320,7 @@ typedef struct {
   long n, dim;
   int  half;
   void *sctx;                     /* sk_search_ctx */
+  void *gp;                       /* cuvsIvfPqParams (IVF_PQ build), freed with the handle */
 } sk_cuvs_index;
 
 /* Fills a 2-D DLManagedTensor over caller-owned shape storage. */
@@ -724,15 +726,14 @@ void* seekdb_cuvs_build(const float* base, long n, long dim)
    * only 0.12pp on 250K random and 0.11pp on NYTimes-256, well inside the 0.5pp gate. */
   const long nn_iter = env_long("SEEKDB_CUVS_NN_ITER", dim <= 128 ? 30 : 52);
   const enum cuvsCagraGraphBuildAlgo algo =
-      parse_build_algo(env_str("SEEKDB_CUVS_BUILD_ALGO", dim <= 128 ? "bfknn" : "ivfpq"));
+      parse_build_algo(env_str("SEEKDB_CUVS_BUILD_ALGO", dim <= 128 ? "bfknn" : "auto"));
   /* Exact brute-force kNN graphs are very fast to build, but they navigate less
    * well than NN-descent graphs; symmetrizing them (adding reverse edges and
    * pruning back by distance) restores connectivity at almost no extra cost.
-   * 256-D defaults to IVF_PQ: its kmeans/GEMM path is host-sync light and runs
-   * at standalone speed inside the engine (~4.5s), where AUTO spends ~11s
-   * (kmeans refinement degrades ~2x in a 400-thread process). The recall gap
-   * (0.89 vs 0.93) is recovered on the search side with a wider candidate pool. */
-  const char *algo_s = env_str("SEEKDB_CUVS_BUILD_ALGO", dim <= 128 ? "bfknn" : "ivfpq");
+   * 256-D stays on AUTO: IVF_PQ runs ~2x faster in-engine, but its kmeans/
+   * extend work buffers peak at 2.8-4GB regardless of n_lists/trainset tuning
+   * and blows the platform relative-VRAM gate (CAGRA peaks at 644MB). */
+  const char *algo_s = env_str("SEEKDB_CUVS_BUILD_ALGO", dim <= 128 ? "bfknn" : "auto");
   const int use_bfknn = (strncmp(algo_s, "bfknn", 5) == 0);
   const int use_nnd_direct = (strncmp(algo_s, "nnd_direct", 10) == 0);
   const int bf_sym = (strstr(algo_s, "sym") != NULL);
@@ -837,6 +838,26 @@ void* seekdb_cuvs_build(const float* base, long n, long dim)
   h->ip->graph_degree = graph_degree;
   h->ip->intermediate_graph_degree = inter_degree;
   h->ip->nn_descent_niter = nn_iter;
+  /* IVF_PQ build: cap the kmeans work buffers. The default n_lists heuristic
+   * (~4*sqrt(N) lists over a full trainset) makes the kmeans distance matrix
+   * alone multi-GB and blows the VRAM gate; a bounded list count and a sampled
+   * trainset keep the peak near the CAGRA baseline. Override via env. */
+  if (algo == IVF_PQ) {
+    cuvsIvfPqParams_t gp = (cuvsIvfPqParams_t)malloc(sizeof(struct cuvsIvfPqParams));
+    cuvsIvfPqIndexParams_t ipq = NULL;
+    if (gp == NULL || cuvsIvfPqIndexParamsCreate(&ipq) != CUVS_SUCCESS) {
+      free(gp);
+      goto fail_ip;
+    }
+    ipq->n_lists = (uint32_t)env_long("SEEKDB_CUVS_IVF_NLISTS", 256);
+    ipq->kmeans_trainset_fraction = 0.5;
+    ipq->kmeans_n_iters = (uint32_t)env_long("SEEKDB_CUVS_IVF_KMEANS_NITER", 20);
+    gp->ivf_pq_build_params = ipq;
+    gp->ivf_pq_search_params = NULL;
+    gp->refinement_rate = (float)env_long("SEEKDB_CUVS_IVF_REFINERATE", 100) / 100.0f;
+    h->ip->graph_build_params = gp;
+    h->gp = gp;
+  }
   if (cuvsCagraIndexCreate(&h->idx)      != CUVS_SUCCESS) goto fail_ip;
   vram_watch_start();
   if (use_bfknn) {
@@ -861,7 +882,11 @@ void* seekdb_cuvs_build(const float* base, long n, long dim)
   return h;
 
 fail_idx: g_vram_watch = 0; cuvsCagraIndexDestroy(h->idx);
-fail_ip:  cuvsCagraIndexParamsDestroy(h->ip);
+fail_ip:  if (h->gp != NULL) {
+            cuvsIvfPqIndexParamsDestroy(((cuvsIvfPqParams_t)h->gp)->ivf_pq_build_params);
+            free(h->gp); h->gp = NULL;
+          }
+          cuvsCagraIndexParamsDestroy(h->ip);
 fail_half: if (half_buf != NULL) { free(half_buf); }
 fail_res: sk_restore_affinity(); sk_release_others(); if (node_base != NULL) { munmap(node_base, node_base_bytes); }
   cuvsResourcesDestroy(h->res); free(h);
@@ -964,6 +989,10 @@ void seekdb_cuvs_free(void* handle)
   if (h->bf != NULL) { cuvsBruteForceIndexDestroy(h->bf); }
   if (h->d_data != NULL) { cudaFree(h->d_data); }
   if (h->d_graph != NULL) { cudaFree(h->d_graph); }
+  if (h->gp != NULL) {
+    cuvsIvfPqIndexParamsDestroy(((cuvsIvfPqParams_t)h->gp)->ivf_pq_build_params);
+    free(h->gp);
+  }
   sk_search_ctx_free((sk_search_ctx*)h->sctx);
   cuvsCagraIndexParamsDestroy(h->ip);
   cuvsResourcesDestroy(h->res);
