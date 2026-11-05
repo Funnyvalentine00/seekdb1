@@ -1,4 +1,5 @@
 /* seekdb <-> hipVS bridge: plain-C CAGRA kNN; all cuVS/ROCm deps live here. */
+#define _GNU_SOURCE
 #include "seekdb_cuvs_bridge.h"
 #include <cuvs/core/c_api.h>
 #include <cuvs/neighbors/cagra.h>
@@ -13,9 +14,190 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include <time.h>
 #include <pthread.h>
 #include <unistd.h>
+#include <sched.h>
+#include <sys/mman.h>
+#include <dirent.h>
+#include <sys/types.h>
+
+/* ---- NUMA pinning ---------------------------------------------------------
+ * The pool exposes several GPU VFs spread across NUMA nodes; whichever device
+ * HIP picks and wherever the engine's threads left the data, a cross-node build
+ * runs up to ~2x slower. Pick a GPU deterministically, pin the build thread (and
+ * the OpenMP threads cuVS spawns, which inherit the mask) to that device's node,
+ * and copy the dataset onto freshly-mmap'd pages so they are node-local too.
+ * Everything is best-effort: on any failure we run unpinned (status quo). */
+static int env_on(const char *name);
+static cpu_set_t sk_saved_affinity;
+static int sk_affinity_saved = 0;
+
+static void sk_restore_affinity(void)
+{
+  if (sk_affinity_saved) {
+    sched_setaffinity(0, sizeof(sk_saved_affinity), &sk_saved_affinity);
+    sk_affinity_saved = 0;
+  }
+}
+
+static int sk_sysfs_numa_node(const char *busid)
+{
+  char path[256];
+  FILE *f;
+  int node = -1;
+  char b[64];
+  snprintf(b, sizeof(b), "%s", busid);
+  for (char *p = b; *p; p++) { *p = (char)(*p == '-' ? ':' : tolower((unsigned char)*p)); }
+  snprintf(path, sizeof(path), "/sys/bus/pci/devices/%s/numa_node", b);
+  f = fopen(path, "r");
+  if (f == NULL) { return -1; }
+  if (fscanf(f, "%d", &node) != 1 || node < 0) { node = -1; }
+  fclose(f);
+  return node;
+}
+
+/* Select a HIP device with a known NUMA node, make it current, return its node.
+ * SEEKDB_CUVS_GPU=<idx> forces one device (even if its node is unknown). */
+static int sk_pick_gpu_and_node(int force_gpu)
+{
+  int count = 0;
+  if (hipGetDeviceCount(&count) != hipSuccess || count <= 0) { return -1; }
+  if (force_gpu >= count) { force_gpu = -1; }
+  for (int d = (force_gpu >= 0 ? force_gpu : 0); d < count; d++) {
+    char busid[64] = {0};
+    if (hipDeviceGetPCIBusId(busid, sizeof(busid), d) != hipSuccess) { continue; }
+    int node = sk_sysfs_numa_node(busid);
+    if (node < 0 && force_gpu < 0) { continue; }
+    if (hipSetDevice(d) != hipSuccess) { continue; }
+    if (env_on("SEEKDB_CUVS_TIME")) {
+      fprintf(stderr, "[seekdb_cuvs] using gpu %d (%s) numa node %d\n", d, busid, node);
+    }
+    return node;
+  }
+  return -1;
+}
+
+static void sk_pin_to_node(int node);
+/* Parse /sys/devices/system/node/nodeN/cpulist ("0-31,64-95") into a CPU set.
+ * Returns 0 on success. */
+static int sk_node_cpulist(int node, cpu_set_t *s)
+{
+  char path[256];
+  FILE *f;
+  char list[1024] = {0};
+  size_t n;
+  char *p;
+  snprintf(path, sizeof(path), "/sys/devices/system/node/node%d/cpulist", node);
+  f = fopen(path, "r");
+  if (f == NULL) { return 1; }
+  n = fread(list, 1, sizeof(list) - 1, f);
+  fclose(f);
+  list[n] = '\0';
+  CPU_ZERO(s);
+  p = list;
+  while (*p) {
+    int a = -1, b = -1;
+    if (sscanf(p, "%d-%d", &a, &b) >= 1) {
+      if (b == -1) { b = a; }
+      for (int c = a; c <= b && c < CPU_SETSIZE; c++) { CPU_SET(c, s); }
+    }
+    while (*p && *p != ',') { p++; }
+    if (*p == ',') { p++; }
+  }
+  return CPU_COUNT(s) == 0;
+}
+
+static void sk_pin_to_node(int node)
+{
+  cpu_set_t s;
+  if (sk_node_cpulist(node, &s) != 0) { return; }
+  if (sk_affinity_saved == 0) {
+    CPU_ZERO(&sk_saved_affinity);
+    if (sched_getaffinity(0, sizeof(sk_saved_affinity), &sk_saved_affinity) != 0) { return; }
+  }
+  if (sched_setaffinity(0, sizeof(s), &s) == 0) {
+    sk_affinity_saved = 1;
+    if (env_on("SEEKDB_CUVS_TIME")) {
+      fprintf(stderr, "[seekdb_cuvs] pinned build thread to numa node %d\n", node);
+    }
+  }
+}
+
+/* ---- thread quarantine -----------------------------------------------------
+ * While the build runs, the engine's other ~400 (mostly spinning) threads roam
+ * over every core, including the ones the cuVS OpenMP team needs; that costs
+ * ~2x standalone build time. During the build, park every pre-existing thread
+ * on the OTHER node's cores, then give them the original mask back. Threads
+ * spawned while quarantined (the OMP team) are not in the snapshot and stay on
+ * the build node. On by default (SEEKDB_CUVS_NO_QUARANTINE disables); a
+ * watchdog undoes it after 180s so a pathological build can still finish. */
+#define SK_Q_MAX_TIDS 4096
+static pid_t sk_q_tids[SK_Q_MAX_TIDS];
+static int sk_q_count = 0;
+static volatile int sk_q_watch_run = 0;
+static int sk_quarantined = 0;
+
+static void sk_release_others(void);
+
+static void *sk_q_watchdog(void *arg)
+{
+  int secs = (int)(long)arg;
+  for (int i = 0; i < secs && sk_q_watch_run; i++) { sleep(1); }
+  if (sk_q_watch_run) {
+    fprintf(stderr, "[seekdb_cuvs] quarantine watchdog fired after %ds; restoring affinity\n", secs);
+    sk_restore_affinity();
+    sk_release_others();
+  }
+  return NULL;
+}
+
+static void sk_quarantine_others(int gpu_node)
+{
+  DIR *d;
+  struct dirent *e;
+  cpu_set_t q;
+  pid_t self = gettid();
+  int onode = (gpu_node == 0) ? 1 : 0;
+  /* Only quarantine after sk_pin_to_node saved the original mask: release
+   * restores threads to it, and an empty saved mask would be fatal. */
+  if (sk_quarantined || sk_affinity_saved == 0 ||
+      env_on("SEEKDB_CUVS_NO_QUARANTINE") || gpu_node < 0) { return; }
+  if (sk_node_cpulist(onode, &q) != 0) { return; }
+  d = opendir("/proc/self/task");
+  if (d == NULL) { return; }
+  sk_q_count = 0;
+  while ((e = readdir(d)) != NULL && sk_q_count < SK_Q_MAX_TIDS) {
+    if (!isdigit((unsigned char)e->d_name[0])) { continue; }
+    pid_t tid = (pid_t)atoi(e->d_name);
+    if (tid == self) { continue; }
+    sk_q_tids[sk_q_count++] = tid;
+  }
+  closedir(d);
+  for (int i = 0; i < sk_q_count; i++) {
+    sched_setaffinity(sk_q_tids[i], sizeof(q), &q);
+  }
+  sk_quarantined = 1;
+  sk_q_watch_run = 1;
+  pthread_t w;
+  if (pthread_create(&w, NULL, sk_q_watchdog, (void *)(long)180) == 0) { pthread_detach(w); }
+  if (env_on("SEEKDB_CUVS_TIME")) {
+    fprintf(stderr, "[seekdb_cuvs] quarantined %d threads to numa node %d\n", sk_q_count, onode);
+  }
+}
+
+static void sk_release_others(void)
+{
+  if (!sk_quarantined) { return; }
+  sk_q_watch_run = 0;
+  for (int i = 0; i < sk_q_count; i++) {
+    sched_setaffinity(sk_q_tids[i], sizeof(sk_saved_affinity), &sk_saved_affinity);
+  }
+  sk_quarantined = 0;
+  sk_q_count = 0;
+}
+
 
 /* ---- tuning knobs (defaults keep the frozen-baseline behaviour) ---------- */
 static long env_long(const char *name, long def)
@@ -551,6 +733,21 @@ void* seekdb_cuvs_build(const float* base, long n, long dim)
   const int bf_sym = (strstr(algo_s, "sym") != NULL);
   if (inter_degree < graph_degree) { inter_degree = graph_degree; }
   const double t0 = now_ms();
+  {
+    /* SEEKDB_CUVS_GPU=<idx> forces the device; SEEKDB_CUVS_PIN_NODE=<n|off> overrides
+     * pinning (default: pin to the chosen GPU's node). Diagnostics for the NUMA sweep. */
+    const char *gv = getenv("SEEKDB_CUVS_GPU");
+    const int force_gpu = (gv != NULL && gv[0] != '\0') ? atoi(gv) : -1;
+    int gpu_node = sk_pick_gpu_and_node(force_gpu);
+    int pin_node = gpu_node;
+    const char *pv = getenv("SEEKDB_CUVS_PIN_NODE");
+    if (pv != NULL && pv[0] != '\0') {
+      if (pv[0] == 'o' || pv[0] == 'O' || pv[0] == 'n' || pv[0] == 'N') { pin_node = -1; }
+      else { pin_node = atoi(pv); }
+    }
+    if (pin_node >= 0) { sk_pin_to_node(pin_node); }
+    sk_quarantine_others(gpu_node);
+  }
 
   sk_cuvs_index* h = (sk_cuvs_index*)calloc(1, sizeof(*h));
   if (!h) return NULL;
@@ -559,6 +756,22 @@ void* seekdb_cuvs_build(const float* base, long n, long dim)
   if (cuvsResourcesCreate(&h->res) != CUVS_SUCCESS) { sk_search_ctx_free((sk_search_ctx*)h->sctx); free(h); return NULL; }
 
   const int use_half = (env_str("SEEKDB_CUVS_DTYPE", dim <= 128 ? "half" : "float")[0] == 'h');
+  float *node_base = NULL;      /* node-local dataset copy (mmap'd, see below) */
+  size_t node_base_bytes = 0;
+  /* Copy the dataset onto the GPU's NUMA node: the pinned thread's memcpy makes the
+   * pages node-local, so cuVS's host-side reads and the H2D transfer stay on-node
+   * (engine-thread buffers often live on the far node and cost ~2x build time). */
+  {
+    size_t bytes = (size_t)n * dim * sizeof(float);
+    float *nb = (float *)mmap(NULL, bytes, PROT_READ | PROT_WRITE,
+                              MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    if (nb != MAP_FAILED) {
+      memcpy(nb, base, bytes);
+      node_base = nb;
+      node_base_bytes = bytes;
+      base = node_base;
+    }
+  }
   unsigned short *half_buf = NULL;
   if (use_half) {
     const size_t cnt = (size_t)n * (size_t)dim;
@@ -593,7 +806,10 @@ void* seekdb_cuvs_build(const float* base, long n, long dim)
     if (st != CUVS_SUCCESS) goto fail_idx;
   }
   vram_watch_stop(use_bfknn ? "bfknn" : (use_nnd_direct ? "nnd_direct" : "cuvs_build"));
+  sk_restore_affinity();
+  sk_release_others();
   if (half_buf != NULL) { free(half_buf); half_buf = NULL; }
+  if (node_base != NULL) { munmap(node_base, node_base_bytes); node_base = NULL; }
   h->n = n; h->dim = dim; h->half = use_half;
   if (env_on("SEEKDB_CUVS_TIME")) {
     fprintf(stderr, "[seekdb_cuvs] build n=%ld dim=%ld gd=%ld igd=%ld iters=%ld algo=%s half=%d took=%.1fms\n",
@@ -604,7 +820,8 @@ void* seekdb_cuvs_build(const float* base, long n, long dim)
 fail_idx: g_vram_watch = 0; cuvsCagraIndexDestroy(h->idx);
 fail_ip:  cuvsCagraIndexParamsDestroy(h->ip);
 fail_half: if (half_buf != NULL) { free(half_buf); }
-fail_res: cuvsResourcesDestroy(h->res); free(h);
+fail_res: sk_restore_affinity(); sk_release_others(); if (node_base != NULL) { munmap(node_base, node_base_bytes); }
+  cuvsResourcesDestroy(h->res); free(h);
   fprintf(stderr, "[seekdb_cuvs] build failed: %s\n", cuvsGetLastErrorText());
   return NULL;
 }
