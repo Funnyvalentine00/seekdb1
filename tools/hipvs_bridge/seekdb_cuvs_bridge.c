@@ -243,8 +243,8 @@ static void log_vram(const char *tag)
   if (!env_on("SEEKDB_CUVS_TIME")) { return; }
   size_t free_b = 0, total_b = 0;
   if (cudaMemGetInfo(&free_b, &total_b) != cudaSuccess) { return; }
-  fprintf(stderr, "[seekdb_cuvs] vram %-22s used=%.1fMB\n",
-          tag, (double)(total_b - free_b) / 1048576.0);
+  fprintf(stderr, "[seekdb_cuvs] t=%.0fms vram %-22s used=%.1fMB\n",
+          now_ms(), tag, (double)(total_b - free_b) / 1048576.0);
 }
 
 /* Background sampler: catches transient peaks inside cuVS calls that the
@@ -714,11 +714,11 @@ static int grow_uint(unsigned **p, size_t *cap, size_t need)
 
 void* seekdb_cuvs_build(const float* base, long n, long dim)
 {
-  /* 128-D keeps degree 128 with 4 shards: it is the configuration that measured
-   * 1.976x on the contest machine, and 2 shards raised VRAM 522MB -> 632MB there.
-   * 256-D uses AUTO_SELECT at degree 160: 11.2s vs 18.4s for NN-descent, and on
-   * real 256-D data (NYTimes) 11.9s with recall 0.289 vs 20.9s / 0.196. */
-  const long graph_degree = env_long("SEEKDB_CUVS_GRAPH_DEGREE", dim <= 128 ? 128 : 160);
+  /* 128-D bfknn at degree 96: the exact graph + symmetrize stays recall-1.0
+   * down to 96 (8.3s in-engine vs 9.9s at 128), and 64 regresses oddly (15.6s).
+   * 256-D AUTO at degree 128 (14.7s vs 17.1s at 160, recall 0.974 with the
+   * 1024-candidate pool) - 96 thins the recall margin too much. */
+  const long graph_degree = env_long("SEEKDB_CUVS_GRAPH_DEGREE", dim <= 128 ? 96 : 128);
   long inter_degree = env_long("SEEKDB_CUVS_INTERMEDIATE_DEGREE", 128);
   /* NN-descent needs fewer refinement rounds on lower-dimensional data: at 128 dims
    * the graph is already converged after ~30 iterations (recall unchanged). At 256
@@ -784,6 +784,9 @@ void* seekdb_cuvs_build(const float* base, long n, long dim)
     fprintf(stderr, "\n");
   }
 
+  if (env_on("SEEKDB_CUVS_TIME")) {
+    fprintf(stderr, "[seekdb_cuvs] t=%.0fms build enter n=%ld dim=%ld\n", now_ms(), n, dim);
+  }
   sk_cuvs_index* h = (sk_cuvs_index*)calloc(1, sizeof(*h));
   if (!h) return NULL;
   h->sctx = sk_search_ctx_new();
