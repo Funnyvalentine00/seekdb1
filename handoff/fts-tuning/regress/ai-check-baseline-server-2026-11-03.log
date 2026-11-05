@@ -1,0 +1,4 @@
+<jemalloc>: option background_thread currently supports pthread only
+Starting seekdb (OceanBase seekdb 1.4.0.0) source revision 1-fdb8363f64363819fcf2307be95bcd10a5a7e4ba.
+Change working directory to base dir. path='/Users/xiazihan/seekdb-work/data/ai-check/'
+The log file is in the directory: '/Users/xiazihan/seekdb-work/data/ai-check/log/'

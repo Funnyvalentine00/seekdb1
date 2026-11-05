@@ -1,0 +1,285 @@
+{
+ "platform": "linux x86_64 (legion WSL2)",
+ "baseline": "5bce9e0",
+ "candidate": "5bce9e0 + query patch + tokenize fast path",
+ "pairs": 3,
+ "metrics": {
+  "select1_avg_ms": {
+   "baseline": [
+    0.1723,
+    0.1749,
+    0.178
+   ],
+   "candidate": [
+    0.1744,
+    0.1748,
+    0.169
+   ],
+   "base_median": 0.1749,
+   "cand_median": 0.1744,
+   "improvement_pct": 0.28587764436821067,
+   "pair_improvement_pct": [
+    -1.218804410911196,
+    0.05717552887363578,
+    5.056179775280889
+   ]
+  },
+  "build_ik_all_sec": {
+   "baseline": [
+    3.349,
+    3.448,
+    3.344
+   ],
+   "candidate": [
+    3.35,
+    3.348,
+    3.343
+   ],
+   "base_median": 3.349,
+   "cand_median": 3.348,
+   "improvement_pct": 0.029859659599890533,
+   "pair_improvement_pct": [
+    -0.029859659599877273,
+    2.9002320185614874,
+    0.0299043062200924
+   ]
+  },
+  "build_ik_content_sec": {
+   "baseline": [
+    2.428,
+    2.428,
+    2.726
+   ],
+   "candidate": [
+    2.431,
+    2.428,
+    2.527
+   ],
+   "base_median": 2.428,
+   "cand_median": 2.431,
+   "improvement_pct": -0.12355848434926335,
+   "pair_improvement_pct": [
+    -0.12355848434926335,
+    0.0,
+    7.300073367571527
+   ]
+  },
+  "build_beng_en_sec": {
+   "baseline": [
+    1.426,
+    1.424,
+    1.524
+   ],
+   "candidate": [
+    1.423,
+    1.323,
+    1.425
+   ],
+   "base_median": 1.426,
+   "cand_median": 1.423,
+   "improvement_pct": 0.2103786816269209,
+   "pair_improvement_pct": [
+    0.2103786816269209,
+    7.092696629213482,
+    6.4960629921259825
+   ]
+  },
+  "tokenize_ik_avg_ms": {
+   "baseline": [
+    0.241,
+    0.2502,
+    0.2303
+   ],
+   "candidate": [
+    0.2271,
+    0.231,
+    0.2399
+   ],
+   "base_median": 0.241,
+   "cand_median": 0.231,
+   "improvement_pct": 4.149377593360988,
+   "pair_improvement_pct": [
+    5.767634854771782,
+    7.67386091127097,
+    -4.168475900998696
+   ]
+  },
+  "tokenize_beng_avg_ms": {
+   "baseline": [
+    0.1861,
+    0.1922,
+    0.1913
+   ],
+   "candidate": [
+    0.2038,
+    0.1849,
+    0.1918
+   ],
+   "base_median": 0.1913,
+   "cand_median": 0.1918,
+   "improvement_pct": -0.2613695765812862,
+   "pair_improvement_pct": [
+    -9.511015583019894,
+    3.7981269510926117,
+    -0.2613695765812862
+   ]
+  },
+  "query_cn_avg_ms": {
+   "baseline": [
+    1.1748,
+    1.2004,
+    1.2417
+   ],
+   "candidate": [
+    1.1874,
+    1.1092,
+    1.1279
+   ],
+   "base_median": 1.2004,
+   "cand_median": 1.1279,
+   "improvement_pct": 6.039653448850384,
+   "pair_improvement_pct": [
+    -1.0725229826353373,
+    7.59746751082972,
+    9.164854634774915
+   ]
+  },
+  "query_beng_avg_ms": {
+   "baseline": [
+    1.6411,
+    1.6083,
+    1.6426
+   ],
+   "candidate": [
+    1.5699,
+    1.5449,
+    1.5728
+   ],
+   "base_median": 1.6411,
+   "cand_median": 1.5699,
+   "improvement_pct": 4.338553409298637,
+   "pair_improvement_pct": [
+    4.338553409298637,
+    3.9420506124479338,
+    4.249360769511755
+   ]
+  },
+  "query_mixed_avg_ms": {
+   "baseline": [
+    1.4045,
+    1.3872,
+    1.3743
+   ],
+   "candidate": [
+    1.2755,
+    1.264,
+    1.22
+   ],
+   "base_median": 1.3872,
+   "cand_median": 1.264,
+   "improvement_pct": 8.881199538638983,
+   "pair_improvement_pct": [
+    9.184763260946955,
+    8.881199538638983,
+    11.227534017317915
+   ]
+  },
+  "query_limit_avg_ms": {
+   "baseline": [
+    1.457,
+    1.4375,
+    1.4464
+   ],
+   "candidate": [
+    1.4201,
+    1.3601,
+    1.409
+   ],
+   "base_median": 1.4464,
+   "cand_median": 1.409,
+   "improvement_pct": 2.585730088495567,
+   "pair_improvement_pct": [
+    2.5326012354152474,
+    5.384347826086951,
+    2.585730088495567
+   ]
+  }
+ },
+ "hits": {
+  "query_cn_hits": {
+   "expected": 8001,
+   "base": [
+    8001,
+    8001,
+    8001
+   ],
+   "cand": [
+    8001,
+    8001,
+    8001
+   ],
+   "passed": true
+  },
+  "query_beng_hits": {
+   "expected": 11000,
+   "base": [
+    11000,
+    11000,
+    11000
+   ],
+   "cand": [
+    11000,
+    11000,
+    11000
+   ],
+   "passed": true
+  },
+  "query_mixed_hits": {
+   "expected": 7332,
+   "base": [
+    7332,
+    7332,
+    7332
+   ],
+   "cand": [
+    7332,
+    7332,
+    7332
+   ],
+   "passed": true
+  },
+  "query_limit_hits": {
+   "expected": 20,
+   "base": [
+    20,
+    20,
+    20
+   ],
+   "cand": [
+    20,
+    20,
+    20
+   ],
+   "passed": true
+  }
+ },
+ "hits_all_passed": true,
+ "official_9_metrics": {
+  "build_ik_all_sec": 0.029859659599890533,
+  "build_ik_content_sec": -0.12355848434926335,
+  "build_beng_en_sec": 0.2103786816269209,
+  "tokenize_ik_avg_ms": 4.149377593360988,
+  "tokenize_beng_avg_ms": -0.2613695765812862,
+  "query_cn_avg_ms": 6.039653448850384,
+  "query_beng_avg_ms": 4.338553409298637,
+  "query_mixed_avg_ms": 8.881199538638983,
+  "query_limit_avg_ms": 2.585730088495567
+ },
+ "gate": {
+  "any_official_metric_regressed_gt_1pct": false
+ },
+ "baseline_commit_sha40": "5bce9e06d1281347ad61344e4b01fab9158c58a2",
+ "candidate_commit_sha40": "7accd1ace8ee5d035b3ef8aaf426c46b1d0a595e",
+ "branch": "feat/fts-clean-v5",
+ "provenance_note": "candidate binary built from 5bce9e0 + query patch + tokenize fast path; commit identifies the tokenize commit"
+}

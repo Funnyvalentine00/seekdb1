@@ -1,0 +1,231 @@
+{
+  "baseline_sha256": "ccb4c581bc1d58b380407e35e00942eb21c8e0fa229aafc0b6abe0edc92cbcbb",
+  "candidate_sha256": "89b018a03d229dd0e748104f7c094028e5f6c1d9fe6f81a6fce8aa0c4fc1ff06",
+  "pairs": 3,
+  "platform": "macOS arm64",
+  "skip_load": true,
+  "candidate_change": "fill_merge_heap + get_iter + binary merge comparator",
+  "metrics": {
+    "select1_avg_ms": {
+      "base_samples": [
+        0.0348,
+        0.035,
+        0.0347
+      ],
+      "cand_samples": [
+        0.0355,
+        0.035,
+        0.0374
+      ],
+      "base_median": 0.0348,
+      "cand_median": 0.0355,
+      "improvement_pct": -2.011494252873561,
+      "pair_improvement_pct": [
+        -2.011494252873561,
+        0.0,
+        -7.780979827089339
+      ]
+    },
+    "tokenize_ik_avg_ms": {
+      "base_samples": [
+        0.0747,
+        0.0745,
+        0.0741
+      ],
+      "cand_samples": [
+        0.0746,
+        0.0743,
+        0.0768
+      ],
+      "base_median": 0.0745,
+      "cand_median": 0.0746,
+      "improvement_pct": -0.13422818791946695,
+      "pair_improvement_pct": [
+        0.13386880856760758,
+        0.26845637583891524,
+        -3.6437246963562675
+      ]
+    },
+    "tokenize_beng_avg_ms": {
+      "base_samples": [
+        0.0491,
+        0.0483,
+        0.0485
+      ],
+      "cand_samples": [
+        0.0487,
+        0.0483,
+        0.0488
+      ],
+      "base_median": 0.0485,
+      "cand_median": 0.0487,
+      "improvement_pct": -0.41237113402061604,
+      "pair_improvement_pct": [
+        0.814663951120158,
+        0.0,
+        -0.6185567010309312
+      ]
+    },
+    "query_cn_avg_ms": {
+      "base_samples": [
+        0.8377,
+        0.84,
+        0.8369
+      ],
+      "cand_samples": [
+        0.792,
+        0.7855,
+        0.7879
+      ],
+      "base_median": 0.8377,
+      "cand_median": 0.7879,
+      "improvement_pct": 5.9448489912856575,
+      "pair_improvement_pct": [
+        5.455413632565353,
+        6.488095238095237,
+        5.854940853148516
+      ]
+    },
+    "query_beng_avg_ms": {
+      "base_samples": [
+        1.2212,
+        1.2337,
+        1.225
+      ],
+      "cand_samples": [
+        1.1444,
+        1.1339,
+        1.215
+      ],
+      "base_median": 1.225,
+      "cand_median": 1.1444,
+      "improvement_pct": 6.579591836734694,
+      "pair_improvement_pct": [
+        6.288896167703896,
+        8.089486909297245,
+        0.8163265306122455
+      ]
+    },
+    "query_mixed_avg_ms": {
+      "base_samples": [
+        0.9305,
+        0.9427,
+        0.9451
+      ],
+      "cand_samples": [
+        0.868,
+        0.8716,
+        0.8852
+      ],
+      "base_median": 0.9427,
+      "cand_median": 0.8716,
+      "improvement_pct": 7.542166118595517,
+      "pair_improvement_pct": [
+        6.716818914562063,
+        7.542166118595517,
+        6.337953655697816
+      ]
+    },
+    "query_limit_avg_ms": {
+      "base_samples": [
+        1.0521,
+        1.0573,
+        1.0833
+      ],
+      "cand_samples": [
+        1.0094,
+        1.0059,
+        1.0392
+      ],
+      "base_median": 1.0573,
+      "cand_median": 1.0094,
+      "improvement_pct": 4.530407642107239,
+      "pair_improvement_pct": [
+        4.0585495675316,
+        4.86143951574765,
+        4.070894489061205
+      ]
+    }
+  },
+  "hits": {
+    "query_cn_hits": {
+      "expected": 8001,
+      "baseline": [
+        8001,
+        8001,
+        8001
+      ],
+      "candidate": [
+        8001,
+        8001,
+        8001
+      ],
+      "passed": true
+    },
+    "query_beng_hits": {
+      "expected": 11000,
+      "baseline": [
+        11000,
+        11000,
+        11000
+      ],
+      "candidate": [
+        11000,
+        11000,
+        11000
+      ],
+      "passed": true
+    },
+    "query_mixed_hits": {
+      "expected": 7332,
+      "baseline": [
+        7332,
+        7332,
+        7332
+      ],
+      "candidate": [
+        7332,
+        7332,
+        7332
+      ],
+      "passed": true
+    },
+    "query_limit_hits": {
+      "expected": 20,
+      "baseline": [
+        20,
+        20,
+        20
+      ],
+      "candidate": [
+        20,
+        20,
+        20
+      ],
+      "passed": true
+    }
+  },
+  "rss_kb": {
+    "baseline": {
+      "samples": [
+        318880,
+        318528,
+        316864
+      ],
+      "mean": 318090.6666666667
+    },
+    "candidate": {
+      "samples": [
+        313984,
+        317888,
+        314544
+      ],
+      "mean": 315472
+    }
+  },
+  "hits_all_passed": true,
+  "gate": {
+    "max_regression_pct": 1.0,
+    "any_metric_regressed_gt_1pct": true
+  }
+}

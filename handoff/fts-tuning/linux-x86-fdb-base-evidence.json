@@ -1,0 +1,270 @@
+{
+ "platform": "linux x86_64 (legion WSL2)",
+ "baseline": "5bce9e0",
+ "comparison": "fdb8363 (integration base)",
+ "pairs": 3,
+ "metrics": {
+  "select1_avg_ms": {
+   "base": [
+    0.1923,
+    0.1678,
+    0.171
+   ],
+   "fdb": [
+    0.1774,
+    0.1675,
+    0.185
+   ],
+   "base_median": 0.171,
+   "fdb_median": 0.1774,
+   "improvement_pct": -3.7426900584795253,
+   "pair_improvement_pct": [
+    7.748309932397294,
+    0.1787842669845022,
+    -8.187134502923966
+   ]
+  },
+  "build_ik_all_sec": {
+   "base": [
+    3.35,
+    3.347,
+    3.353
+   ],
+   "fdb": [
+    3.352,
+    3.347,
+    3.348
+   ],
+   "base_median": 3.35,
+   "fdb_median": 3.348,
+   "improvement_pct": 0.059701492537320114,
+   "pair_improvement_pct": [
+    -0.059701492537306854,
+    0.0,
+    0.14912019087385436
+   ]
+  },
+  "build_ik_content_sec": {
+   "base": [
+    2.434,
+    2.428,
+    2.531
+   ],
+   "fdb": [
+    2.425,
+    2.429,
+    2.529
+   ],
+   "base_median": 2.434,
+   "fdb_median": 2.429,
+   "improvement_pct": 0.2054231717337854,
+   "pair_improvement_pct": [
+    0.3697617091208028,
+    -0.04118616144974835,
+    0.07902015013829411
+   ]
+  },
+  "build_beng_en_sec": {
+   "base": [
+    1.426,
+    1.425,
+    1.428
+   ],
+   "fdb": [
+    1.427,
+    1.424,
+    1.545
+   ],
+   "base_median": 1.426,
+   "fdb_median": 1.427,
+   "improvement_pct": -0.07012622720898401,
+   "pair_improvement_pct": [
+    -0.07012622720898401,
+    0.07017543859649908,
+    -8.193277310924369
+   ]
+  },
+  "tokenize_ik_avg_ms": {
+   "base": [
+    0.2413,
+    0.2518,
+    0.2268
+   ],
+   "fdb": [
+    0.2372,
+    0.2375,
+    0.233
+   ],
+   "base_median": 0.2413,
+   "fdb_median": 0.2372,
+   "improvement_pct": 1.6991297140488988,
+   "pair_improvement_pct": [
+    1.6991297140488988,
+    5.679110405083413,
+    -2.733686067019405
+   ]
+  },
+  "tokenize_beng_avg_ms": {
+   "base": [
+    0.2146,
+    0.2045,
+    0.1938
+   ],
+   "fdb": [
+    0.202,
+    0.205,
+    0.1986
+   ],
+   "base_median": 0.2045,
+   "fdb_median": 0.202,
+   "improvement_pct": 1.22249388753055,
+   "pair_improvement_pct": [
+    5.871388630009319,
+    -0.24449877750611268,
+    -2.476780185758513
+   ]
+  },
+  "query_cn_avg_ms": {
+   "base": [
+    1.167,
+    1.1585,
+    1.1549
+   ],
+   "fdb": [
+    1.1566,
+    1.1995,
+    1.1877
+   ],
+   "base_median": 1.1585,
+   "fdb_median": 1.1877,
+   "improvement_pct": -2.5205006473888556,
+   "pair_improvement_pct": [
+    0.8911739502999113,
+    -3.5390591281829886,
+    -2.8400727335700005
+   ]
+  },
+  "query_beng_avg_ms": {
+   "base": [
+    1.6544,
+    1.6763,
+    1.627
+   ],
+   "fdb": [
+    1.6355,
+    1.6773,
+    1.6562
+   ],
+   "base_median": 1.6544,
+   "fdb_median": 1.6562,
+   "improvement_pct": -0.10880077369437872,
+   "pair_improvement_pct": [
+    1.1424081237911108,
+    -0.05965519298455599,
+    -1.7947141979102577
+   ]
+  },
+  "query_mixed_avg_ms": {
+   "base": [
+    1.3315,
+    1.3326,
+    1.3214
+   ],
+   "fdb": [
+    1.3357,
+    1.3577,
+    1.3472
+   ],
+   "base_median": 1.3315,
+   "fdb_median": 1.3472,
+   "improvement_pct": -1.179121291776196,
+   "pair_improvement_pct": [
+    -0.3154337213668948,
+    -1.8835359447696158,
+    -1.952474648100503
+   ]
+  },
+  "query_limit_avg_ms": {
+   "base": [
+    1.4262,
+    1.4503,
+    1.4226
+   ],
+   "fdb": [
+    1.3883,
+    1.4932,
+    1.4875
+   ],
+   "base_median": 1.4262,
+   "fdb_median": 1.4875,
+   "improvement_pct": -4.298134903940551,
+   "pair_improvement_pct": [
+    2.6574113027625734,
+    -2.958008687857696,
+    -4.56206945030226
+   ]
+  }
+ },
+ "hits": {
+  "query_cn_hits": {
+   "expected": 8001,
+   "base": [
+    8001,
+    8001,
+    8001
+   ],
+   "fdb": [
+    8001,
+    8001,
+    8001
+   ],
+   "passed": true
+  },
+  "query_beng_hits": {
+   "expected": 11000,
+   "base": [
+    11000,
+    11000,
+    11000
+   ],
+   "fdb": [
+    11000,
+    11000,
+    11000
+   ],
+   "passed": true
+  },
+  "query_mixed_hits": {
+   "expected": 7332,
+   "base": [
+    7332,
+    7332,
+    7332
+   ],
+   "fdb": [
+    7332,
+    7332,
+    7332
+   ],
+   "passed": true
+  },
+  "query_limit_hits": {
+   "expected": 20,
+   "base": [
+    20,
+    20,
+    20
+   ],
+   "fdb": [
+    20,
+    20,
+    20
+   ],
+   "passed": true
+  }
+ },
+ "hits_all_passed": true,
+ "baseline_commit_sha40": "5bce9e06d1281347ad61344e4b01fab9158c58a2",
+ "comparison_commit_sha40": "fdb8363f64363819fcf2307be95bcd10a5a7e4ba",
+ "branch": "feat/fts-clean-v5"
+}

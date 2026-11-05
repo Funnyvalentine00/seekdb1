@@ -1,0 +1,231 @@
+{
+  "baseline_sha256": "ccb4c581bc1d58b380407e35e00942eb21c8e0fa229aafc0b6abe0edc92cbcbb",
+  "candidate_sha256": "87ab49f44f3d23dc1553ce8c3ebc9110c3ef84ec5a0d15ea5da9e73b159c4f3e",
+  "pairs": 3,
+  "platform": "macOS arm64",
+  "skip_load": true,
+  "candidate_change": "fill_merge_heap + get_iter + merge comparator + DaaT token comparator",
+  "metrics": {
+    "select1_avg_ms": {
+      "base_samples": [
+        0.0336,
+        0.0336,
+        0.0339
+      ],
+      "cand_samples": [
+        0.0349,
+        0.0338,
+        0.0335
+      ],
+      "base_median": 0.0336,
+      "cand_median": 0.0338,
+      "improvement_pct": -0.5952380952380917,
+      "pair_improvement_pct": [
+        -3.8690476190476266,
+        -0.5952380952380917,
+        1.1799410029498454
+      ]
+    },
+    "tokenize_ik_avg_ms": {
+      "base_samples": [
+        0.0713,
+        0.0719,
+        0.0719
+      ],
+      "cand_samples": [
+        0.0731,
+        0.0714,
+        0.0722
+      ],
+      "base_median": 0.0719,
+      "cand_median": 0.0722,
+      "improvement_pct": -0.41724617524338625,
+      "pair_improvement_pct": [
+        -2.524544179523136,
+        0.6954102920723232,
+        -0.41724617524338625
+      ]
+    },
+    "tokenize_beng_avg_ms": {
+      "base_samples": [
+        0.0462,
+        0.0467,
+        0.046
+      ],
+      "cand_samples": [
+        0.0461,
+        0.0459,
+        0.0467
+      ],
+      "base_median": 0.0462,
+      "cand_median": 0.0461,
+      "improvement_pct": 0.21645021645020765,
+      "pair_improvement_pct": [
+        0.21645021645020765,
+        1.7130620985010603,
+        -1.521739130434781
+      ]
+    },
+    "query_cn_avg_ms": {
+      "base_samples": [
+        0.8137,
+        0.8306,
+        0.828
+      ],
+      "cand_samples": [
+        0.7921,
+        0.7776,
+        0.7838
+      ],
+      "base_median": 0.828,
+      "cand_median": 0.7838,
+      "improvement_pct": 5.3381642512077185,
+      "pair_improvement_pct": [
+        2.6545409856212303,
+        6.3809294485913854,
+        5.3381642512077185
+      ]
+    },
+    "query_beng_avg_ms": {
+      "base_samples": [
+        1.2032,
+        1.2175,
+        1.2099
+      ],
+      "cand_samples": [
+        1.1111,
+        1.1153,
+        1.1146
+      ],
+      "base_median": 1.2099,
+      "cand_median": 1.1146,
+      "improvement_pct": 7.87668402347301,
+      "pair_improvement_pct": [
+        7.6545877659574515,
+        8.394250513347028,
+        7.87668402347301
+      ]
+    },
+    "query_mixed_avg_ms": {
+      "base_samples": [
+        0.9236,
+        0.9274,
+        0.9304
+      ],
+      "cand_samples": [
+        0.8579,
+        0.8618,
+        0.857
+      ],
+      "base_median": 0.9274,
+      "cand_median": 0.8579,
+      "improvement_pct": 7.494069441449214,
+      "pair_improvement_pct": [
+        7.113469034213943,
+        7.07353892602976,
+        7.889079965606192
+      ]
+    },
+    "query_limit_avg_ms": {
+      "base_samples": [
+        1.0329,
+        1.0341,
+        1.0343
+      ],
+      "cand_samples": [
+        0.9158,
+        0.9184,
+        0.9144
+      ],
+      "base_median": 1.0341,
+      "cand_median": 0.9158,
+      "improvement_pct": 11.439899429455572,
+      "pair_improvement_pct": [
+        11.337012295478747,
+        11.188473068368632,
+        11.59238132069999
+      ]
+    }
+  },
+  "hits": {
+    "query_cn_hits": {
+      "expected": 8001,
+      "baseline": [
+        8001,
+        8001,
+        8001
+      ],
+      "candidate": [
+        8001,
+        8001,
+        8001
+      ],
+      "passed": true
+    },
+    "query_beng_hits": {
+      "expected": 11000,
+      "baseline": [
+        11000,
+        11000,
+        11000
+      ],
+      "candidate": [
+        11000,
+        11000,
+        11000
+      ],
+      "passed": true
+    },
+    "query_mixed_hits": {
+      "expected": 7332,
+      "baseline": [
+        7332,
+        7332,
+        7332
+      ],
+      "candidate": [
+        7332,
+        7332,
+        7332
+      ],
+      "passed": true
+    },
+    "query_limit_hits": {
+      "expected": 20,
+      "baseline": [
+        20,
+        20,
+        20
+      ],
+      "candidate": [
+        20,
+        20,
+        20
+      ],
+      "passed": true
+    }
+  },
+  "rss_kb": {
+    "baseline": {
+      "samples": [
+        439488,
+        395616,
+        394432
+      ],
+      "mean": 409845.3333333333
+    },
+    "candidate": {
+      "samples": [
+        385200,
+        398912,
+        394848
+      ],
+      "mean": 392986.6666666667
+    }
+  },
+  "hits_all_passed": true,
+  "gate": {
+    "max_regression_pct": 1.0,
+    "any_metric_regressed_gt_1pct": false
+  }
+}

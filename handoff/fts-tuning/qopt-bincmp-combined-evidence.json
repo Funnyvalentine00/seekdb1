@@ -1,0 +1,377 @@
+{
+ "baseline_sha256": "ccb4c581bc1d58b380407e35e00942eb21c8e0fa229aafc0b6abe0edc92cbcbb",
+ "candidate_sha256": "89b018a03d229dd0e748104f7c094028e5f6c1d9fe6f81a6fce8aa0c4fc1ff06",
+ "candidate_changes": [
+  "fill_merge_heap raw array access",
+  "ObSRBMWIterImpl::get_iter raw array access",
+  "ObSRMergeCmp binary doc-id memcmp fast path"
+ ],
+ "reports_baseline": [
+  "/Users/xiazihan/seekdb-work/results/qopt-b1-base.txt",
+  "/Users/xiazihan/seekdb-work/results/qopt-b2-base.txt",
+  "/Users/xiazihan/seekdb-work/results/qopt-b3-base.txt",
+  "/Users/xiazihan/seekdb-work/results/qopt-bfull-base.txt"
+ ],
+ "reports_candidate": [
+  "/Users/xiazihan/seekdb-work/results/qopt-b1-cand.txt",
+  "/Users/xiazihan/seekdb-work/results/qopt-b2-cand.txt",
+  "/Users/xiazihan/seekdb-work/results/qopt-b3-cand.txt",
+  "/Users/xiazihan/seekdb-work/results/qopt-bfull-cand.txt"
+ ],
+ "metrics_median_4_reports": {
+  "select1_avg_ms": {
+   "baseline_samples": [
+    0.0348,
+    0.035,
+    0.0347,
+    0.0355
+   ],
+   "candidate_samples": [
+    0.0355,
+    0.035,
+    0.0374,
+    0.0346
+   ],
+   "baseline_median": 0.0349,
+   "candidate_median": 0.035250000000000004,
+   "improvement_pct": -1.0028653295129026
+  },
+  "tokenize_ik_avg_ms": {
+   "baseline_samples": [
+    0.0747,
+    0.0745,
+    0.0741,
+    0.0749
+   ],
+   "candidate_samples": [
+    0.0746,
+    0.0743,
+    0.0768,
+    0.0756
+   ],
+   "baseline_median": 0.0746,
+   "candidate_median": 0.0751,
+   "improvement_pct": -0.6702412868632714
+  },
+  "tokenize_beng_avg_ms": {
+   "baseline_samples": [
+    0.0491,
+    0.0483,
+    0.0485,
+    0.0476
+   ],
+   "candidate_samples": [
+    0.0487,
+    0.0483,
+    0.0488,
+    0.0477
+   ],
+   "baseline_median": 0.0484,
+   "candidate_median": 0.0485,
+   "improvement_pct": -0.2066115702479398
+  },
+  "query_cn_avg_ms": {
+   "baseline_samples": [
+    0.8377,
+    0.84,
+    0.8369,
+    0.8492
+   ],
+   "candidate_samples": [
+    0.792,
+    0.7855,
+    0.7879,
+    0.7948
+   ],
+   "baseline_median": 0.83885,
+   "candidate_median": 0.78995,
+   "improvement_pct": 5.829409310365374
+  },
+  "query_beng_avg_ms": {
+   "baseline_samples": [
+    1.2212,
+    1.2337,
+    1.225,
+    1.2498
+   ],
+   "candidate_samples": [
+    1.1444,
+    1.1339,
+    1.215,
+    1.1227
+   ],
+   "baseline_median": 1.2293500000000002,
+   "candidate_median": 1.1391499999999999,
+   "improvement_pct": 7.337210721112805
+  },
+  "query_mixed_avg_ms": {
+   "baseline_samples": [
+    0.9305,
+    0.9427,
+    0.9451,
+    0.9274
+   ],
+   "candidate_samples": [
+    0.868,
+    0.8716,
+    0.8852,
+    0.8603
+   ],
+   "baseline_median": 0.9366,
+   "candidate_median": 0.8698,
+   "improvement_pct": 7.132180226350626
+  },
+  "query_limit_avg_ms": {
+   "baseline_samples": [
+    1.0521,
+    1.0573,
+    1.0833,
+    1.0492
+   ],
+   "candidate_samples": [
+    1.0094,
+    1.0059,
+    1.0392,
+    0.9957
+   ],
+   "baseline_median": 1.0547,
+   "candidate_median": 1.00765,
+   "improvement_pct": 4.46098416611359
+  }
+ },
+ "build": {
+  "build_ik_all_sec": {
+   "baseline_full_samples": [
+    2.357,
+    2.249,
+    2.353
+   ],
+   "baseline_full_median": 2.353,
+   "candidate_full_samples": [
+    2.352
+   ],
+   "candidate_full_median": 2.352,
+   "improvement_vs_median_pct": 0.042498937526576026,
+   "paired_last_improvement_pct": 0.042498937526576026,
+   "baseline_aa_range_pct": 4.589885252868682
+  },
+  "build_ik_content_sec": {
+   "baseline_full_samples": [
+    1.741,
+    1.741,
+    1.84
+   ],
+   "baseline_full_median": 1.741,
+   "candidate_full_samples": [
+    1.744
+   ],
+   "candidate_full_median": 1.744,
+   "improvement_vs_median_pct": -0.17231476163124015,
+   "paired_last_improvement_pct": 5.217391304347831,
+   "baseline_aa_range_pct": 5.68638713383113
+  },
+  "build_beng_en_sec": {
+   "baseline_full_samples": [
+    1.032,
+    1.036,
+    0.935
+   ],
+   "baseline_full_median": 1.032,
+   "candidate_full_samples": [
+    1.035
+   ],
+   "candidate_full_median": 1.035,
+   "improvement_vs_median_pct": -0.2906976744185942,
+   "paired_last_improvement_pct": -10.695187165775385,
+   "baseline_aa_range_pct": 9.786821705426355
+  }
+ },
+ "hits": {
+  "query_cn_hits": {
+   "expected": 8001,
+   "baseline": [
+    8001,
+    8001,
+    8001,
+    8001
+   ],
+   "candidate": [
+    8001,
+    8001,
+    8001,
+    8001
+   ],
+   "passed": true
+  },
+  "query_beng_hits": {
+   "expected": 11000,
+   "baseline": [
+    11000,
+    11000,
+    11000,
+    11000
+   ],
+   "candidate": [
+    11000,
+    11000,
+    11000,
+    11000
+   ],
+   "passed": true
+  },
+  "query_mixed_hits": {
+   "expected": 7332,
+   "baseline": [
+    7332,
+    7332,
+    7332,
+    7332
+   ],
+   "candidate": [
+    7332,
+    7332,
+    7332,
+    7332
+   ],
+   "passed": true
+  },
+  "query_limit_hits": {
+   "expected": 20,
+   "baseline": [
+    20,
+    20,
+    20,
+    20
+   ],
+   "candidate": [
+    20,
+    20,
+    20,
+    20
+   ],
+   "passed": true
+  }
+ },
+ "hits_all_passed": true,
+ "official_9_metrics": {
+  "tokenize_ik_avg_ms": {
+   "baseline_samples": [
+    0.0747,
+    0.0745,
+    0.0741,
+    0.0749
+   ],
+   "candidate_samples": [
+    0.0746,
+    0.0743,
+    0.0768,
+    0.0756
+   ],
+   "baseline_median": 0.0746,
+   "candidate_median": 0.0751,
+   "improvement_pct": -0.6702412868632714
+  },
+  "tokenize_beng_avg_ms": {
+   "baseline_samples": [
+    0.0491,
+    0.0483,
+    0.0485,
+    0.0476
+   ],
+   "candidate_samples": [
+    0.0487,
+    0.0483,
+    0.0488,
+    0.0477
+   ],
+   "baseline_median": 0.0484,
+   "candidate_median": 0.0485,
+   "improvement_pct": -0.2066115702479398
+  },
+  "query_cn_avg_ms": {
+   "baseline_samples": [
+    0.8377,
+    0.84,
+    0.8369,
+    0.8492
+   ],
+   "candidate_samples": [
+    0.792,
+    0.7855,
+    0.7879,
+    0.7948
+   ],
+   "baseline_median": 0.83885,
+   "candidate_median": 0.78995,
+   "improvement_pct": 5.829409310365374
+  },
+  "query_beng_avg_ms": {
+   "baseline_samples": [
+    1.2212,
+    1.2337,
+    1.225,
+    1.2498
+   ],
+   "candidate_samples": [
+    1.1444,
+    1.1339,
+    1.215,
+    1.1227
+   ],
+   "baseline_median": 1.2293500000000002,
+   "candidate_median": 1.1391499999999999,
+   "improvement_pct": 7.337210721112805
+  },
+  "query_mixed_avg_ms": {
+   "baseline_samples": [
+    0.9305,
+    0.9427,
+    0.9451,
+    0.9274
+   ],
+   "candidate_samples": [
+    0.868,
+    0.8716,
+    0.8852,
+    0.8603
+   ],
+   "baseline_median": 0.9366,
+   "candidate_median": 0.8698,
+   "improvement_pct": 7.132180226350626
+  },
+  "query_limit_avg_ms": {
+   "baseline_samples": [
+    1.0521,
+    1.0573,
+    1.0833,
+    1.0492
+   ],
+   "candidate_samples": [
+    1.0094,
+    1.0059,
+    1.0392,
+    0.9957
+   ],
+   "baseline_median": 1.0547,
+   "candidate_median": 1.00765,
+   "improvement_pct": 4.46098416611359
+  },
+  "build_ik_all_sec": {
+   "improvement_pct": 0.042498937526576026
+  },
+  "build_ik_content_sec": {
+   "improvement_pct": -0.17231476163124015
+  },
+  "build_beng_en_sec": {
+   "improvement_pct": -0.2906976744185942
+  }
+ },
+ "gate": {
+  "max_regression_pct": 1.0,
+  "any_official_metric_regressed_gt_1pct": false
+ },
+ "baseline_commit_sha40": "fdb8363f64363819fcf2307be95bcd10a5a7e4ba",
+ "candidate_commit_sha40": "fdb8363f64363819fcf2307be95bcd10a5a7e4ba",
+ "branch": "feat/fts-clean-v5",
+ "provenance_note": "candidate source is an uncommitted working-tree patch on fdb8363"
+}

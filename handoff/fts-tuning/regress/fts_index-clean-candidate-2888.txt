@@ -1,0 +1,16 @@
+PASS basic_dml_sequel
+FAIL basic_dml (rc=1)
+PASS cn_word
+PASS create_fts_index_afterward
+PASS create_table_with_fts_index
+PASS domain_id_merge_with_compare_null
+PASS drop_index
+PASS index_view
+PASS load_data
+PASS offline_ddl_with_fts_index
+PASS online_ddl_on_table_with_fts_index
+PASS parser_properties
+FAIL partitioned_simple_query (rc=1)
+PASS simple_query
+PASS tokenize_function
+pass=13 fail=2

@@ -1,0 +1,204 @@
+diff --git a/src/sql/engine/expr/ob_expr_tokenize.cpp b/src/sql/engine/expr/ob_expr_tokenize.cpp
+index ad9500996..1f75d4b66 100644
+--- a/src/sql/engine/expr/ob_expr_tokenize.cpp
++++ b/src/sql/engine/expr/ob_expr_tokenize.cpp
+@@ -212,7 +212,7 @@ int ObExprTokenize::parse_param(const ObExpr &expr,
+   } else if (OB_FAIL(parse_fulltext(expr, ctx, param))) {
+   } else if (OB_FAIL(parse_parser_name(expr, ctx, param))) {
+   } else if (OB_FAIL(parse_parser_properties(expr, ctx, temp_allocator, param))) {
+-  } else if (OB_FAIL(param.reform_parser_properties(param.properties_))) {
++  } else if (expr.arg_cnt_ > 2 && OB_FAIL(param.reform_parser_properties(param.properties_))) {
+   } else if (OB_FAIL(param.try_load_dictionary_for_ik())) {
+   }
+   return ret;
+diff --git a/src/storage/fts/ob_fts_parser_helper.cpp b/src/storage/fts/ob_fts_parser_helper.cpp
+index 2c92ee45d..9a1bdcb1d 100644
+--- a/src/storage/fts/ob_fts_parser_helper.cpp
++++ b/src/storage/fts/ob_fts_parser_helper.cpp
+@@ -324,6 +324,26 @@ ObFTParseHelper::~ObFTParseHelper()
+   reset();
+ }
+ 
++static void set_default_parser_property(
++    const ObFTParser &parser,
++    ObFTParserProperty &property)
++{
++  // Mirrors parse_for_parser_helper(parser, empty) without the JSON round trip.
++  if (parser.is_ik()) {
++    property.dict_table_ = ObString(ObFTSLiteral::CONFIG_NAME_DICT_TABLE);
++    property.stopword_table_ = ObString(ObFTSLiteral::CONFIG_NAME_STOPWORD_TABLE);
++    property.quantifier_table_ = ObString(ObFTSLiteral::CONFIG_NAME_QUANTIFIER_TABLE);
++  } else if (parser.is_space() || parser.is_beng()) {
++    property.min_token_size_ = ObFTSLiteral::FT_DEFAULT_MIN_TOKEN_SIZE;
++    property.max_token_size_ = ObFTSLiteral::FT_DEFAULT_MAX_TOKEN_SIZE;
++  } else if (parser.is_ngram()) {
++    property.ngram_token_size_ = ObFTSLiteral::FT_DEFAULT_NGRAM_TOKEN_SIZE;
++  } else if (parser.is_ngram2()) {
++    property.min_ngram_token_size_ = ObFTSLiteral::FT_DEFAULT_MIN_NGRAM_SIZE;
++    property.max_ngram_token_size_ = ObFTSLiteral::FT_DEFAULT_MAX_NGRAM_SIZE;
++  }
++}
++
+ int ObFTParseHelper::init(
+     common::ObIAllocator *allocator,
+     const common::ObString &parser_name,
+@@ -335,7 +355,10 @@ int ObFTParseHelper::init(
+   } else if (OB_ISNULL(allocator) || OB_UNLIKELY(parser_name.empty())) {
+     ret = OB_INVALID_ARGUMENT;
+   } else if (OB_FAIL(parser_name_.parse_from_str(parser_name.ptr(), parser_name.length()))) {
+-  } else if (OB_FAIL(parser_property_.parse_for_parser_helper(parser_name_, parser_properties))) {
++  } else if (!parser_properties.empty()
++             && OB_FAIL(parser_property_.parse_for_parser_helper(parser_name_, parser_properties))) {
++  } else if (parser_properties.empty()
++             && FALSE_IT(set_default_parser_property(parser_name_, parser_property_))) {
+   } else if (OB_FAIL(parser_name_.get_desc(parser_desc_))) {
+   } else if (OB_ISNULL(parser_desc_)) {
+     ret = OB_ERR_UNEXPECTED;
+diff --git a/src/storage/retrieval/ob_sparse_daat_iter.cpp b/src/storage/retrieval/ob_sparse_daat_iter.cpp
+index fd8e2993f..19887bf9d 100644
+--- a/src/storage/retrieval/ob_sparse_daat_iter.cpp
++++ b/src/storage/retrieval/ob_sparse_daat_iter.cpp
+@@ -17,6 +17,7 @@
+ #define USING_LOG_PREFIX STORAGE
+ 
+ #include "ob_sparse_daat_iter.h"
++#include <string.h>
+ 
+ namespace oceanbase
+ {
+@@ -25,6 +26,7 @@ namespace storage
+ 
+ ObSRMergeCmp::ObSRMergeCmp()
+   : cmp_func_(nullptr),
++    is_binary_(false),
+     iter_ids_(nullptr),
+     is_inited_(false)
+ {
+@@ -44,6 +46,7 @@ int ObSRMergeCmp::init(
+     if (OB_ISNULL(cmp_func_)) {
+       ret = OB_ERR_UNEXPECTED;
+     } else {
++      is_binary_ = common::CS_TYPE_BINARY == id_meta.cs_type_ && ob_is_string_type(id_meta.type_);
+       is_inited_ = true;
+     }
+   }
+@@ -58,6 +61,25 @@ int ObSRMergeCmp::cmp(
+   int ret = OB_SUCCESS;
+   if (IS_NOT_INIT) {
+     ret = OB_NOT_INIT;
++  } else if (is_binary_) {
++    const ObDatum &l_datum = get_id_datum(l.iter_idx_);
++    const ObDatum &r_datum = get_id_datum(r.iter_idx_);
++    if (OB_UNLIKELY(l_datum.is_null()) || OB_UNLIKELY(r_datum.is_null())) {
++      int tmp_ret = 0;
++      if (OB_FAIL(cmp_func_(l_datum, r_datum, tmp_ret, nullptr))) {
++      } else {
++        cmp_ret = tmp_ret;
++      }
++    } else {
++      const int64_t l_len = l_datum.len_;
++      const int64_t r_len = r_datum.len_;
++      const int64_t min_len = l_len < r_len ? l_len : r_len;
++      int c = min_len > 0 ? memcmp(l_datum.ptr_, r_datum.ptr_, min_len) : 0;
++      if (0 == c) {
++        c = l_len > r_len ? 1 : (l_len < r_len ? -1 : 0);
++      }
++      cmp_ret = c > 0 ? 1 : (c < 0 ? -1 : 0);
++    }
+   } else {
+     int tmp_ret = 0;
+     if (OB_FAIL(cmp_func_(
+diff --git a/src/storage/retrieval/ob_sparse_daat_iter.h b/src/storage/retrieval/ob_sparse_daat_iter.h
+index 11fdd0bdd..29e5dd4c7 100644
+--- a/src/storage/retrieval/ob_sparse_daat_iter.h
++++ b/src/storage/retrieval/ob_sparse_daat_iter.h
+@@ -54,6 +54,7 @@ private:
+   }
+ private:
+   common::ObDatumCmpFuncType cmp_func_;
++  bool is_binary_;
+   // TODO: if memory lifetime of docid datum is guaranteed by dim_iters, we can use pointer to datum directly
+   //       and avoid deep copy into merge heap here
+   const ObFixedArray<const ObDatum *, ObIAllocator> *iter_ids_;
+diff --git a/src/storage/retrieval/ob_text_retrieval_token_iter.cpp b/src/storage/retrieval/ob_text_retrieval_token_iter.cpp
+index db785b0ce..3985d9022 100644
+--- a/src/storage/retrieval/ob_text_retrieval_token_iter.cpp
++++ b/src/storage/retrieval/ob_text_retrieval_token_iter.cpp
+@@ -17,6 +17,7 @@
+ #define USING_LOG_PREFIX STORAGE
+ 
+ #include "ob_text_retrieval_token_iter.h"
++#include <string.h>
+ #include "query/das/ob_das_iter_access.h"
+ #include "share/rc/ob_server_runtime.h"
+ #include "query/engine/expr/ob_expr_bm25.h"
+@@ -413,6 +414,7 @@ ObTextRetrievalDaaTTokenIter::ObTextRetrievalDaaTTokenIter()
+     relevance_(),
+     doc_id_(),
+     cmp_func_(nullptr),
++    cmp_is_binary_(false),
+     is_inited_(false)
+ {
+ }
+@@ -436,6 +438,7 @@ int ObTextRetrievalDaaTTokenIter::init(const ObTextRetrievalScanIterParam &iter_
+       max_batch_size_ = OB_MAX(iter_param.eval_ctx_->max_batch_size_, 1);
+       common::ObDatumBasicFuncs *basic_funcs = ObDatumFuncs::get_basic_func(inv_scan_domain_id_col_->datum_meta_.type_, CS_TYPE_BINARY);
+       cmp_func_ = basic_funcs->null_first_cmp_;
++      cmp_is_binary_ = nullptr != cmp_func_ && ob_is_string_type(inv_scan_domain_id_col_->datum_meta_.type_);
+       if (OB_ISNULL(cmp_func_)) {
+         ret = OB_ERR_UNEXPECTED;
+       } else if (FALSE_IT(relevance_.set_allocator(allocator_))) {
+@@ -545,14 +548,29 @@ int ObTextRetrievalDaaTTokenIter::advance_to(const ObDatum &id_datum)
+   int ret = OB_SUCCESS;
+   int result = 0;
+   bool find = false;
++  auto cmp_ids = [this](const ObDatum &lhs, const ObDatum &rhs, int &cmp_ret) -> int {
++    int ret = OB_SUCCESS;
++    if (OB_LIKELY(cmp_is_binary_) && OB_LIKELY(!lhs.is_null()) && OB_LIKELY(!rhs.is_null())) {
++      const int64_t lhs_len = lhs.len_;
++      const int64_t rhs_len = rhs.len_;
++      const int64_t min_len = lhs_len < rhs_len ? lhs_len : rhs_len;
++      int c = min_len > 0 ? memcmp(lhs.ptr_, rhs.ptr_, min_len) : 0;
++      if (0 == c) {
++        c = lhs_len > rhs_len ? 1 : (lhs_len < rhs_len ? -1 : 0);
++      }
++      cmp_ret = c > 0 ? 1 : (c < 0 ? -1 : 0);
++    } else {
++      ret = cmp_func_(lhs, rhs, cmp_ret, nullptr);
++    }
++    return ret;
++  };
+ 
+   if (cur_idx_ < 0) {
+     ret = OB_ERR_UNEXPECTED;
+   }
+   while (OB_SUCC(ret) && !find) {
+     if (cur_idx_ < count_) {
+-      if (OB_FAIL(cmp_func_(
+-              id_datum, doc_id_[cur_idx_].get_datum(), result, nullptr))) {
++      if (OB_FAIL(cmp_ids(id_datum, doc_id_[cur_idx_].get_datum(), result))) {
+       } else if (result <= 0) {
+         find = true;
+       } else {
+@@ -566,8 +584,7 @@ int ObTextRetrievalDaaTTokenIter::advance_to(const ObDatum &id_datum)
+       }
+     } else if (cur_idx_ != 0) {
+       ret = OB_ERR_UNEXPECTED;
+-    } else if (OB_FAIL(cmp_func_(
+-                   id_datum, doc_id_[cur_idx_].get_datum(), result, nullptr))) {
++    } else if (OB_FAIL(cmp_ids(id_datum, doc_id_[cur_idx_].get_datum(), result))) {
+     } else if (result <= 0) {
+       find = true;
+     } else {
+diff --git a/src/storage/retrieval/ob_text_retrieval_token_iter.h b/src/storage/retrieval/ob_text_retrieval_token_iter.h
+index 710cbba65..e4e6e77b9 100644
+--- a/src/storage/retrieval/ob_text_retrieval_token_iter.h
++++ b/src/storage/retrieval/ob_text_retrieval_token_iter.h
+@@ -156,6 +156,7 @@ private:
+   ObFixedArray<double, ObIAllocator> relevance_; // when ~ObFixedArray(), wikll destory itself
+   ObFixedArray<ObDocIdExt, ObIAllocator> doc_id_;
+   common::ObDatumCmpFuncType cmp_func_;
++  bool cmp_is_binary_;
+   bool is_inited_;
+   DISALLOW_COPY_AND_ASSIGN(ObTextRetrievalDaaTTokenIter);
+ };

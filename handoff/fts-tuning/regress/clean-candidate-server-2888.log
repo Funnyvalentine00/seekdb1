@@ -1,0 +1,4 @@
+<jemalloc>: option background_thread currently supports pthread only
+Starting seekdb (OceanBase seekdb 1.4.0.0) source revision 1-6b29a178d55e8524ada8a6d8cab2c4dc9cdb410d.
+Change working directory to base dir. path='/Users/xiazihan/seekdb-work/data/regress-clean-20261105/'
+The log file is in the directory: '/Users/xiazihan/seekdb-work/data/regress-clean-20261105/log/'
