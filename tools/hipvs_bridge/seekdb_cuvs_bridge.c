@@ -238,13 +238,21 @@ static double now_ms(void)
   return ts.tv_sec * 1000.0 + ts.tv_nsec / 1e6;
 }
 
+/* Wall-clock epoch ms, aligns bridge markers with OB log timestamps. */
+static double now_epoch_ms(void)
+{
+  struct timespec ts;
+  clock_gettime(CLOCK_REALTIME, &ts);
+  return ts.tv_sec * 1000.0 + ts.tv_nsec / 1e6;
+}
+
 static void log_vram(const char *tag)
 {
   if (!env_on("SEEKDB_CUVS_TIME")) { return; }
   size_t free_b = 0, total_b = 0;
   if (cudaMemGetInfo(&free_b, &total_b) != cudaSuccess) { return; }
-  fprintf(stderr, "[seekdb_cuvs] t=%.0fms vram %-22s used=%.1fMB\n",
-          now_ms(), tag, (double)(total_b - free_b) / 1048576.0);
+  fprintf(stderr, "[seekdb_cuvs] t=%.0fms(epoch=%.0f) vram %-22s used=%.1fMB\n",
+          now_ms(), now_epoch_ms(), tag, (double)(total_b - free_b) / 1048576.0);
 }
 
 /* Background sampler: catches transient peaks inside cuVS calls that the
@@ -492,6 +500,14 @@ static void sk_merge_topk(const float *ad, const unsigned *ai, int ac,
   }
 }
 
+/* GEMM-based exact kNN (seekdb_bf_gemm.cpp): fp16 rocBLAS distances + cuVS
+ * select_k, replacing the cuVS brute-force search inner loop for the 128-D
+ * path. Returns 0 on success, 2 when the shape is unsupported (caller falls
+ * back to the cuVS bf path), 1 on a hard failure. */
+extern int sk_bf_gemm_topk128(void *res, const void *d_base, long n, long dim,
+                              long gd, float *host_d, unsigned *host_id,
+                              long tile_q, long tile_b);
+
 static int build_bruteforce_graph(sk_cuvs_index *h, const float *base, long n, long dim,
                                   long gd, int symmetrize, const unsigned short *half_host)
 {
@@ -523,6 +539,31 @@ static int build_bruteforce_graph(sk_cuvs_index *h, const float *base, long n, l
   gg = (unsigned *)malloc(cnt * sizeof(unsigned));
   if (best_d == NULL || best_id == NULL || gg == NULL) { goto done; }
 
+  /* v13: compute the exact kNN with a rocBLAS fp16 GEMM + cuVS select_k
+   * instead of cuVS brute-force search (SEEKDB_CUVS_BF_GEMM=0 reverts). The
+   * GEMM path only handles the fp16 dataset and degree <= 128; anything else
+   * falls back to the shard loop below. */
+  {
+    const char *gv = getenv("SEEKDB_CUVS_BF_GEMM");
+    const int use_gemm = (gv == NULL || gv[0] != '0');
+    int gemm_done = 0;
+    if (use_gemm && half) {
+      const long tq = env_long("SEEKDB_CUVS_GEMM_TILE_Q", 2048);
+      const long tbm = env_long("SEEKDB_CUVS_GEMM_TILE_B", 16384);
+      const int grc = sk_bf_gemm_topk128((void *)h->res, d_data, n, dim, gd,
+                                         best_d, best_id, tq, tbm);
+      if (grc == 0) {
+        gemm_done = 1;
+        if (env_on("SEEKDB_CUVS_TIME")) {
+          fprintf(stderr, "[seekdb_cuvs] bf-gemm: n=%ld dim=%ld gd=%ld tiles %ldx%ld\n",
+                  n, dim, gd, tq, tbm);
+        }
+      } else if (grc != 2) {
+        fprintf(stderr, "[seekdb_cuvs] bf-gemm path failed rc=%d\n", grc);
+        goto done;
+      }
+    }
+    if (!gemm_done) {
   if (cudaMalloc(&d_nbr, sizeof(long long) * (size_t)chunk * gd) != cudaSuccess) { goto done; }
   if (cudaMalloc(&d_dist, sizeof(float) * (size_t)chunk * gd) != cudaSuccess) { goto done; }
 
@@ -585,6 +626,8 @@ static int build_bruteforce_graph(sk_cuvs_index *h, const float *base, long n, l
     cuvsBruteForceIndexDestroy(bf); bf = NULL;
     log_vram("after_bf_shard");
   }
+    } /* !gemm_done */
+  } /* gemm scope */
   /* drop the kNN scratch before the CAGRA index takes its own copies */
   cudaFree(d_nbr); d_nbr = NULL;
   cudaFree(d_dist); d_dist = NULL;
@@ -785,7 +828,8 @@ void* seekdb_cuvs_build(const float* base, long n, long dim)
   }
 
   if (env_on("SEEKDB_CUVS_TIME")) {
-    fprintf(stderr, "[seekdb_cuvs] t=%.0fms build enter n=%ld dim=%ld\n", now_ms(), n, dim);
+    fprintf(stderr, "[seekdb_cuvs] t=%.0fms(epoch=%.0f) build enter n=%ld dim=%ld\n",
+            now_ms(), now_epoch_ms(), n, dim);
   }
   sk_cuvs_index* h = (sk_cuvs_index*)calloc(1, sizeof(*h));
   if (!h) return NULL;
@@ -879,8 +923,8 @@ void* seekdb_cuvs_build(const float* base, long n, long dim)
   if (node_base != NULL) { munmap(node_base, node_base_bytes); node_base = NULL; }
   h->n = n; h->dim = dim; h->half = use_half;
   if (env_on("SEEKDB_CUVS_TIME")) {
-    fprintf(stderr, "[seekdb_cuvs] build n=%ld dim=%ld gd=%ld igd=%ld iters=%ld algo=%s half=%d took=%.1fms\n",
-            n, dim, graph_degree, inter_degree, nn_iter, algo_s, use_half, now_ms() - t0);
+    fprintf(stderr, "[seekdb_cuvs] t=%.0fms(epoch=%.0f) build n=%ld dim=%ld gd=%ld igd=%ld iters=%ld algo=%s half=%d took=%.1fms\n",
+            now_ms(), now_epoch_ms(), n, dim, graph_degree, inter_degree, nn_iter, algo_s, use_half, now_ms() - t0);
   }
   return h;
 

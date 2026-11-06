@@ -1,4 +1,13 @@
 #!/usr/bin/env bash
+# Build the seekdb <-> hipVS bridge as one shared object.
+#
+# Two translation units:
+#   seekdb_cuvs_bridge.c  - plain C, cuVS C API side (index lifecycle, search)
+#   seekdb_bf_gemm.cpp    - HIP C++, rocBLAS + cuVS select_k exact-kNN engine
+#
+# The GEMM unit compiles against a vendored raft header tree (raft/) and the
+# shim/ directory (CUDA->HIP mapping + stubbed logger headers), so no extra
+# system packages are needed beyond what /opt/hipvs and /opt/rocm ship.
 
 set -Eeuo pipefail
 
@@ -17,21 +26,29 @@ OUTPUT=${1:-$SCRIPT_DIR/libseekdb_cuvs_bridge.so}
   echo "libcuvs_c.so is missing under $HIPVS_ROOT/lib" >&2
   exit 2
 }
+[[ -f "$SCRIPT_DIR/raft/include/raft/core/device_mdspan.hpp" ]] || {
+  echo "vendored raft headers are missing under $SCRIPT_DIR/raft/include" >&2
+  exit 2
+}
 
 mkdir -p "$(dirname "$OUTPUT")"
 
-"$HIPCC" \
-  -shared \
-  -fPIC \
-  -O2 \
-  -D__HIP_PLATFORM_AMD__ \
-  -I"$HIPVS_ROOT/include" \
-  -I"$ROCM_ROOT/include" \
-  "$SCRIPT_DIR/seekdb_cuvs_bridge.c" \
+COMMON=(-shared -fPIC -O2 -D__HIP_PLATFORM_AMD__
+        -I"$SCRIPT_DIR" -I"$SCRIPT_DIR/raft/include" -I"$SCRIPT_DIR/shim"
+        -I"$HIPVS_ROOT/include" -I"$ROCM_ROOT/include")
+
+"$HIPCC" -c "${COMMON[@]}" "$SCRIPT_DIR/seekdb_cuvs_bridge.c" \
+  -o "$SCRIPT_DIR/.bridge_c.o"
+"$HIPCC" -c "${COMMON[@]}" "$SCRIPT_DIR/seekdb_bf_gemm.cpp" \
+  -o "$SCRIPT_DIR/.bridge_cpp.o"
+
+"$HIPCC" -shared \
+  "$SCRIPT_DIR/.bridge_c.o" "$SCRIPT_DIR/.bridge_cpp.o" \
   -L"$HIPVS_ROOT/lib" \
   -Wl,-soname,libseekdb_cuvs_bridge.so \
   -Wl,-rpath,"$HIPVS_ROOT/lib:$ROCM_ROOT/lib" \
-  -lcuvs_c \
+  -lcuvs_c -lcuvs -lrocblas \
   -o "$OUTPUT"
 
+rm -f "$SCRIPT_DIR/.bridge_c.o" "$SCRIPT_DIR/.bridge_cpp.o"
 echo "built $OUTPUT"
