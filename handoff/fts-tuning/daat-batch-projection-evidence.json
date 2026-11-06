@@ -1,0 +1,294 @@
+{
+  "date": "2026-11-06",
+  "platform": "macOS arm64 (local screening; official Linux CI pending)",
+  "baseline_commit_sha40": "7d04fbbe868a4e42c764173a36ba3053e0869abe",
+  "candidate_commit_sha40": "f8819ff6dffab44c4ba7cc77dced2493cec5830d",
+  "binaries": {
+    "base": {
+      "path": "/Users/xiazihan/seekdb-work/saved-binaries/seekdb-ik-clean-baseline",
+      "sha256": "dad8dbecc6502872ef9aa0a3f6a1caa4f2580632f1fed348f6c85c39ec2b8653"
+    },
+    "stage1": {
+      "path": "/Users/xiazihan/seekdb-work/saved-binaries/seekdb-h2-stage1-20261106",
+      "sha256": "8dd7dc33362ab37869e8a389dddf4e43321113cedb2b1b83c8c6f93a7a638cf7"
+    },
+    "stage2": {
+      "path": "/Users/xiazihan/seekdb-work/saved-binaries/seekdb-h2-stage2-20261106",
+      "sha256": "26ca0ebb86d66cef26dec73d18e5febd2278c467709040d0526b8bb8f20dcbe3"
+    }
+  },
+  "workloads": [
+    "query_cn",
+    "query_beng",
+    "query_mixed",
+    "query_limit"
+  ],
+  "instruction_stage1_vs_base": {
+    "query_cn": {
+      "base_round_medians": [
+        20920621.58,
+        20927030.72,
+        20919417.91
+      ],
+      "candidate_round_medians": [
+        20271596.19,
+        20278269.525,
+        20268929.68
+      ],
+      "base_median_instr": 20920621.58,
+      "candidate_median_instr": 20271596.19,
+      "improvement_pct": 3.1023236452040304,
+      "base_round_range_pct": 0.03638902396320989,
+      "candidate_round_range_pct": 0.04607355490144463
+    },
+    "query_beng": {
+      "base_round_medians": [
+        31132364.43,
+        31125283.025,
+        31111769.615
+      ],
+      "candidate_round_medians": [
+        30247274.42,
+        30244891.11,
+        30218911.2
+      ],
+      "base_median_instr": 31125283.025,
+      "candidate_median_instr": 30244891.11,
+      "improvement_pct": 2.828542681179358,
+      "base_round_range_pct": 0.06616747864897958,
+      "candidate_round_range_pct": 0.0937785489021803
+    },
+    "query_mixed": {
+      "base_round_medians": [
+        22158103.59,
+        22163732.255,
+        22170223.595
+      ],
+      "candidate_round_medians": [
+        21586759.52,
+        21572751.325,
+        21569621.71
+      ],
+      "base_median_instr": 22163732.255,
+      "candidate_median_instr": 21572751.325,
+      "improvement_pct": 2.6664323643716514,
+      "base_round_range_pct": 0.05468395331866888,
+      "candidate_round_range_pct": 0.07944192996902615
+    },
+    "query_limit": {
+      "base_round_medians": [
+        22863987.675,
+        22863465.135,
+        22866728.655
+      ],
+      "candidate_round_medians": [
+        22867503.96,
+        22856283.31,
+        22853140.73
+      ],
+      "base_median_instr": 22863987.675,
+      "candidate_median_instr": 22856283.31,
+      "improvement_pct": 0.03369650609297281,
+      "base_round_range_pct": 0.014273625608921927,
+      "candidate_round_range_pct": 0.06284149441618227
+    }
+  },
+  "instruction_stage2_vs_base": {
+    "query_cn": {
+      "base_round_medians": [
+        20945686.835,
+        20922257.87,
+        20919634.22
+      ],
+      "candidate_round_medians": [
+        19806643.19,
+        19800110.36,
+        19797204.32
+      ],
+      "base_median_instr": 20922257.87,
+      "candidate_median_instr": 19800110.36,
+      "improvement_pct": 5.36341496683791,
+      "base_round_range_pct": 0.12452104912328033,
+      "candidate_round_range_pct": 0.0476707949015747
+    },
+    "query_beng": {
+      "base_round_medians": [
+        31139371.285,
+        31114616.12,
+        31111911.47
+      ],
+      "candidate_round_medians": [
+        29587529.185,
+        29590555.82,
+        29586794.27
+      ],
+      "base_median_instr": 31114616.12,
+      "candidate_median_instr": 29587529.185,
+      "improvement_pct": 4.907940786125964,
+      "base_round_range_pct": 0.08825374831589386,
+      "candidate_round_range_pct": 0.012713295444446032
+    },
+    "query_mixed": {
+      "base_round_medians": [
+        22161657.735,
+        22181800.045,
+        22161481.1
+      ],
+      "candidate_round_medians": [
+        21134342.635,
+        21139751.845,
+        21141084.385
+      ],
+      "base_median_instr": 22161657.735,
+      "candidate_median_instr": 21139751.845,
+      "improvement_pct": 4.611143724984523,
+      "base_round_range_pct": 0.09168513133343136,
+      "candidate_round_range_pct": 0.03189133935644835
+    },
+    "query_limit": {
+      "base_round_medians": [
+        22863328.84,
+        22848816.9,
+        22868420.675
+      ],
+      "candidate_round_medians": [
+        22847822.875,
+        22847173.36,
+        22865662.485
+      ],
+      "base_median_instr": 22863328.84,
+      "candidate_median_instr": 22847822.875,
+      "improvement_pct": 0.06782024222505845,
+      "base_round_range_pct": 0.0857433103341667,
+      "candidate_round_range_pct": 0.08092291813164715
+    }
+  },
+  "wall_stage2_vs_base": {
+    "pairs": {
+      "p1": {
+        "query_cn": {
+          "base": 0.8421,
+          "candidate": 0.8257,
+          "imp_pct": 1.9475121719510713
+        },
+        "query_beng": {
+          "base": 1.185,
+          "candidate": 1.1433,
+          "imp_pct": 3.5189873417721618
+        },
+        "query_mixed": {
+          "base": 0.9237,
+          "candidate": 0.8798,
+          "imp_pct": 4.752625311248238
+        },
+        "query_limit": {
+          "base": 0.9716,
+          "candidate": 0.9646,
+          "imp_pct": 0.7204610951008661
+        },
+        "query_class_mean_imp_pct": 2.7348964800180844
+      },
+      "p2": {
+        "query_cn": {
+          "base": 0.85,
+          "candidate": 0.8016,
+          "imp_pct": 5.694117647058827
+        },
+        "query_beng": {
+          "base": 1.191,
+          "candidate": 1.1322,
+          "imp_pct": 4.937027707808561
+        },
+        "query_mixed": {
+          "base": 0.9229,
+          "candidate": 0.8663,
+          "imp_pct": 6.1328421280745555
+        },
+        "query_limit": {
+          "base": 0.9741,
+          "candidate": 0.962,
+          "imp_pct": 1.242172261574792
+        },
+        "query_class_mean_imp_pct": 4.501539936129184
+      },
+      "p3": {
+        "query_cn": {
+          "base": 0.8547,
+          "candidate": 0.8198,
+          "imp_pct": 4.083304083304085
+        },
+        "query_beng": {
+          "base": 1.1963,
+          "candidate": 1.1765,
+          "imp_pct": 1.6551032349744865
+        },
+        "query_mixed": {
+          "base": 0.9232,
+          "candidate": 0.8875,
+          "imp_pct": 3.8669844020797317
+        },
+        "query_limit": {
+          "base": 0.9847,
+          "candidate": 1.0007,
+          "imp_pct": -1.6248603635624859
+        },
+        "query_class_mean_imp_pct": 1.9951328391989542
+      }
+    },
+    "paired_median_imp_pct": {
+      "query_cn": 4.083304083304085,
+      "query_beng": 3.5189873417721618,
+      "query_mixed": 4.752625311248238,
+      "query_limit": 0.7204610951008661
+    },
+    "hits_ok": true,
+    "gate_ok": true,
+    "paired_improvements_pct": {
+      "query_cn": [
+        1.9475121719510713,
+        5.694117647058827,
+        4.083304083304085
+      ],
+      "query_beng": [
+        3.5189873417721618,
+        4.937027707808561,
+        1.6551032349744865
+      ],
+      "query_mixed": [
+        4.752625311248238,
+        6.1328421280745555,
+        3.8669844020797317
+      ],
+      "query_limit": [
+        0.7204610951008661,
+        1.242172261574792,
+        -1.6248603635624859
+      ]
+    },
+    "query_class_mean_median_imp_pct": 2.7348964800180844,
+    "peak_rss_kb": {
+      "p1-base": 495984,
+      "p1-candidate": 454752,
+      "p2-candidate": 494400,
+      "p2-base": 497184,
+      "p3-base": 452384,
+      "p3-candidate": 492112
+    }
+  },
+  "correctness": {
+    "differential_sql": "diff_projection.sql",
+    "clean_output_sha256": "539253c0017d7375c482d2173b716d54d6cec5674d282597cd85de88613d0815",
+    "stage1_output_sha256": "539253c0017d7375c482d2173b716d54d6cec5674d282597cd85de88613d0815",
+    "stage2_output_sha256": "539253c0017d7375c482d2173b716d54d6cec5674d282597cd85de88613d0815",
+    "lines": 1734,
+    "stage1_identical": true,
+    "stage2_identical": true
+  },
+  "regression_fts_index": {
+    "stage1_full_run": "12/15 (basic_dml transient metadata race, cn_word missing admin user, partitioned_simple_query known EXPLAIN diff)",
+    "stage1_cn_word_after_admin": "PASS",
+    "stage1_basic_dml_alone": "PASS",
+    "base_known_failures": "basic_dml PASS, partitioned_simple_query FAIL (known)",
+    "stage2": "14/15 (only partitioned_simple_query known EXPLAIN diff)"
+  }
+}

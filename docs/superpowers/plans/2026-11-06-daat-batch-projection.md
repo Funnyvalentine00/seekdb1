@@ -100,4 +100,18 @@ query_cn 的 project_results 行级样本（258 个 inclusive 样本）：
 
 ## Outcome
 
-（待填：阶段 1/2 结果、二进制 SHA、是否保留。）
+Both stages kept and committed separately.
+
+- Stage 1 `9fa0416e5`: hoisted the expression-level projected flags and replaced per-row evaluated-bit sets with `set_all(0, count)`.
+- Stage 2 `f8819ff6d`: bulk `locate_datums_for_update` plus raw array data pointers; legacy per-row path retained for non-batch expressions.
+
+Measured against clean `7d04fbbe8` (binary `dad8dbe…`):
+
+- Server instructions: stage 1 `-3.10% / -2.83% / -2.67%` and stage 2 `-5.36% / -4.91% / -4.61%` for query_cn/beng/mixed; query_limit control `-0.07%`; round-to-round spread below 0.13%.
+- Wall clock (3 alternating pairs): stage 2 paired medians `+4.08% / +3.52% / +4.75%`; query_limit control `+0.72%`; query class mean `+2.73%`.
+- Profile: `project_results` inclusive `4.0% -> 2.3% -> 1.7%`; self `2.3% -> 1.4% -> 0.6%`.
+- Correctness: 1734-line differential byte-identical (SHA256 `539253c0…`); hits exact; fts_index 14/15 with only the known `partitioned_simple_query` EXPLAIN diff; tokenize 21 cases identical.
+- Binary SHA256: stage 1 `8dd7dc33362ab37869e8a389dddf4e43321113cedb2b1b83c8c6f93a7a638cf7`; stage 2 `26ca0ebb86d66cef26dec73d18e5febd2278c467709040d0526b8bb8f20dcbe3`.
+
+Limits: macOS local screening only; Linux CI, file_sql and ai_column remain pending. See `handoff/fts-tuning/DAAT_BATCH_PROJECTION_2026-11-06.md` and the evidence JSON.
+
