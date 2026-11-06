@@ -337,6 +337,12 @@ done:
   if (ev_g0 != NULL) { hipEventDestroy(ev_g0); }
   if (ev_g1 != NULL) { hipEventDestroy(ev_g1); }
   if (ev_s1 != NULL) { hipEventDestroy(ev_s1); }
+  /* release the rocblas handle (and its device workspace pool) right away so
+   * the resident VRAM footprint of a built index does not carry the GEMM
+   * scratch into the 256-D build that follows in the same process. */
+  pthread_mutex_lock(&g_blas_mu);
+  if (g_blas != NULL) { rocblas_destroy_handle(g_blas); g_blas = NULL; }
+  pthread_mutex_unlock(&g_blas_mu);
   if (d_normb != NULL) { hipFree(d_normb); }
   if (d_scratch != NULL) { hipFree(d_scratch); }
   if (d_best_d != NULL) { hipFree(d_best_d); }
