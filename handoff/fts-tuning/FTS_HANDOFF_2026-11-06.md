@@ -26,7 +26,8 @@ H7 详情见 `handoff/fts-tuning/RAW_ARRAY_ACCESS_2026-11-06.md` 与 `raw-array-
 - 该分支在 macOS 构建前必须应用 `fts-tuning-kit/local-macos-build.patch`（file_sql 的 `from_chars` → `fast_float`）；当前工作树已应用、**未提交**，交接时请勿把它提交进分支。
 - 已构建候选二进制 `~/seekdb-work/saved-binaries/seekdb-fts-opt-v4-20261106`，SHA256 `f9716d9fe03eadc287a66c9a342bb153a9f23c286a1499abb9489d394cf3269d`。
 - **尚未在该基线上做语义校验、A/B 与三套回归**：`hits`/差分/指令/墙钟/`fts_index`/`file_sql`/`ai_column` 全部待跑（脚本在 `~/seekdb-work/results/fts-opt-v4-20261106/`，其中 `run_suite_v4.sh` 已修正 file_sql 需要的 `tools/deploy` cwd）。
-- 数据目录 `~/seekdb-work/data/h2-clean-prof-20261106` 已被 v4 首次启动触发**升级/回放**，master 基线旧二进制可能无法再打开它；如需旧基线数据请另建目录。
+- 数据目录 `~/seekdb-work/data/h2-clean-prof-20261106` 已被 v4 首次启动触发**升级/回放**，master 基线旧二进制可能无法再打开它；且 fdb8363 版 v4 二进制在该目录上启动失败（`server_start 12/14`, errcode −5044），**不要再复用该目录**。
+- 已改用全新目录 `~/seekdb-work/data/fts-v4-20261106` 启动 v4 实例并保持运行：`127.0.0.1:2914`（PID 31133，2026-11-06 16:24 起，root 空密码）。该实例目前是空库，未加载 `fts_large_bench` 数据；跑压测前需用官方脚本的加载阶段（SKIP_LOAD=0）或手工建表灌数。
 - `~/seekdb-work/seekdb1` 工作树（`feat/fts-opt-v3`）属于其他 agent，**不要修改**；其中 file_sql 两个文件有未提交改动。
 
 ## 3. 尝试过且未保留的方向
