@@ -1,0 +1,1 @@
+{"command": "rocm-smi --showtemp --showuse --showpower --json", "rc": 0, "stdout": "{\"card0\": {\"Temperature (Sensor edge) (C)\": \"31.0\", \"Temperature (Sensor junction) (C)\": \"36.0\", \"Temperature (Sensor memory) (C)\": \"30.0\", \"Average Graphics Package Power (W)\": \"37.0\", \"GPU use (%)\": \"100\"}}\n", "stderr": ""}

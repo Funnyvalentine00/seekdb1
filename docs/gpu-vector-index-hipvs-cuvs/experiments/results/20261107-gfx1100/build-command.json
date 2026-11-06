@@ -1,0 +1,17 @@
+[
+  [
+    "/workspace/seekdb-amd-20261106/build-tools/cmake/data/bin/cmake",
+    "--build",
+    "/workspace/seekdb-amd-20261106/hipvs-build",
+    "--target",
+    "cuvs",
+    "cuvs_c",
+    "--parallel",
+    "8"
+  ],
+  [
+    "/workspace/seekdb-amd-20261106/build-tools/cmake/data/bin/cmake",
+    "--install",
+    "/workspace/seekdb-amd-20261106/hipvs-build"
+  ]
+]

@@ -1,0 +1,71 @@
+clang++: warning: argument unused during compilation: '-shared' [-Wunused-command-line-argument]
+clang++: warning: argument unused during compilation: '-shared' [-Wunused-command-line-argument]
+In file included from /workspace/seekdb-amd-20261106/source-f97bc2823-lf/tools/hipvs_bridge/seekdb_bf_gemm.cpp:27:
+In file included from /workspace/seekdb-amd-20261106/source-f97bc2823-lf/tools/hipvs_bridge/raft/include/raft/core/device_mdspan.hpp:8:
+In file included from /workspace/seekdb-amd-20261106/source-f97bc2823-lf/tools/hipvs_bridge/raft/include/raft/core/host_device_accessor.hpp:7:
+/workspace/seekdb-amd-20261106/source-f97bc2823-lf/tools/hipvs_bridge/raft/include/raft/core/memory_type.hpp:81:3: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+   81 |   RAFT_CUDA_TRY(cudaPointerGetAttributes(&attrs, ptr));
+      |   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/workspace/seekdb-amd-20261106/source-f97bc2823-lf/tools/hipvs_bridge/raft/include/raft/util/cuda_rt_essentials.hpp:42:7: note: expanded from macro 'RAFT_CUDA_TRY'
+   42 |       cudaGetLastError();                          \
+      |       ^~~~~~~~~~~~~~~~~~
+/workspace/seekdb-amd-20261106/source-f97bc2823-lf/tools/hipvs_bridge/shim/cuda_runtime.h:26:26: note: expanded from macro 'cudaGetLastError'
+   26 | #define cudaGetLastError hipGetLastError
+      |                          ^
+/workspace/seekdb-amd-20261106/source-f97bc2823-lf/tools/hipvs_bridge/seekdb_bf_gemm.cpp:284:9: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+  284 |         hipGetLastError();  /* consume any sticky error before the launch */
+      |         ^~~~~~~~~~~~~~~~~
+/workspace/seekdb-amd-20261106/source-f97bc2823-lf/tools/hipvs_bridge/seekdb_bf_gemm.cpp:353:26: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+  353 |   if (d_normb != NULL) { hipFree(d_normb); }
+      |                          ^~~~~~~~~~~~~~~~
+/workspace/seekdb-amd-20261106/source-f97bc2823-lf/tools/hipvs_bridge/seekdb_bf_gemm.cpp:354:28: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+  354 |   if (d_scratch != NULL) { hipFree(d_scratch); }
+      |                            ^~~~~~~~~~~~~~~~~~
+/workspace/seekdb-amd-20261106/source-f97bc2823-lf/tools/hipvs_bridge/seekdb_bf_gemm.cpp:355:27: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+  355 |   if (d_best_d != NULL) { hipFree(d_best_d); }
+      |                           ^~~~~~~~~~~~~~~~~
+/workspace/seekdb-amd-20261106/source-f97bc2823-lf/tools/hipvs_bridge/seekdb_bf_gemm.cpp:356:27: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+  356 |   if (d_best_i != NULL) { hipFree(d_best_i); }
+      |                           ^~~~~~~~~~~~~~~~~
+/workspace/seekdb-amd-20261106/source-f97bc2823-lf/tools/hipvs_bridge/seekdb_bf_gemm.cpp:357:26: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+  357 |   if (d_tdist != NULL) { hipFree(d_tdist); }
+      |                          ^~~~~~~~~~~~~~~~
+/workspace/seekdb-amd-20261106/source-f97bc2823-lf/tools/hipvs_bridge/seekdb_bf_gemm.cpp:358:25: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+  358 |   if (d_tidx != NULL) { hipFree(d_tidx); }
+      |                         ^~~~~~~~~~~~~~~
+8 warnings generated when compiling for gfx1100.
+In file included from /workspace/seekdb-amd-20261106/source-f97bc2823-lf/tools/hipvs_bridge/seekdb_bf_gemm.cpp:27:
+In file included from /workspace/seekdb-amd-20261106/source-f97bc2823-lf/tools/hipvs_bridge/raft/include/raft/core/device_mdspan.hpp:8:
+In file included from /workspace/seekdb-amd-20261106/source-f97bc2823-lf/tools/hipvs_bridge/raft/include/raft/core/host_device_accessor.hpp:7:
+/workspace/seekdb-amd-20261106/source-f97bc2823-lf/tools/hipvs_bridge/raft/include/raft/core/memory_type.hpp:81:3: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+   81 |   RAFT_CUDA_TRY(cudaPointerGetAttributes(&attrs, ptr));
+      |   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/workspace/seekdb-amd-20261106/source-f97bc2823-lf/tools/hipvs_bridge/raft/include/raft/util/cuda_rt_essentials.hpp:42:7: note: expanded from macro 'RAFT_CUDA_TRY'
+   42 |       cudaGetLastError();                          \
+      |       ^~~~~~~~~~~~~~~~~~
+/workspace/seekdb-amd-20261106/source-f97bc2823-lf/tools/hipvs_bridge/shim/cuda_runtime.h:26:26: note: expanded from macro 'cudaGetLastError'
+   26 | #define cudaGetLastError hipGetLastError
+      |                          ^
+/workspace/seekdb-amd-20261106/source-f97bc2823-lf/tools/hipvs_bridge/seekdb_bf_gemm.cpp:284:9: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+  284 |         hipGetLastError();  /* consume any sticky error before the launch */
+      |         ^~~~~~~~~~~~~~~~~
+/workspace/seekdb-amd-20261106/source-f97bc2823-lf/tools/hipvs_bridge/seekdb_bf_gemm.cpp:353:26: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+  353 |   if (d_normb != NULL) { hipFree(d_normb); }
+      |                          ^~~~~~~~~~~~~~~~
+/workspace/seekdb-amd-20261106/source-f97bc2823-lf/tools/hipvs_bridge/seekdb_bf_gemm.cpp:354:28: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+  354 |   if (d_scratch != NULL) { hipFree(d_scratch); }
+      |                            ^~~~~~~~~~~~~~~~~~
+/workspace/seekdb-amd-20261106/source-f97bc2823-lf/tools/hipvs_bridge/seekdb_bf_gemm.cpp:355:27: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+  355 |   if (d_best_d != NULL) { hipFree(d_best_d); }
+      |                           ^~~~~~~~~~~~~~~~~
+/workspace/seekdb-amd-20261106/source-f97bc2823-lf/tools/hipvs_bridge/seekdb_bf_gemm.cpp:356:27: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+  356 |   if (d_best_i != NULL) { hipFree(d_best_i); }
+      |                           ^~~~~~~~~~~~~~~~~
+/workspace/seekdb-amd-20261106/source-f97bc2823-lf/tools/hipvs_bridge/seekdb_bf_gemm.cpp:357:26: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+  357 |   if (d_tdist != NULL) { hipFree(d_tdist); }
+      |                          ^~~~~~~~~~~~~~~~
+/workspace/seekdb-amd-20261106/source-f97bc2823-lf/tools/hipvs_bridge/seekdb_bf_gemm.cpp:358:25: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+  358 |   if (d_tidx != NULL) { hipFree(d_tidx); }
+      |                         ^~~~~~~~~~~~~~~
+8 warnings generated when compiling for host.
+built /workspace/seekdb-amd-20261106/libseekdb_cuvs_bridge-acceptance.so

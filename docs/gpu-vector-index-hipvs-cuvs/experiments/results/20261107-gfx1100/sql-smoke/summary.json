@@ -1,0 +1,65 @@
+{
+  "cases": [
+    {
+      "detail": "build=1 serve=1",
+      "name": "cuvs_l2_route",
+      "status": "PASS"
+    },
+    {
+      "detail": "cuvs_markers=0",
+      "name": "vsag_cpu_route",
+      "status": "PASS"
+    },
+    {
+      "detail": "cosine and inner_product rejected",
+      "name": "ddl_non_l2",
+      "status": "PASS"
+    },
+    {
+      "detail": "n=400 serve=0 exact_match=1",
+      "name": "freshness_fallback",
+      "status": "PASS"
+    },
+    {
+      "detail": "n=700 build=1 serve=1",
+      "name": "freshness_rebuild",
+      "status": "PASS"
+    },
+    {
+      "detail": "serve=0 exact_match=1",
+      "name": "filter_fallback",
+      "status": "PASS"
+    },
+    {
+      "detail": "serve=0 exact_match=1 deleted_absent=1",
+      "name": "delete_fallback",
+      "status": "PASS"
+    },
+    {
+      "detail": "trace=1 rows=1000 recall=1.0000",
+      "name": "batch_knn",
+      "status": "PASS"
+    },
+    {
+      "detail": "trace=1 rows=10000 recall=0.9994",
+      "name": "batch_knn_top100",
+      "status": "PASS"
+    },
+    {
+      "detail": "observer opened /dev/dri/renderD131 and /dev/kfd",
+      "name": "gpu_fd",
+      "status": "PASS"
+    },
+    {
+      "detail": "serve=0 exact_match=1 observer_alive=1",
+      "name": "gpu_unavailable_fallback",
+      "status": "PASS"
+    },
+    {
+      "detail": "all observers stopped and ports closed",
+      "name": "cleanup",
+      "status": "PASS"
+    }
+  ],
+  "status": "PASS"
+}

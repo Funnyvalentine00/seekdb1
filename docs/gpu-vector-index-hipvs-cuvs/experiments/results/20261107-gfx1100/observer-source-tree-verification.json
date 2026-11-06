@@ -1,0 +1,10 @@
+{
+  "source_commit": "f97bc2823f3ff74c9a9ecbb232f82f1997cb90ed",
+  "checked": 8866,
+  "mismatches": [],
+  "missing": [
+    "tools/deploy/.gitignore",
+    "tools/hipvs_bridge/raft/include/raft/thirdparty/mdspan/.gitignore"
+  ],
+  "metadata_note": "Archive build startup revision is not source provenance; use tree hashes and exported archive SHA."
+}

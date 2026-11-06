@@ -1,0 +1,6 @@
+[seekdb_cuvs] using gpu 0 (0000:63:00.0) numa node 0
+[seekdb_cuvs] pinned build thread to numa node 0
+[seekdb_cuvs] quarantined 3 threads to numa node 1
+[seekdb_cuvs] env: tasks=5 mempolicy mode=-1 nmask0=0 OMP_NUM_THREADS=8
+[seekdb_cuvs] t=477073902ms(epoch=1793986416157) build enter n=1000000 dim=128
+[seekdb_cuvs] quarantine watchdog fired after 180s; restoring affinity

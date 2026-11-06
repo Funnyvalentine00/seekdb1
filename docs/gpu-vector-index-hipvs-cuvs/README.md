@@ -1,9 +1,13 @@
 # hipVS/cuVS GPU vector backend
 
-Status: **Phase 1 implemented and review-gated** on AMD `gfx1100` with ROCm
-7.2.4. This directory documents the current integration and its reproducible
-validation assets. Historical feasibility experiments remain available in Git
-history rather than in the product-facing tree.
+Current acceptance (2026-11-07): actual AMD `gfx1100`, ROCm7.2.1; CPU/HIP/GPU
+checks, all12 SQL smoke cases and restart persistence pass. A fused WMMA norm
+epilogue reduces warm bridge construction latency18.11-18.27% on the250K/128D
+research fixture; SQL/contest speedup is unmeasured and the1M reference timed out.
+See the [bounded experiment report](experiments/FINAL_REPORT.md) for exact source,
+dependency patch, raw measurements and limits. Earlier ROCm7.2.4 measurements
+are historical evidence. Set `SEEKDB_CUVS_GEMM_FUSED_NORM=0` to use the original
+WMMA epilogue; cuVS BF fallback remains available.
 
 ## Scope
 
@@ -121,17 +125,16 @@ The runner validates:
 - bounded observer cleanup and closed ports.
 
 The runner writes a machine-readable `summary.json` into its evidence directory.
-Results for a specific candidate belong in that pull request's description or a
-validation comment rather than in the source tree.
+Bounded research results and raw records are preserved under `experiments/`.
 The no-GPU DDL contract remains covered by
 [`vector_index_cuvs_ddl.test`](../../tools/deploy/mysql_test/test_suite/vector_index/t/vector_index_cuvs_ddl.test).
 
 ## Current limitations
 
 - Phase 1 supports dense float32 L2 indexes only.
-- GPU indexes are process-local and rebuilt lazily; persistence and cache reuse
-  are follow-up work.
+- Offline GPU snapshots serialize with the index and reload after restart;
+  FP16 reload in this runtime requires the recorded private hipVS compatibility patch.
 - The explicit batch API rebuilds its CAGRA index per call.
 - GPU validation is manual because upstream CI has no compatible GPU runner.
-- Multi-GPU, long-duration, and snapshot-reload coverage are out of scope for
-  this phase.
+- Multi-GPU and long-duration qualification remain incomplete. Snapshot reload
+  passed bridge and isolated SQL restart checks in the bounded report.

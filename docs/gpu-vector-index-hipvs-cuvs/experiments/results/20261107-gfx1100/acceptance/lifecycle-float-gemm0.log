@@ -1,0 +1,24 @@
+[seekdb_cuvs] using gpu 0 (0000:63:00.0) numa node 0
+[seekdb_cuvs] env: tasks=3 mempolicy mode=-1 nmask0=0 OMP_NUM_THREADS=8
+[seekdb_cuvs] t=477608609ms(epoch=1793986950864) build enter n=512 dim=128
+[seekdb_cuvs] t=477608967ms(epoch=1793986951222) vram after_bf_shard         used=310.0MB
+[seekdb_cuvs] t=477608968ms(epoch=1793986951223) vram after_bf_shard         used=310.0MB
+[seekdb_cuvs] t=477608969ms(epoch=1793986951224) vram after_bf_shard         used=310.0MB
+[seekdb_cuvs] t=477608970ms(epoch=1793986951225) vram after_bf_shard         used=310.0MB
+[seekdb_cuvs] t=477608971ms(epoch=1793986951226) vram after_index_from_args  used=274.0MB
+[seekdb_cuvs] vram peak bfknn            used=330.0MB
+[seekdb_cuvs] t=477609001ms(epoch=1793986951256) build n=512 dim=128 gd=96 igd=128 iters=30 algo=bfknn_sym half=0 took=474.6ms
+[seekdb_cuvs] search nq=16 topk=10 rc=0 took=5.93ms
+{"stage": "fresh", "queries": 16, "topk": 10, "self_matches": 16, "tie_aware_recall": 1.0}
+[seekdb_cuvs] search nq=16 topk=10 rc=0 took=0.59ms
+{"stage": "reused", "queries": 16, "topk": 10, "self_matches": 16, "tie_aware_recall": 1.0}
+[seekdb_cuvs] t=477609020ms(epoch=1793986951275) vram serialize_begin        used=416.0MB
+[seekdb_cuvs] t=477609022ms(epoch=1793986951277) vram serialize_end          used=416.0MB
+[seekdb_cuvs] search nq=16 topk=10 rc=0 took=0.54ms
+{"stage": "deserialized", "queries": 16, "topk": 10, "self_matches": 16, "tie_aware_recall": 1.0}
+[seekdb_cuvs] snapshot shape mismatch: 512 x 128, expected 513 x 128
+[seekdb_cuvs] deserialize failed: (null)
+[seekdb_cuvs] snapshot shape mismatch: 512 x 128, expected 512 x 129
+[seekdb_cuvs] deserialize failed: (null)
+PASS: mismatched snapshot shapes rejected
+PASS: real bridge build/search/reuse/serialize/deserialize/free

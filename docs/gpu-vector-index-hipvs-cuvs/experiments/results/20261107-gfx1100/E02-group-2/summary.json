@@ -1,0 +1,13 @@
+{
+  "group": 2,
+  "paired_speedups": [
+    1.2221672849154377,
+    1.2528127682231114,
+    1.2211166486471663,
+    1.213373663912774,
+    1.2188865635843569
+  ],
+  "median_speedup": 1.2211166486471663,
+  "improvement_percent": 18.10774170445829,
+  "note": "Bridge-only; no SQL or contest speedup established"
+}

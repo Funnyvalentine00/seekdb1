@@ -1,0 +1,13 @@
+{
+  "seed": 1314,
+  "n": 10000,
+  "dim": 256,
+  "nq": 100,
+  "truth_k": 100,
+  "fixture": "run_gpu_smoke generator; scaled n/dim; independent FP64 truth",
+  "hashes": {
+    "truth.npy": "3876c8cc5b58a1613233c06eb65e519efe3d0e2c1d7005ee89fdbecfe177d203",
+    "base.npy": "cbe572a7bcac7c77d6b749eba6b5a05c02bd36904382f5aed51c38180d5a6928",
+    "query.npy": "69cb94340770591d651815e41918518cf9bdef60689d8ec5609ff5bebcbeeca2"
+  }
+}

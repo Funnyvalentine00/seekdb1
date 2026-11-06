@@ -1,0 +1,1 @@
+["/opt/venv/bin/python", "/workspace/seekdb-amd-20261106/bridge_smoke.py", "--bridge", "/workspace/seekdb-amd-20261106/libseekdb_cuvs_bridge-acceptance.so", "--snapshot", "/workspace/seekdb-amd-20261106/acceptance/snapshot-float-gemm0.bin", "--dtype", "float", "--gemm", "0"]

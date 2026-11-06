@@ -1,0 +1,47 @@
+[
+  {
+    "source": "rocmds-cmake-26.03",
+    "commit": "58b184f87d98d5e68cc48863477a6b18281ebd4e",
+    "rc": 0
+  },
+  {
+    "source": "hipvs-source",
+    "commit": "f96a663d0a4441d6f5344bd3ef552b71ae7b370b",
+    "rc": 0
+  },
+  {
+    "source": "hipvs-build/_deps/raft-src",
+    "commit": "baafb19bb11d7a32060a46c66c6d440cac21b5c1",
+    "rc": 0
+  },
+  {
+    "source": "hipvs-build/_deps/rmm-src",
+    "commit": "22732e49aa00ba179847e3b314371f2307f47a9a",
+    "rc": 0
+  },
+  {
+    "source": "hipvs-build/_deps/cuco-src",
+    "commit": "95578ff691c8387cb2245599b8319bdfdba9bbd5",
+    "rc": 0
+  },
+  {
+    "source": "hipvs-build/_deps/libhipcxx-src",
+    "commit": "45cae2d97824f461e062d3f316f0b4cbe3ee24e3",
+    "rc": 0
+  },
+  {
+    "source": "hipvs-build/_deps/rapids_logger-src",
+    "commit": "22b252ceb6d8f2a83f44b0e5e6d8ee7d9ae0f708",
+    "rc": 0
+  },
+  {
+    "source": "hipvs-build/_deps/spdlog-src",
+    "commit": "27cb4c76708608465c413f6d0e6b8d99a4d84302",
+    "rc": 0
+  },
+  {
+    "source": "hipvs-build/_deps/dlpack-src",
+    "commit": "365b823cedb281cd0240ca601aba9b78771f91a3",
+    "rc": 0
+  }
+]

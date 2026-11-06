@@ -1,0 +1,134 @@
+In file included from /workspace/seekdb-amd-20261106/source-f97bc2823-lf/unittest/oblib/vector/hipvs_gemm/test_gpu_kernels.cpp:3:
+In file included from /workspace/seekdb-amd-20261106/source-f97bc2823-lf/tools/hipvs_bridge/seekdb_bf_gemm.cpp:27:
+In file included from /workspace/seekdb-amd-20261106/source-f97bc2823-lf/tools/hipvs_bridge/raft/include/raft/core/device_mdspan.hpp:8:
+In file included from /workspace/seekdb-amd-20261106/source-f97bc2823-lf/tools/hipvs_bridge/raft/include/raft/core/host_device_accessor.hpp:7:
+/workspace/seekdb-amd-20261106/source-f97bc2823-lf/tools/hipvs_bridge/raft/include/raft/core/memory_type.hpp:81:3: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+   81 |   RAFT_CUDA_TRY(cudaPointerGetAttributes(&attrs, ptr));
+      |   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/workspace/seekdb-amd-20261106/source-f97bc2823-lf/tools/hipvs_bridge/raft/include/raft/util/cuda_rt_essentials.hpp:42:7: note: expanded from macro 'RAFT_CUDA_TRY'
+   42 |       cudaGetLastError();                          \
+      |       ^~~~~~~~~~~~~~~~~~
+/workspace/seekdb-amd-20261106/source-f97bc2823-lf/tools/hipvs_bridge/shim/cuda_runtime.h:26:26: note: expanded from macro 'cudaGetLastError'
+   26 | #define cudaGetLastError hipGetLastError
+      |                          ^
+In file included from /workspace/seekdb-amd-20261106/source-f97bc2823-lf/unittest/oblib/vector/hipvs_gemm/test_gpu_kernels.cpp:3:
+/workspace/seekdb-amd-20261106/source-f97bc2823-lf/tools/hipvs_bridge/seekdb_bf_gemm.cpp:284:9: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+  284 |         hipGetLastError();  /* consume any sticky error before the launch */
+      |         ^~~~~~~~~~~~~~~~~
+/workspace/seekdb-amd-20261106/source-f97bc2823-lf/tools/hipvs_bridge/seekdb_bf_gemm.cpp:353:26: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+  353 |   if (d_normb != NULL) { hipFree(d_normb); }
+      |                          ^~~~~~~~~~~~~~~~
+/workspace/seekdb-amd-20261106/source-f97bc2823-lf/tools/hipvs_bridge/seekdb_bf_gemm.cpp:354:28: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+  354 |   if (d_scratch != NULL) { hipFree(d_scratch); }
+      |                            ^~~~~~~~~~~~~~~~~~
+/workspace/seekdb-amd-20261106/source-f97bc2823-lf/tools/hipvs_bridge/seekdb_bf_gemm.cpp:355:27: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+  355 |   if (d_best_d != NULL) { hipFree(d_best_d); }
+      |                           ^~~~~~~~~~~~~~~~~
+/workspace/seekdb-amd-20261106/source-f97bc2823-lf/tools/hipvs_bridge/seekdb_bf_gemm.cpp:356:27: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+  356 |   if (d_best_i != NULL) { hipFree(d_best_i); }
+      |                           ^~~~~~~~~~~~~~~~~
+/workspace/seekdb-amd-20261106/source-f97bc2823-lf/tools/hipvs_bridge/seekdb_bf_gemm.cpp:357:26: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+  357 |   if (d_tdist != NULL) { hipFree(d_tdist); }
+      |                          ^~~~~~~~~~~~~~~~
+/workspace/seekdb-amd-20261106/source-f97bc2823-lf/tools/hipvs_bridge/seekdb_bf_gemm.cpp:358:25: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+  358 |   if (d_tidx != NULL) { hipFree(d_tidx); }
+      |                         ^~~~~~~~~~~~~~~
+8 warnings generated when compiling for gfx1100.
+In file included from /workspace/seekdb-amd-20261106/source-f97bc2823-lf/unittest/oblib/vector/hipvs_gemm/test_gpu_kernels.cpp:3:
+In file included from /workspace/seekdb-amd-20261106/source-f97bc2823-lf/tools/hipvs_bridge/seekdb_bf_gemm.cpp:27:
+In file included from /workspace/seekdb-amd-20261106/source-f97bc2823-lf/tools/hipvs_bridge/raft/include/raft/core/device_mdspan.hpp:8:
+In file included from /workspace/seekdb-amd-20261106/source-f97bc2823-lf/tools/hipvs_bridge/raft/include/raft/core/host_device_accessor.hpp:7:
+/workspace/seekdb-amd-20261106/source-f97bc2823-lf/tools/hipvs_bridge/raft/include/raft/core/memory_type.hpp:81:3: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+   81 |   RAFT_CUDA_TRY(cudaPointerGetAttributes(&attrs, ptr));
+      |   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/workspace/seekdb-amd-20261106/source-f97bc2823-lf/tools/hipvs_bridge/raft/include/raft/util/cuda_rt_essentials.hpp:42:7: note: expanded from macro 'RAFT_CUDA_TRY'
+   42 |       cudaGetLastError();                          \
+      |       ^~~~~~~~~~~~~~~~~~
+/workspace/seekdb-amd-20261106/source-f97bc2823-lf/tools/hipvs_bridge/shim/cuda_runtime.h:26:26: note: expanded from macro 'cudaGetLastError'
+   26 | #define cudaGetLastError hipGetLastError
+      |                          ^
+In file included from /workspace/seekdb-amd-20261106/source-f97bc2823-lf/unittest/oblib/vector/hipvs_gemm/test_gpu_kernels.cpp:3:
+/workspace/seekdb-amd-20261106/source-f97bc2823-lf/tools/hipvs_bridge/seekdb_bf_gemm.cpp:284:9: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+  284 |         hipGetLastError();  /* consume any sticky error before the launch */
+      |         ^~~~~~~~~~~~~~~~~
+/workspace/seekdb-amd-20261106/source-f97bc2823-lf/tools/hipvs_bridge/seekdb_bf_gemm.cpp:353:26: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+  353 |   if (d_normb != NULL) { hipFree(d_normb); }
+      |                          ^~~~~~~~~~~~~~~~
+/workspace/seekdb-amd-20261106/source-f97bc2823-lf/tools/hipvs_bridge/seekdb_bf_gemm.cpp:354:28: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+  354 |   if (d_scratch != NULL) { hipFree(d_scratch); }
+      |                            ^~~~~~~~~~~~~~~~~~
+/workspace/seekdb-amd-20261106/source-f97bc2823-lf/tools/hipvs_bridge/seekdb_bf_gemm.cpp:355:27: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+  355 |   if (d_best_d != NULL) { hipFree(d_best_d); }
+      |                           ^~~~~~~~~~~~~~~~~
+/workspace/seekdb-amd-20261106/source-f97bc2823-lf/tools/hipvs_bridge/seekdb_bf_gemm.cpp:356:27: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+  356 |   if (d_best_i != NULL) { hipFree(d_best_i); }
+      |                           ^~~~~~~~~~~~~~~~~
+/workspace/seekdb-amd-20261106/source-f97bc2823-lf/tools/hipvs_bridge/seekdb_bf_gemm.cpp:357:26: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+  357 |   if (d_tdist != NULL) { hipFree(d_tdist); }
+      |                          ^~~~~~~~~~~~~~~~
+/workspace/seekdb-amd-20261106/source-f97bc2823-lf/tools/hipvs_bridge/seekdb_bf_gemm.cpp:358:25: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+  358 |   if (d_tidx != NULL) { hipFree(d_tidx); }
+      |                         ^~~~~~~~~~~~~~~
+8 warnings generated when compiling for host.
+WMMA distance mismatch q=0 b=0 got=15302.000977 expected=15302.000000
+WMMA distance mismatch q=0 b=29 got=17637.998047 expected=17638.000000
+WMMA distance mismatch q=0 b=33 got=18397.998047 expected=18398.000000
+PASS: fused WMMA epilogue matches separate epilogue for 8192 distances
+4eps outlier q=56 b=5 got=7843.99609 expected=7844 bound=1.20001428
+norm_max_abs_error=0 distance_max_abs_error=0.00390625 mismatches=383/8192
+outside_4eps_relative_tolerance=1/8192
+operand_rounding_bound_failures=0 rank_inversions=0
+rocblas_max_abs_error=0 wmma_vs_rocblas_max_abs_error=0.00390625 library_bound_errors=0
+PASS: real GPU short-tile copy/merge kernels
+PASS: 8192 WMMA L2 distances within operand-based FP32 bound; exact-distance ordering preserved
+/workspace/seekdb-amd-20261106/source-f97bc2823-lf/unittest/oblib/vector/hipvs_gemm/test_gpu_entry.cpp:40:37: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+   40 |     cuvsResourcesDestroy(resource); hipFree(data); return 3;
+      |                                     ^~~~~~~~~~~~~
+1 warning generated when compiling for gfx1100.
+/workspace/seekdb-amd-20261106/source-f97bc2823-lf/unittest/oblib/vector/hipvs_gemm/test_gpu_entry.cpp:40:37: warning: ignoring return value of type 'hipError_t' declared with 'nodiscard' attribute [-Wunused-value]
+   40 |     cuvsResourcesDestroy(resource); hipFree(data); return 3;
+      |                                     ^~~~~~~~~~~~~
+1 warning generated when compiling for host.
+[seekdb_bf_gemm] n=256 dim=128 gd=96 ksel=96 tiles 64x128 algo=0 wma=0 total_wall=58ms rc=0
+[seekdb_bf_gemm] n=257 dim=128 gd=96 ksel=96 tiles 64x128 algo=0 wma=0 total_wall=3ms rc=0
+[seekdb_bf_gemm] n=65 dim=128 gd=48 ksel=48 tiles 8x8 algo=0 wma=0 total_wall=9ms rc=0
+[seekdb_bf_gemm] n=129 dim=130 gd=96 ksel=96 tiles 64x64 algo=0 wma=0 total_wall=2ms rc=0
+[seekdb_bf_gemm] n=128 dim=256 gd=128 ksel=128 tiles 64x64 algo=0 wma=0 total_wall=1ms rc=0
+[seekdb_bf_gemm] n=256 dim=128 gd=96 ksel=96 tiles 64x128 algo=0 wma=1 total_wall=2ms rc=0
+[seekdb_bf_gemm] n=257 dim=128 gd=96 ksel=96 tiles 64x128 algo=0 wma=1 total_wall=3ms rc=0
+[seekdb_bf_gemm] n=65 dim=128 gd=48 ksel=48 tiles 8x8 algo=0 wma=1 total_wall=9ms rc=0
+[seekdb_bf_gemm] n=129 dim=130 gd=96 ksel=96 tiles 64x64 algo=0 wma=0 total_wall=2ms rc=0
+[seekdb_bf_gemm] n=128 dim=256 gd=128 ksel=128 tiles 64x64 algo=0 wma=1 total_wall=1ms rc=0
+[seekdb_bf_gemm] n=256 dim=128 gd=96 ksel=96 tiles 64x128 algo=0 wma=0 total_wall=2ms rc=0
+[seekdb_bf_gemm] n=257 dim=128 gd=96 ksel=96 tiles 64x128 algo=0 wma=0 total_wall=3ms rc=0
+[seekdb_bf_gemm] n=65 dim=128 gd=48 ksel=48 tiles 8x8 algo=0 wma=0 total_wall=9ms rc=0
+[seekdb_bf_gemm] n=129 dim=130 gd=96 ksel=96 tiles 64x64 algo=0 wma=0 total_wall=2ms rc=0
+[seekdb_bf_gemm] n=128 dim=256 gd=128 ksel=128 tiles 64x64 algo=0 wma=0 total_wall=1ms rc=0
+[seekdb_bf_gemm] n=256 dim=128 gd=96 ksel=96 tiles 64x128 algo=0 wma=1 total_wall=2ms rc=0
+[seekdb_bf_gemm] n=257 dim=128 gd=96 ksel=96 tiles 64x128 algo=0 wma=1 total_wall=3ms rc=0
+[seekdb_bf_gemm] n=65 dim=128 gd=48 ksel=48 tiles 8x8 algo=0 wma=1 total_wall=9ms rc=0
+[seekdb_bf_gemm] n=129 dim=130 gd=96 ksel=96 tiles 64x64 algo=0 wma=0 total_wall=2ms rc=0
+[seekdb_bf_gemm] n=128 dim=256 gd=128 ksel=128 tiles 64x64 algo=0 wma=1 total_wall=1ms rc=0
+fused_norm=0
+n=256 dim=128 k=96 tiles=64x128 wmma=0 max_abs_error=0 bad_ids=0 bound_errors=0 wrong_topk=0 inversions=0
+n=257 dim=128 k=96 tiles=64x128 wmma=0 max_abs_error=0 bad_ids=0 bound_errors=0 wrong_topk=0 inversions=0
+n=65 dim=128 k=48 tiles=8x8 wmma=0 max_abs_error=0 bad_ids=0 bound_errors=0 wrong_topk=0 inversions=0
+n=129 dim=130 k=96 tiles=64x64 wmma=0 max_abs_error=0 bad_ids=0 bound_errors=0 wrong_topk=0 inversions=0
+n=128 dim=256 k=128 tiles=64x64 wmma=0 max_abs_error=0 bad_ids=0 bound_errors=0 wrong_topk=0 inversions=0
+n=256 dim=128 k=96 tiles=64x128 wmma=1 max_abs_error=0.0078125 bad_ids=0 bound_errors=0 wrong_topk=0 inversions=0
+n=257 dim=128 k=96 tiles=64x128 wmma=1 max_abs_error=0.0078125 bad_ids=0 bound_errors=0 wrong_topk=0 inversions=0
+n=65 dim=128 k=48 tiles=8x8 wmma=1 max_abs_error=0 bad_ids=0 bound_errors=0 wrong_topk=0 inversions=0
+n=129 dim=130 k=96 tiles=64x64 wmma=1 max_abs_error=0 bad_ids=0 bound_errors=0 wrong_topk=0 inversions=0
+n=128 dim=256 k=128 tiles=64x64 wmma=1 max_abs_error=0.001953125 bad_ids=0 bound_errors=0 wrong_topk=0 inversions=0
+fused_norm=1
+n=256 dim=128 k=96 tiles=64x128 wmma=0 max_abs_error=0 bad_ids=0 bound_errors=0 wrong_topk=0 inversions=0
+n=257 dim=128 k=96 tiles=64x128 wmma=0 max_abs_error=0 bad_ids=0 bound_errors=0 wrong_topk=0 inversions=0
+n=65 dim=128 k=48 tiles=8x8 wmma=0 max_abs_error=0 bad_ids=0 bound_errors=0 wrong_topk=0 inversions=0
+n=129 dim=130 k=96 tiles=64x64 wmma=0 max_abs_error=0 bad_ids=0 bound_errors=0 wrong_topk=0 inversions=0
+n=128 dim=256 k=128 tiles=64x64 wmma=0 max_abs_error=0 bad_ids=0 bound_errors=0 wrong_topk=0 inversions=0
+n=256 dim=128 k=96 tiles=64x128 wmma=1 max_abs_error=0.0078125 bad_ids=0 bound_errors=0 wrong_topk=0 inversions=0
+n=257 dim=128 k=96 tiles=64x128 wmma=1 max_abs_error=0.0078125 bad_ids=0 bound_errors=0 wrong_topk=0 inversions=0
+n=65 dim=128 k=48 tiles=8x8 wmma=1 max_abs_error=0 bad_ids=0 bound_errors=0 wrong_topk=0 inversions=0
+n=129 dim=130 k=96 tiles=64x64 wmma=1 max_abs_error=0 bad_ids=0 bound_errors=0 wrong_topk=0 inversions=0
+n=128 dim=256 k=128 tiles=64x64 wmma=1 max_abs_error=0.001953125 bad_ids=0 bound_errors=0 wrong_topk=0 inversions=0
+PASS: full GEMM entry and CPU top-k oracle; runner verifies actual path counters

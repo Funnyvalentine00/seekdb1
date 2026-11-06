@@ -1,0 +1,18 @@
+{
+  "ports_connect_ex": {
+    "29561": 111,
+    "29571": 111
+  },
+  "live_owned_benchmarks_or_observers": [],
+  "gpu_telemetry": {
+    "card0": {
+      "Temperature (Sensor edge) (C)": "31.0",
+      "Temperature (Sensor junction) (C)": "36.0",
+      "Temperature (Sensor memory) (C)": "30.0",
+      "Average Graphics Package Power (W)": "37.0",
+      "GPU use (%)": "100",
+      "VRAM Total Memory (B)": "51522830336",
+      "VRAM Total Used Memory (B)": "26759168"
+    }
+  }
+}

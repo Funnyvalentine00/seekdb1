@@ -1,0 +1,40 @@
+{
+  "status": "PASS",
+  "cases": [
+    {
+      "name": "preexisting_rows_gpu_ddl",
+      "status": "PASS",
+      "detail": "10000 rows; exact top10; actual final bridge loaded"
+    },
+    {
+      "name": "sql_fused_execution",
+      "status": "PASS",
+      "detail": "positive production fused tile counter; base tile128 for coverage"
+    },
+    {
+      "name": "restart_gpu_snapshot",
+      "status": "PASS",
+      "detail": "exact top10; GPU served; no rebuild"
+    },
+    {
+      "name": "restart_cpu_snapshot",
+      "status": "PASS",
+      "detail": "VSAG deserialized; exact top10; no GPU marker"
+    },
+    {
+      "name": "snapshot_lifecycle",
+      "status": "PASS",
+      "detail": "GPU snapshot serialized/reloaded; no eager CPU fallback"
+    },
+    {
+      "name": "post_restart_mutation_fallback",
+      "status": "PASS",
+      "detail": "delete/insert exact; no stale IDs"
+    },
+    {
+      "name": "cleanup",
+      "status": "PASS",
+      "detail": "owned observer stopped; data preserved"
+    }
+  ]
+}

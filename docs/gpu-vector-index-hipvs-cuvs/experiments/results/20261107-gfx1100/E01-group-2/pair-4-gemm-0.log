@@ -1,0 +1,69 @@
+[seekdb_cuvs] using gpu 0 (0000:63:00.0) numa node 0
+[seekdb_cuvs] pinned build thread to numa node 0
+[seekdb_cuvs] quarantined 3 threads to numa node 1
+[seekdb_cuvs] env: tasks=5 mempolicy mode=-1 nmask0=0 OMP_NUM_THREADS=8
+[seekdb_cuvs] t=476724775ms(epoch=1793986067030) build enter n=250000 dim=128
+[seekdb_cuvs] t=476726347ms(epoch=1793986068602) vram after_bf_shard         used=358.0MB
+[seekdb_cuvs] t=476727559ms(epoch=1793986069814) vram after_bf_shard         used=358.0MB
+[seekdb_cuvs] t=476728802ms(epoch=1793986071057) vram after_bf_shard         used=358.0MB
+[seekdb_cuvs] t=476729967ms(epoch=1793986072222) vram after_bf_shard         used=358.0MB
+[seekdb_cuvs] t=476730034ms(epoch=1793986072289) vram after_index_from_args  used=414.0MB
+[seekdb_cuvs] vram peak bfknn            used=510.0MB
+[seekdb_cuvs] t=476730087ms(epoch=1793986072342) build n=250000 dim=128 gd=96 igd=128 iters=30 algo=bfknn half=1 took=5312.5ms
+[seekdb_cuvs] search nq=100 topk=100 rc=0 took=18.97ms
+[seekdb_cuvs] using gpu 0 (0000:63:00.0) numa node 0
+[seekdb_cuvs] pinned build thread to numa node 0
+[seekdb_cuvs] quarantined 5 threads to numa node 1
+[seekdb_cuvs] env: tasks=7 mempolicy mode=-1 nmask0=0 OMP_NUM_THREADS=8
+[seekdb_cuvs] t=476730107ms(epoch=1793986072362) build enter n=250000 dim=128
+[seekdb_cuvs] t=476731409ms(epoch=1793986073664) vram after_bf_shard         used=502.0MB
+[seekdb_cuvs] t=476732600ms(epoch=1793986074855) vram after_bf_shard         used=502.0MB
+[seekdb_cuvs] t=476733764ms(epoch=1793986076019) vram after_bf_shard         used=502.0MB
+[seekdb_cuvs] t=476734926ms(epoch=1793986077181) vram after_bf_shard         used=502.0MB
+[seekdb_cuvs] t=476734993ms(epoch=1793986077248) vram after_index_from_args  used=558.0MB
+[seekdb_cuvs] vram peak bfknn            used=652.0MB
+[seekdb_cuvs] t=476735046ms(epoch=1793986077301) build n=250000 dim=128 gd=96 igd=128 iters=30 algo=bfknn half=1 took=4939.0ms
+[seekdb_cuvs] search nq=100 topk=100 rc=0 took=6.12ms
+[seekdb_cuvs] search nq=1 topk=10 rc=0 took=14.91ms
+[seekdb_cuvs] search nq=1 topk=10 rc=0 took=0.42ms
+[seekdb_cuvs] search nq=1 topk=10 rc=0 took=0.43ms
+[seekdb_cuvs] search nq=1 topk=10 rc=0 took=0.42ms
+[seekdb_cuvs] search nq=1 topk=10 rc=0 took=0.41ms
+[seekdb_cuvs] search nq=1 topk=10 rc=0 took=0.41ms
+[seekdb_cuvs] search nq=1 topk=10 rc=0 took=0.41ms
+[seekdb_cuvs] search nq=1 topk=10 rc=0 took=0.41ms
+[seekdb_cuvs] search nq=1 topk=10 rc=0 took=0.41ms
+[seekdb_cuvs] search nq=1 topk=10 rc=0 took=0.41ms
+[seekdb_cuvs] search nq=1 topk=10 rc=0 took=0.41ms
+[seekdb_cuvs] search nq=1 topk=10 rc=0 took=0.41ms
+[seekdb_cuvs] search nq=1 topk=10 rc=0 took=0.42ms
+[seekdb_cuvs] search nq=1 topk=10 rc=0 took=0.42ms
+[seekdb_cuvs] search nq=1 topk=10 rc=0 took=0.40ms
+[seekdb_cuvs] search nq=1 topk=10 rc=0 took=0.41ms
+[seekdb_cuvs] search nq=1 topk=10 rc=0 took=0.41ms
+[seekdb_cuvs] search nq=1 topk=10 rc=0 took=0.41ms
+[seekdb_cuvs] search nq=1 topk=10 rc=0 took=0.40ms
+[seekdb_cuvs] search nq=1 topk=10 rc=0 took=0.40ms
+[seekdb_cuvs] search nq=1 topk=10 rc=0 took=0.41ms
+[seekdb_cuvs] search nq=1 topk=10 rc=0 took=0.40ms
+[seekdb_cuvs] search nq=1 topk=10 rc=0 took=0.40ms
+[seekdb_cuvs] search nq=1 topk=10 rc=0 took=0.40ms
+[seekdb_cuvs] search nq=1 topk=10 rc=0 took=0.40ms
+[seekdb_cuvs] search nq=1 topk=10 rc=0 took=0.40ms
+[seekdb_cuvs] search nq=1 topk=10 rc=0 took=0.40ms
+[seekdb_cuvs] search nq=1 topk=10 rc=0 took=0.40ms
+[seekdb_cuvs] search nq=1 topk=10 rc=0 took=0.40ms
+[seekdb_cuvs] search nq=1 topk=10 rc=0 took=0.40ms
+[seekdb_cuvs] search nq=1 topk=10 rc=0 took=0.40ms
+[seekdb_cuvs] search nq=1 topk=10 rc=0 took=0.40ms
+[seekdb_cuvs] search nq=1 topk=10 rc=0 took=0.40ms
+[seekdb_cuvs] search nq=16 topk=10 rc=0 took=0.61ms
+[seekdb_cuvs] search nq=16 topk=10 rc=0 took=0.61ms
+[seekdb_cuvs] search nq=16 topk=10 rc=0 took=0.60ms
+[seekdb_cuvs] search nq=16 topk=10 rc=0 took=0.60ms
+[seekdb_cuvs] search nq=16 topk=10 rc=0 took=0.60ms
+[seekdb_cuvs] search nq=100 topk=10 rc=0 took=5.02ms
+[seekdb_cuvs] search nq=100 topk=10 rc=0 took=5.69ms
+[seekdb_cuvs] search nq=100 topk=10 rc=0 took=5.66ms
+[seekdb_cuvs] search nq=100 topk=10 rc=0 took=5.68ms
+[seekdb_cuvs] search nq=100 topk=10 rc=0 took=5.58ms

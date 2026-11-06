@@ -1,0 +1,1 @@
+["ldd", "-r", "/workspace/seekdb-amd-20261106/libseekdb_cuvs_bridge-acceptance.so"]

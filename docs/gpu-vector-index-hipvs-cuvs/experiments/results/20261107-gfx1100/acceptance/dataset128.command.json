@@ -1,0 +1,1 @@
+["/opt/venv/bin/python", "/workspace/seekdb-amd-20261106/bench_bridge.py", "worker", "--data", "/workspace/seekdb-amd-20261106/data-250k128", "--bridge", "/workspace/seekdb-amd-20261106/libseekdb_cuvs_bridge-acceptance.so", "--gemm", "1", "--fused", "1", "--implementation", "final-acceptance-unpaired-not-new-performance-group"]

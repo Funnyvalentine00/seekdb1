@@ -1,0 +1,12 @@
+cuvs_l2_route	PASS	build=1 serve=1
+vsag_cpu_route	PASS	cuvs_markers=0
+ddl_non_l2	PASS	cosine and inner_product rejected
+freshness_fallback	PASS	n=400 serve=0 exact_match=1
+freshness_rebuild	PASS	n=700 build=1 serve=1
+filter_fallback	PASS	serve=0 exact_match=1
+delete_fallback	PASS	serve=0 exact_match=1 deleted_absent=1
+batch_knn	PASS	trace=1 rows=1000 recall=1.0000
+batch_knn_top100	PASS	trace=1 rows=10000 recall=0.9994
+gpu_fd	PASS	observer opened /dev/dri/renderD131 and /dev/kfd
+gpu_unavailable_fallback	PASS	serve=0 exact_match=1 observer_alive=1
+cleanup	PASS	all observers stopped and ports closed

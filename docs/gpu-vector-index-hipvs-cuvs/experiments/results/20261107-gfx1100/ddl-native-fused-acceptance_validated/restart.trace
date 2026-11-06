@@ -1,0 +1,4 @@
+create_dense   handle=(nil) a=128 b=0
+fdeserialize   handle=0x7dfb4f9f7000 a=0 b=0
+knn_simple     handle=0x7dfb4f9f7000 a=128 b=10
+cuvs_serve     handle=0x7dfb4f9f7000 a=10 b=10000

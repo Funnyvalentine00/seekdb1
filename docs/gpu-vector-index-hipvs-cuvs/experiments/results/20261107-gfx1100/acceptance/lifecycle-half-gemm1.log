@@ -1,0 +1,22 @@
+[seekdb_cuvs] using gpu 0 (0000:63:00.0) numa node 0
+[seekdb_cuvs] env: tasks=3 mempolicy mode=-1 nmask0=0 OMP_NUM_THREADS=8
+[seekdb_cuvs] t=477608102ms(epoch=1793986950357) build enter n=512 dim=128
+[seekdb_bf_gemm] n=512 dim=128 gd=96 ksel=96 tiles 64x128 algo=0 wma=1 fused_tiles=32 wmma_tiles=32 blas_tiles=0 total_wall=45ms rc=0
+[seekdb_cuvs] bf-gemm: n=512 dim=128 gd=96 tiles 64x128
+[seekdb_cuvs] t=477608176ms(epoch=1793986950431) vram after_index_from_args  used=346.0MB
+[seekdb_cuvs] vram peak bfknn            used=272.0MB
+[seekdb_cuvs] t=477608206ms(epoch=1793986950461) build n=512 dim=128 gd=96 igd=128 iters=30 algo=bfknn_sym half=1 took=187.0ms
+[seekdb_cuvs] search nq=16 topk=10 rc=0 took=8.07ms
+{"stage": "fresh", "queries": 16, "topk": 10, "self_matches": 16, "tie_aware_recall": 1.0}
+[seekdb_cuvs] search nq=16 topk=10 rc=0 took=0.63ms
+{"stage": "reused", "queries": 16, "topk": 10, "self_matches": 16, "tie_aware_recall": 1.0}
+[seekdb_cuvs] t=477608227ms(epoch=1793986950481) vram serialize_begin        used=482.5MB
+[seekdb_cuvs] t=477608227ms(epoch=1793986950482) vram serialize_end          used=482.5MB
+[seekdb_cuvs] search nq=16 topk=10 rc=0 took=0.56ms
+{"stage": "deserialized", "queries": 16, "topk": 10, "self_matches": 16, "tie_aware_recall": 1.0}
+[seekdb_cuvs] snapshot shape mismatch: 512 x 128, expected 513 x 128
+[seekdb_cuvs] deserialize failed: (null)
+[seekdb_cuvs] snapshot shape mismatch: 512 x 128, expected 512 x 129
+[seekdb_cuvs] deserialize failed: (null)
+PASS: mismatched snapshot shapes rejected
+PASS: real bridge build/search/reuse/serialize/deserialize/free

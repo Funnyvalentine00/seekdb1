@@ -1,0 +1,566 @@
+AMD GPU CAGRA Optimization Mission
+SeekDB Autonomous Performance Research & Engineering
+你现在负责 SeekDB AMD GPU 向量索引赛题的长时间自主研发任务。
+本任务不是简单修复一个 GPU Kernel，而是围绕现有 HIP/cuVS/CAGRA 向量索引实现，持续寻找性能瓶颈、设计优化方案、实施代码修改、在真实 AMD GPU 上验证，并通过循环实验不断提升性能。
+你拥有充足的研发时间，但必须严格管理现有成果、GPU 算力、实验数据和代码版本。
+最终目标：
+在保持 Recall、查询正确性、稳定性和接口兼容性的前提下，尽可能提升 GPU 索引构建和查询性能。
+0. 固定项目信息
+Repository:
+https://github.com/Funnyvalentine00/seekdb1.git
+Target branch:
+amd-cagra-submit
+Latest known remote HEAD:
+f97bc2823f3ff74c9a9ecbb232f82f1997cb90ed
+Previous important commit:
+f6a8e1dc38f68c2a80ca76986e7607b222b9a341
+Project:
+SeekDB AMD GPU Vector Index / hipVS-cuVS Integration
+Technology stack:
+AMD ROCm
+HIP
+cuVS
+CAGRA
+rocBLAS
+Optional rocWMMA
+GPU GEMM
+GPU Top-K selection
+SeekDB vector index adaptor
+Primary optimization target:
+GPU-accelerated vector index construction and ANN search.
+Do not confuse this task with the FTS optimization project.
+The FTS branches and their working directories must not be modified.
+1. Phase One: Project Takeover Audit
+Before making any modifications, perform a complete read-only audit.
+1.1 Git state
+Inspect:
+Current working directory.
+Current branch.
+Current HEAD.
+git status.
+git log.
+git reflog.
+Local branches.
+Remote branches.
+Upstream configuration.
+Existing uncommitted changes.
+Existing untracked files.
+Relationship between local and remote amd-cagra-submit.
+The remote HEAD is a reference, not an unconditional reset target.
+If local HEAD differs from f97bc282, determine whether local changes contain additional optimizations.
+Do not reset, clean, rebase, force checkout, or overwrite existing work.
+Do not discard any existing commit or experiment.
+1.2 Read the existing technical documentation
+At minimum:
+docs/gpu-vector-index-hipvs-cuvs/README.md
+docs/gpu-vector-index-hipvs-cuvs/GEMM_OPTIMIZATION_20261106.md
+Existing validation scripts.
+Existing benchmark scripts.
+Existing experiment logs.
+Previous CAGRA optimization commits.
+Inspect the full implementation, not just the most recent GEMM file.
+Important source files include:
+src/oblib/lib/vector/ob_vsag_adaptor.cpp
+src/observer/vector_index/ob_plugin_vector_index_adaptor.cpp
+src/observer/vector_index/ob_vector_index_util.cpp
+src/pl/sys_package/ob_dbms_vector_mysql.cpp
+tools/hipvs_bridge/seekdb_cuvs_bridge.c
+tools/hipvs_bridge/seekdb_bf_gemm.cpp
+tools/hipvs_bridge/build.sh
+Find all related build flags, runtime parameters, environment variables, and fallback implementations.
+1.3 Create an optimization inventory
+Build a table containing:
+Optimization name.
+Original bottleneck.
+Modified files.
+Implementation.
+Experimental evidence.
+GPU validation status.
+Recall impact.
+Build-time impact.
+Search impact.
+Memory impact.
+Remaining risks.
+Separate each item into:
+VALIDATED
+EXPERIMENTAL
+FAILED
+UNKNOWN
+A committed optimization is not automatically a validated optimization.
+1.4 Protect existing assets
+Preserve:
+Existing optimization commits.
+Existing benchmark results.
+Existing test fixtures.
+Existing GPU datasets.
+Existing bridge libraries.
+Existing GPU binaries.
+Existing experimental logs.
+Never delete datasets or build outputs to make space without first checking their ownership and reproducibility.
+Keep this project isolated from other SeekDB optimization branches.
+2. Phase Two: Establish Real AMD GPU Environment
+The AMD GPU environment is essential to this project.
+CPU-only testing is useful for correctness but cannot establish GPU performance.
+Inspect the actual hardware and software environment before compiling.
+2.1 Hardware identification
+Record:
+AMD GPU model.
+GPU architecture, such as gfx1100 or another actual target.
+VRAM capacity.
+Available VRAM.
+GPU compute capability.
+GPU utilization.
+PCIe configuration.
+NUMA topology.
+CPU model.
+CPU-to-GPU NUMA distance.
+System memory.
+Do not assume the target GPU is gfx1100 simply because an earlier evaluation environment used it.
+Use rocminfo, rocm-smi, sysfs, and other available system tools to identify the actual hardware.
+2.2 Software environment
+Record:
+ROCm version.
+HIP compiler version.
+hipcc version.
+rocBLAS version.
+rocWMMA availability.
+cuVS version.
+RAFT version.
+CMake/Bazel configuration.
+Compiler flags.
+Runtime libraries.
+Actual offload architecture.
+Compare the current environment against the documented ROCm 7.2.4 / gfx1100 validation environment.
+If versions differ, identify compatibility risks before modifying code.
+2.3 GPU execution verification
+Before running large experiments:
+Confirm the GPU is visible.
+Compile a minimal HIP kernel.
+Execute it.
+Confirm device memory allocation.
+Verify rocBLAS initialization.
+Verify cuVS initialization.
+Verify actual device execution rather than silent CPU fallback.
+Record the results.
+A successful host compilation does not prove GPU execution.
+A successful GPU initialization does not prove the GEMM path is being used.
+Instrument the execution path to distinguish:
+GPU GEMM path.
+cuVS brute-force fallback.
+VSAG CPU fallback.
+Other fallback paths.
+3. Phase Three: Establish Performance Baseline
+Before new optimization, establish a trustworthy baseline.
+Use the latest verified working version as the primary comparison target.
+Do not use the original historical version as the only comparison.
+Maintain three separate references:
+Original competition baseline.
+Current best validated version.
+Current experimental candidate.
+3.1 Dataset matrix
+Use existing contest datasets and fixtures.
+Prioritize:
+128-dimensional vectors.
+256-dimensional vectors.
+SIFT or equivalent existing dataset.
+Larger datasets if available.
+Different query batch sizes.
+Different graph degrees.
+Preserve existing dataset definitions and random seeds.
+Never compare candidates using different datasets or different ground truth.
+3.2 Metrics
+Measure at least:
+Index construction
+GPU kernel build time.
+End-to-end index DDL time.
+Main-table scan time.
+Host-to-device transfer time.
+GPU allocation time.
+Graph construction time.
+Index finalization time.
+Query
+QPS.
+p50.
+p95.
+p99.
+Single-query latency.
+Batched-query latency.
+End-to-end SQL query latency.
+Accuracy
+Recall@10.
+Recall@100.
+Ground-truth agreement.
+Neighbor ID correctness.
+Distance correctness.
+Resources
+Peak VRAM.
+Persistent VRAM.
+Temporary VRAM.
+Host memory.
+GPU utilization.
+CPU utilization.
+PCIe transfer volume.
+Power and thermal behavior if accessible.
+Do not report only GPU kernel time.
+The actual competition outcome depends on the entire execution pipeline.
+3.3 Measurement methodology
+Use paired A/B experiments.
+Same GPU.
+Same dataset.
+Same parameters.
+Same software environment.
+Same ground truth.
+Consistent warmup.
+Alternating execution order.
+Multiple repetitions.
+Record raw results, not just averages.
+Distinguish cold-start and warm-start performance.
+Do not use isolated microbenchmark improvements as proof of end-to-end improvement.
+4. Phase Four: Autonomous Optimization Research
+Do not restrict yourself to the optimizations already present.
+Investigate the entire GPU vector indexing pipeline.
+Use profiling evidence to choose the next direction.
+A. GPU GEMM optimization
+Current GEMM path is an important research target.
+Investigate:
+rocBLAS GEMM performance.
+rocWMMA tensor-core utilization.
+Matrix tile sizes.
+Query tile sizes.
+Base-vector tile sizes.
+Memory layout.
+FP16 input conversion.
+FP32 accumulation.
+Register pressure.
+Shared memory usage.
+Occupancy.
+Memory coalescing.
+Kernel launch overhead.
+Scratch buffer reuse.
+Matrix transpose overhead.
+Evaluate whether a custom WMMA implementation actually outperforms rocBLAS on the target hardware.
+Do not assume tensor-core execution is automatically faster.
+Benchmark multiple tile configurations.
+Preserve numerical accuracy.
+B. Top-K and candidate selection
+Investigate:
+cuVS select_k.
+Radix selection.
+Warp-level selection.
+Candidate reduction.
+Merge kernels.
+Candidate buffer layouts.
+Memory traffic.
+Sorting overhead.
+Stable tie handling.
+The current GEMM implementation reduces candidate width from gd+32 to gd.
+Investigate whether additional candidate processing can be removed safely.
+Do not remove candidates merely to improve performance if it reduces recall.
+C. CAGRA graph construction
+Investigate:
+CAGRA AUTO_SELECT.
+Graph degree.
+Intermediate graph construction.
+Exact KNN initialization.
+NN-descent alternatives.
+Shard construction.
+Graph merging.
+Graph symmetrization.
+Construction precision.
+GPU memory footprint.
+Compare 128D and 256D separately.
+Do not force one configuration across all dimensions.
+D. NUMA and data movement
+Investigate:
+CPU-to-GPU NUMA affinity.
+First-touch allocation.
+Node-local memory copies.
+PCIe bandwidth.
+Pinned host memory.
+Pageable memory.
+Transfer overlap.
+Host-side data preparation.
+GPU data staging.
+The existing NUMA optimization has shown meaningful benefits.
+Do not blindly repeat it.
+Investigate whether the current implementation still has unnecessary copies or synchronization.
+E. Memory management
+Investigate:
+VRAM allocation.
+Scratch buffer lifetime.
+Allocation reuse.
+rocBLAS workspace.
+cuVS temporary buffers.
+Peak memory.
+Fragmentation.
+Cleanup on errors.
+Concurrent builds.
+The latest implementation uses invocation-owned rocBLAS handles.
+Preserve correct resource ownership.
+Investigate whether temporary memory can be reused safely without introducing cross-build races.
+F. GPU search optimization
+Investigate:
+CAGRA search parameters.
+Search graph traversal.
+Batch size.
+Query batching.
+Search workspace.
+Memory access patterns.
+Search kernel occupancy.
+Candidate expansion.
+Recall/latency trade-offs.
+Separate the GPU search performance from the surrounding SQL and adaptor overhead.
+G. SeekDB integration
+Investigate:
+Vector adaptor overhead.
+DDL pipeline.
+Temporary row files.
+Index freshness.
+Lazy rebuild.
+GPU index lifecycle.
+SQL materialization.
+Batch KNN.
+Fallback decisions.
+Determine whether the remaining latency is inside the GPU bridge or outside it.
+Do not optimize the bridge if profiling shows the database pipeline is the dominant bottleneck.
+5. Phase Five: Optimization Loop
+Use the following continuous workflow.
+Step 1: Hypothesis
+Identify one measurable bottleneck.
+Record:
+Profiling evidence.
+Relevant code.
+Expected benefit.
+Potential risks.
+Correctness requirements.
+Benchmark method.
+Rollback method.
+Step 2: Implementation
+Prefer small, isolated modifications.
+Keep CPU and GPU implementations compatible.
+Preserve C ABI boundaries.
+Avoid unnecessary dependencies.
+Do not introduce global mutable state without a strong reason.
+Be especially careful with:
+HIP streams.
+Device pointers.
+rocBLAS handles.
+RAFT resources.
+Asynchronous execution.
+Memory ownership.
+Concurrent DDL operations.
+Step 3: CPU verification
+Run the existing CPU regression harness:
+python3 unittest/oblib/vector/hipvs_gemm/test_cpu.py
+Run any other relevant host-side tests.
+Use ASan and UBSan where applicable.
+Remember:
+CPU harness success validates host control flow, not real GPU execution.
+Step 4: GPU verification
+Compile the bridge with the actual ROCm toolchain.
+Build SeekDB with:
+DOB_BUILD_CUVS=ON
+DOB_BUILD_CUVS_TRACE as appropriate
+The actual bridge library.
+Use the real detected offload architecture.
+Run the existing GPU smoke test:
+docs/gpu-vector-index-hipvs-cuvs/validation/run_gpu_smoke.sh
+Use isolated:
+Observer binary.
+Data directory.
+Port.
+Evidence directory.
+Bridge library.
+Validate:
+CAGRA build.
+GPU search.
+Recall@10.
+Recall@100.
+VSAG isolation.
+Non-L2 rejection.
+Filter fallback.
+Delete fallback.
+Index freshness.
+Rebuild behavior.
+Batch KNN.
+GPU device access.
+Cleanup.
+If GPU validation cannot be performed, clearly mark the result GPU_UNVERIFIED.
+Do not claim a GPU performance improvement from CPU tests.
+Step 5: Benchmark
+Perform paired measurements against the current best validated version.
+Record:
+Raw benchmark output.
+GPU utilization.
+VRAM peak.
+Recall.
+End-to-end build time.
+Query latency.
+QPS.
+CPU and transfer overhead.
+Step 6: Decision
+PASS:
+Correctness verified.
+GPU execution verified.
+Recall gates preserved.
+Repeatable performance improvement.
+No unacceptable resource regression.
+Promote the candidate to the new best validated version.
+PARTIAL:
+Correctness verified.
+Some improvement exists.
+Additional GPU or end-to-end validation remains.
+Keep the experiment isolated.
+FAIL:
+Correctness failure.
+Recall regression.
+Performance regression.
+Resource leak.
+Deadlock.
+GPU crash.
+Revert only the current experiment.
+Never revert previous validated optimizations.
+6. Phase Six: Advanced Exploration
+Once existing optimization directions have been exhausted, explore additional opportunities.
+Possible research directions:
+Persistent GPU index caching.
+Reusing CAGRA graph state.
+Avoiding repeated graph construction.
+Overlapping host-to-device transfers with GPU computation.
+Multi-stream execution.
+Kernel fusion.
+Better memory layouts.
+Adaptive tile selection.
+Adaptive graph degree selection.
+Query batch scheduling.
+Reduced CPU-GPU synchronization.
+Mixed precision with accuracy guarantees.
+GPU memory pool reuse.
+Concurrent index construction.
+Improved CPU/GPU work partitioning.
+Do not implement these mechanically.
+First determine whether they fit the current architecture and competition scoring rules.
+Do not expand scope into unrelated database functionality.
+7. Reliability and Fallback Requirements
+This project must remain robust across evaluation environments.
+The existing fail-soft fallback is an important feature.
+Preserve the ability to fall back to the proven cuVS brute-force shard implementation when the optimized GEMM path is unavailable or fails.
+Never turn an optional optimization into a mandatory dependency.
+Validate:
+Unsupported GPU architecture.
+Missing rocWMMA.
+Insufficient VRAM.
+HIP allocation failures.
+rocBLAS initialization failures.
+Kernel launch failures.
+Synchronization errors.
+Cleanup after partial failure.
+Concurrent build operations.
+The CPU/VSAG fallback must remain functional.
+Do not silently report a successful GPU build if the system actually used a fallback.
+The active execution path must be observable in logs and benchmark evidence.
+8. Long-Running Autonomous Execution
+This task is intended to run for an extended period without user intervention.
+Continue the research and implementation loop without requesting confirmation after each normal experiment.
+However, respect the following restrictions:
+Do not delete user datasets.
+Do not overwrite existing benchmark evidence.
+Do not change global ROCm installations.
+Do not upgrade dependencies without necessity.
+Do not change the system GPU driver.
+Do not run destructive commands against shared environments.
+Do not reset shared Git branches.
+Do not force push.
+Do not automatically merge or close pull requests.
+Monitor GPU memory, temperature, utilization, CPU, and disk space.
+Avoid running several large GPU builds concurrently.
+Stop safely if the GPU becomes unstable.
+Capture logs and exit codes.
+If a test cannot run, record why and continue with independent work that does not rely on the unavailable capability.
+9. Version and Experiment Management
+Maintain three separate references:
+ORIGINAL_BASELINE:
+The earliest competition reference discovered in the existing project history.
+BEST_VALIDATED:
+The latest version with verified correctness and repeatable GPU performance evidence.
+EXPERIMENTAL_CANDIDATE:
+The current unverified optimization.
+Do not confuse these versions.
+The original baseline is for historical comparison only.
+It is never a rollback target for ordinary failed experiments.
+Every successful optimization should receive an independent commit.
+Every failed experiment should be documented.
+Use isolated worktrees for historical comparisons when possible.
+Do not use git reset or git clean as a routine rollback mechanism.
+Keep the AMD project isolated from FTS branches and their working directories.
+10. Model Usage and Context Efficiency
+The model and reasoning effort are fixed by the user.
+Do not assume that you can switch models or change reasoning effort.
+Improve efficiency by:
+Persisting technical findings.
+Avoiding repeated source inspection.
+Reusing benchmark fixtures.
+Reusing validated build artifacts where safe.
+Recording failed hypotheses.
+Keeping a current research queue.
+Summarizing each experiment.
+Avoiding speculative refactoring.
+Do not waste the available compute budget on redundant experiments.
+Prioritize experiments by expected gain, confidence, cost, and risk.
+11. Deliverables
+Maintain an independent documentation directory:
+docs/gpu-vector-index-hipvs-cuvs/experiments/
+Suggested structure:
+STATE.md
+BASELINE.md
+EXPERIMENT_LOG.md
+OPTIMIZATION_REPORT.md
+GPU_VALIDATION.md
+REGRESSION_REPORT.md
+NEXT_STEPS.md
+For each optimization round, preserve:
+Source patch.
+Git commit.
+Build log.
+GPU environment.
+Benchmark parameters.
+Raw performance results.
+Recall results.
+VRAM measurements.
+Profiling results.
+Known limitations.
+Final report must clearly distinguish:
+CPU verified.
+GPU compiled.
+GPU executed.
+GPU benchmarked.
+Contest evaluated.
+These are different validation levels.
+Final questions:
+Which optimizations actually improved performance?
+What is the end-to-end build improvement?
+What is the query QPS improvement?
+What are Recall@10 and Recall@100?
+What is the peak VRAM usage?
+Did CPU-GPU transfer remain a bottleneck?
+Is the GEMM path genuinely faster than the existing cuVS fallback?
+Is the implementation stable on the target AMD GPU?
+Is the final candidate ready for contest evaluation?
+What are the next highest-value optimization opportunities?
+12. Execution Order
+Start with:
+Git and workspace audit.
+Existing optimization inventory.
+AMD GPU environment verification.
+Existing GPU execution path verification.
+Current best-version performance baseline.
+Profiling.
+Highest-value optimization.
+CPU correctness.
+Actual GPU compilation and execution.
+Paired performance comparison.
+Keep or revert.
+Repeat.
+Do not stop at the research report.
+After the initial state has been verified, continue into implementation and testing.
+The ultimate objective is to deliver a genuinely faster AMD GPU vector index implementation, not merely a larger code diff or more impressive theoretical operation counts.

@@ -1,0 +1,13 @@
+test_headless_offload_target_with_and_without_wmma_headers (__main__.BuildRegression.test_headless_offload_target_with_and_without_wmma_headers) ... ok
+test_distinct_norms_across_tiles (__main__.GemmRegression.test_distinct_norms_across_tiles) ... ok
+test_failed_result_copy_cleanup (__main__.GemmRegression.test_failed_result_copy_cleanup) ... ok
+test_failed_selection_cleanup (__main__.GemmRegression.test_failed_selection_cleanup) ... ok
+test_partial_allocation_cleanup (__main__.GemmRegression.test_partial_allocation_cleanup) ... ok
+test_short_final_base_tile (__main__.GemmRegression.test_short_final_base_tile) ... ok
+test_single_tile (__main__.GemmRegression.test_single_tile) ... ok
+test_tiles_smaller_than_requested_k (__main__.GemmRegression.test_tiles_smaller_than_requested_k) ... ok
+
+----------------------------------------------------------------------
+Ran 8 tests in 2.801s
+
+OK

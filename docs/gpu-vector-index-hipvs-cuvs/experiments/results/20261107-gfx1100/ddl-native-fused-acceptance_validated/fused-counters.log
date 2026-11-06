@@ -1,0 +1,1 @@
+[seekdb_bf_gemm] n=10000 dim=128 gd=96 ksel=96 tiles 2048x128 algo=0 wma=1 fused_tiles=312 wmma_tiles=312 blas_tiles=83 total_wall=123ms rc=0
