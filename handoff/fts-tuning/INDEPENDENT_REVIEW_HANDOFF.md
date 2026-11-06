@@ -14,7 +14,7 @@
 
 E01 changes only src/storage/fts/ob_fts_stop_word.cpp: replace get_refactored + set_refactored(overwrite) with one set_or_update operation. The anonymous updater assigns entry.first=word and increments entry.second by word_freq. Initial insertion remains count 1; invalid/non-grouping branches remain unchanged.
 
-Source patch: v5-20261107/e01.patch, SHA256 82f85f8cb1b0ac33968762022b764ab0542a0aa642189d83ccb958dc31de3f41.
+Source patch: v5-20261107/e01.patch.gz (lossless gzip; decompress to inspect/apply), uncompressed SHA256 82f85f8cb1b0ac33968762022b764ab0542a0aa642189d83ccb958dc31de3f41.
 Source before SHA256: 467903a9f748d2e7e31aee0840a0cabddfba01932ef8f08ece82a80ac6967009.
 Source after SHA256: 01c4e435c417cd8d7727f226a6f856d6b22b9003a25c106ab053a405d7cfeb7c.
 Reference binary: 9544ca38c4d6cc336adb079f362eff1fa220739d58ce70bc2d0f1d948d5ade32.
@@ -56,3 +56,5 @@ Node: /home/xiazihan/benchmark/fts-v4-integration-20261106. Use saved-binaries/s
 Harness notes: the first correctness attempt stopped at an overly strict bind-based port preflight before creating an instance; control_v2 uses connect_ex and preserves the failure log. The reused validate_source.py refreshed logs/source-fixed.json with identical bytes (SHA25685a27f88bd681b641dcb0d94e4af1ede26e6b565bae4bc9aa30e5958e9af0656); no historical benchmark data changed. Future validators should write to a new experiment namespace.
 
 Remaining V4 blockers: historical build/tokenize/RSS gates, FTS13/15, lack of official CI, and unproven source of measurement/peak-memory variability. No final server switch or push was performed.
+
+Packaging note: the exact raw unified patch contains a space-only context line. It is retained byte-for-byte in archives and compressed as e01.patch.gz in Git, avoiding treating patch context as newly introduced source whitespace. No raw evidence or history was rewritten.

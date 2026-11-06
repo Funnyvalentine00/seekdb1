@@ -1,7 +1,8 @@
 """Verify the frozen V5 evidence without starting servers or rewriting results."""
 from pathlib import Path
-import hashlib,json,math,re,statistics,tarfile
+import gzip,hashlib,json,math,re,statistics,tarfile
 R=Path(__file__).resolve().parent
+assert hashlib.sha256(gzip.decompress((R/'e01.patch.gz').read_bytes())).hexdigest()=='82f85f8cb1b0ac33968762022b764ab0542a0aa642189d83ccb958dc31de3f41'
 for name,record in json.loads((R/'archive-manifest.json').read_text()).items():
     data=(R/name).read_bytes()
     assert len(data)==record['bytes'] and hashlib.sha256(data).hexdigest()==record['sha256'],name
