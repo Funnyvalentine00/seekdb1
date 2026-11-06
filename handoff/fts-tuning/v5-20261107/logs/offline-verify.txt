@@ -1,0 +1,1 @@
+PASS: 3 archive hashes; 17 exact-input/hit reports; 3 formal pairs; 42000 tail + 9000 calibration samples; before/candidate/final functional parity; 57 passes/6 known failures; no promotion; budget/20% closeout preserved.

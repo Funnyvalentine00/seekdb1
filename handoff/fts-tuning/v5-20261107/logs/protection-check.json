@@ -1,0 +1,19 @@
+{
+  "original_head": "f5fe975382f4b151f7181a70d7f7e05ff9b234fd",
+  "v5_branch": "feat/fts-opt-v5",
+  "v5_product_changes_vs_reference": [],
+  "original_status": [
+    " M src/sql/engine/file_sql/csv_reader.cpp",
+    " M src/sql/engine/file_sql/file_sql_scan.cpp"
+  ],
+  "v3_status": [
+    " M src/sql/engine/file_sql/csv_reader.cpp",
+    " M src/sql/engine/file_sql/file_sql_scan.cpp"
+  ],
+  "macos_files_match": {
+    "src/sql/engine/file_sql/csv_reader.cpp": true,
+    "src/sql/engine/file_sql/file_sql_scan.cpp": true
+  },
+  "server2914": "PID31133 observed listening; no switch performed",
+  "push_performed": false
+}

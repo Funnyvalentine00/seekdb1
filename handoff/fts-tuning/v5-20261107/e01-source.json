@@ -1,0 +1,13 @@
+{
+  "experiment": "E01",
+  "working_parent": "2e8d969ca",
+  "product_parent": "194150497aca9a69e395317bd6d5a64f26340a61",
+  "files": [
+    "src/storage/fts/ob_fts_stop_word.cpp"
+  ],
+  "source_before_sha256": "467903a9f748d2e7e31aee0840a0cabddfba01932ef8f08ece82a80ac6967009",
+  "source_after_sha256": "01c4e435c417cd8d7727f226a6f856d6b22b9003a25c106ab053a405d7cfeb7c",
+  "patch_sha256": "82f85f8cb1b0ac33968762022b764ab0542a0aa642189d83ccb958dc31de3f41",
+  "implementation_corrections": 0,
+  "decision": "EXPERIMENTAL; uncommitted until correctness/performance complete"
+}

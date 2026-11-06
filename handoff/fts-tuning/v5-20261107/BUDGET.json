@@ -1,0 +1,48 @@
+{
+  "total_experiments": 8,
+  "max_implementation_corrections_per_experiment": 2,
+  "max_formal_ab_pairs_per_candidate": 3,
+  "minimum_target_improvement_pct": 2,
+  "require_above_aa_noise": true,
+  "consecutive_valid_experiments_without_repeatable_gain_stop": 3,
+  "wall_time_assumption_hours": 4,
+  "start": "2026-11-07T00:39:00+08:00",
+  "new_experiment_cutoff": "2026-11-07T03:51:00+08:00",
+  "final_deadline": "2026-11-07T04:39:00+08:00",
+  "minimum_final_verification_minutes": 48,
+  "registered": [
+    "E01"
+  ],
+  "implemented": 1,
+  "success": 0,
+  "failed": 1,
+  "partial": 0,
+  "aa_calibrations": [
+    "AA-V5-01",
+    "AA-V5-CONTROLLED-01"
+  ],
+  "calibrations_count_as_optimization": false,
+  "in_progress": null,
+  "formal_ab_pairs": {
+    "E01": 3
+  },
+  "early_stop": true,
+  "early_stop_reason": "Test environment cannot reliably resolve expected small improvements: noisy AA, controlled AA and contradictory formal tokenization results. User early-stop condition 4.",
+  "new_experiments_stopped": true,
+  "final_phase_start_recorded_at": "2026-11-07T01:09:00.912354+08:00",
+  "time_accounting_note": "4h is an upper bound, not mandatory runtime; on early stop use actual final-phase share >=20%, do not idle to exhaust time.",
+  "final_phase_start_actual": "2026-11-07T01:07:04.982171+08:00",
+  "last_recorded_at": "2026-11-07T01:14:30.258659+08:00",
+  "actual_elapsed_minutes": 42.1235701,
+  "final_phase_minutes": 14.040533916666668,
+  "final_phase_fraction": 0.33331775733478647,
+  "implementation_corrections": {
+    "E01": 0
+  },
+  "retained_binary_sha256": {
+    "reference": "9544ca38c4d6cc336adb079f362eff1fa220739d58ce70bc2d0f1d948d5ade32",
+    "experiment": "eff02f8fc44b0245ab33ddc54c61d002d854a77531014d52fa27f992f69e9e8d"
+  },
+  "stop_after_delivery": true,
+  "final_recorded_at": "2026-11-07T01:21:07.414206+08:00"
+}

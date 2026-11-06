@@ -1,0 +1,14 @@
+{
+  "aa-evidence.tar.gz": {
+    "bytes": 5109,
+    "sha256": "48ae97af23bc486b694514dcb78e7319f3955c20c0a483c9694d77edf09f5b8f"
+  },
+  "e01-evidence.tar.gz": {
+    "bytes": 408810,
+    "sha256": "c6906bd2020a6b0fd979840fc9eac23409ed15e160f88a9388b790c63f68138e"
+  },
+  "final-evidence.tar.gz": {
+    "bytes": 501845,
+    "sha256": "3f8a4523e60e165c8bdb858eba8387624a1dc2e2b3aa5c6de670f192983e6e11"
+  }
+}

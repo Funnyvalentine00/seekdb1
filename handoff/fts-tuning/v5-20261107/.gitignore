@@ -1,0 +1,6 @@
+# Regenerable unpacked views; original archives and SHA manifests are retained.
+aa-original/
+collected/
+final-collected/
+e01-preimage.txt
+protected-macos.patch
