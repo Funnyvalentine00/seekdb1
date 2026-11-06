@@ -1,0 +1,11 @@
+{
+  "head": "f5fe975382f4b151f7181a70d7f7e05ff9b234fd",
+  "product": "194150497aca9a69e395317bd6d5a64f26340a61",
+  "macos_files": {
+    "src/sql/engine/file_sql/csv_reader.cpp": "a0f9230f7b509c6fa986917e1981ab03f510a570f2e31407b21dc5be087738f1",
+    "src/sql/engine/file_sql/file_sql_scan.cpp": "35102c1ed61378205ba145fd4642b0c11adddbb123671f5a0e07f59165d1703f"
+  },
+  "macos_patch_sha256": "4f2da893eb5772b4787dee2693255b7c40a70e78e6f168f265f81332a61515b0",
+  "original_worktree": "/Users/xiazihan/seekdb-work/seekdb-clean",
+  "v3_worktree": "/Users/xiazihan/seekdb-work/seekdb1"
+}
