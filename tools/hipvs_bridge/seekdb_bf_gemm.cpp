@@ -33,8 +33,10 @@
 #include <ctime>
 #include <pthread.h>
 
+#ifdef SK_USE_ROCWMA
 #include <rocwmma/rocwmma.hpp>
 using namespace rocwmma;
+#endif
 
 namespace raft { class resources; }
 
@@ -112,7 +114,8 @@ __global__ static void sk_add_normb_kernel(float* c, const float* nb,
 /* WMMA GEMM: dist[i][j] = -2 * <a_i, b_j>, row-major [m x tb] (ldc = tb).
  * One 64x64 output tile per block (16 warps, 16x16 per warp), fp16 inputs,
  * fp32 accumulate on tensor cores. Tail tiles (not multiples of 64) fall
- * back to rocBLAS in the caller. */
+ * back to rocBLAS in the caller. Only built when rocwmma headers exist. */
+#ifdef SK_USE_ROCWMA
 __global__ __launch_bounds__(512) static void sk_wmma_gemm_kernel(
     const unsigned short* base, const unsigned short* q, float* out,
     long m, long tb, long dim)
@@ -132,6 +135,7 @@ __global__ __launch_bounds__(512) static void sk_wmma_gemm_kernel(
   }
   store_matrix_sync((float32_t*)(out + i0 * tb + j0), fc, (unsigned)tb, mem_col_major);
 }
+#endif  /* SK_USE_ROCWMA */
 
 __global__ static void sk_merge_tile_kernel(const float* td, const int* ti,
                                             long tb_off, float* bd,
@@ -190,7 +194,11 @@ static int sk_select_topk(raft::resources& res, const float* in, long m,
 
 /* SEEKDB_CUVS_GEMM_SELALGO: 0=kAuto 1=radix8 2=radix11 3=radix11+extra 4=warpAuto */
 static int env_sel_algo = 0;
+#ifdef SK_USE_ROCWMA
 static int g_use_wmma = 1;
+#else
+static int g_use_wmma = 0;
+#endif
 
 static raft::matrix::SelectAlgo sk_env_algo(void)
 {
@@ -259,6 +267,7 @@ extern "C" int sk_bf_gemm_topk128(void* res_p, const void* d_base, long n,
     for (long bo = 0; bo < n; bo += tile_b) {
       const long tb = (n - bo < tile_b) ? (n - bo) : tile_b;
       /* dist = -2 * base^T @ query, C stored row-major [m x tb] */
+#ifdef SK_USE_ROCWMA
       if (g_use_wmma && (tb % 64) == 0 && (m % 64) == 0) {
         dim3 g((unsigned)(tb / 64), (unsigned)(m / 64));
         sk_wmma_gemm_kernel<<<g, 512, 0, 0>>>(
@@ -268,7 +277,9 @@ extern "C" int sk_bf_gemm_topk128(void* res_p, const void* d_base, long n,
         SK_HIP_CHECK(hipGetLastError());
         sk_add_normb_kernel<<<4096, 256, 0, 0>>>(d_scratch, d_normb,
                                                  m * tb, tb, -2);
-      } else {
+      } else
+#endif
+      {
         const rocblas_status gs = rocblas_gemm_ex(
             blas, rocblas_operation_transpose, rocblas_operation_none,
             (rocblas_int)tb, (rocblas_int)m, (rocblas_int)dim, &alpha,

@@ -37,9 +37,16 @@ COMMON=(-shared -fPIC -O2 -D__HIP_PLATFORM_AMD__
         -I"$SCRIPT_DIR" -I"$SCRIPT_DIR/raft/include" -I"$SCRIPT_DIR/shim"
         -I"$HIPVS_ROOT/include" -I"$ROCM_ROOT/include")
 
-"$HIPCC" -c "${COMMON[@]}" "$SCRIPT_DIR/seekdb_cuvs_bridge.c" \
+# The WMMA kernel needs the rocwmma headers; skip it (rocBLAS fallback) when
+# the ROCm install does not ship them, so the official build never breaks.
+WMA_FLAGS=""
+if [[ -f "$ROCM_ROOT/include/rocwmma/rocwmma.hpp" ]]; then
+  WMA_FLAGS="-DSK_USE_ROCWMA"
+fi
+
+"$HIPCC" -c "${COMMON[@]}" $WMA_FLAGS "$SCRIPT_DIR/seekdb_cuvs_bridge.c" \
   -o "$SCRIPT_DIR/.bridge_c.o"
-"$HIPCC" -c "${COMMON[@]}" "$SCRIPT_DIR/seekdb_bf_gemm.cpp" \
+"$HIPCC" -c "${COMMON[@]}" $WMA_FLAGS "$SCRIPT_DIR/seekdb_bf_gemm.cpp" \
   -o "$SCRIPT_DIR/.bridge_cpp.o"
 
 "$HIPCC" -shared \
