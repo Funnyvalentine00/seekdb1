@@ -1,0 +1,252 @@
+{
+  "date": "2026-11-06",
+  "platform": "macOS arm64 local screening; Linux legion pending",
+  "baseline": "H2 stage 2 commit f8819ff6dffab44c4ba7cc77dced2493cec5830d",
+  "candidate_commit_sha40": "853ccd8ed1366090f52952913c5b774683cdb02f",
+  "h3_patch_sha256": "7ce7c3d659bab3282bf8e455c202db7946343c6881dc6f7bf15fb207bd50bdf5",
+  "binaries": {
+    "base_h2_stage2": {
+      "path": "/Users/xiazihan/seekdb-work/saved-binaries/seekdb-h2-stage2-20261106",
+      "sha256": "26ca0ebb86d66cef26dec73d18e5febd2278c467709040d0526b8bb8f20dcbe3"
+    },
+    "h3_guard": {
+      "path": "/Users/xiazihan/seekdb-work/saved-binaries/seekdb-h3-skipscore-20261106",
+      "sha256": "3edc082d5ff431a1d18da1f3391b561ca7a7b8583c51476313f5a870447d68b7"
+    }
+  },
+  "workloads": [
+    "query_cn",
+    "query_beng",
+    "query_mixed",
+    "query_limit"
+  ],
+  "instruction_h3_vs_h2": {
+    "query_cn": {
+      "base_round_medians": [
+        38494660.625,
+        23219173.675,
+        24287881.08
+      ],
+      "candidate_round_medians": [
+        17654065.565,
+        19820749.515,
+        20724454.38
+      ],
+      "base_median_instr": 24287881.08,
+      "candidate_median_instr": 19820749.515,
+      "improvement_pct": 18.39243016007058,
+      "base_round_range_pct": 62.89345249873894,
+      "candidate_round_range_pct": 15.490780571523697
+    },
+    "query_beng": {
+      "base_round_medians": [
+        29534572.185,
+        29533601.02,
+        29534967.175
+      ],
+      "candidate_round_medians": [
+        22058248.955,
+        22061223.27,
+        22058177.65
+      ],
+      "base_median_instr": 29534572.185,
+      "candidate_median_instr": 22058248.955,
+      "improvement_pct": 25.313802357350788,
+      "base_round_range_pct": 0.004625612964507521,
+      "candidate_round_range_pct": 0.013807170307191065
+    },
+    "query_mixed": {
+      "base_round_medians": [
+        37483592.315,
+        37715530.965,
+        36958235.91
+      ],
+      "candidate_round_medians": [
+        15719653.62,
+        15718995.625,
+        15725619.655
+      ],
+      "base_median_instr": 37483592.315,
+      "candidate_median_instr": 15719653.62,
+      "improvement_pct": 58.06257445151706,
+      "base_round_range_pct": 2.0203374549481388,
+      "candidate_round_range_pct": 0.04213852391487574
+    },
+    "query_limit": {
+      "base_round_medians": [
+        22866331.48,
+        22838873.405,
+        22835093.335
+      ],
+      "candidate_round_medians": [
+        26471749.775,
+        22882389.1,
+        22876066.37
+      ],
+      "base_median_instr": 22838873.405,
+      "candidate_median_instr": 22882389.1,
+      "improvement_pct": -0.19053345683186507,
+      "base_round_range_pct": 0.1367762080294238,
+      "candidate_round_range_pct": 15.7137586870245
+    }
+  },
+  "wall_h3_vs_h2": {
+    "pairs": {
+      "p1": {
+        "query_cn": {
+          "base": 0.8201,
+          "candidate": 0.6602,
+          "imp_pct": 19.497622241190104
+        },
+        "query_beng": {
+          "base": 1.1299,
+          "candidate": 0.9267,
+          "imp_pct": 17.983892379856627
+        },
+        "query_mixed": {
+          "base": 0.8742,
+          "candidate": 0.7132,
+          "imp_pct": 18.41683825211623
+        },
+        "query_limit": {
+          "base": 0.9835,
+          "candidate": 0.9757,
+          "imp_pct": 0.7930859176410787
+        },
+        "query_class_mean_imp_pct": 14.172859697701009
+      },
+      "p2": {
+        "query_cn": {
+          "base": 0.8504,
+          "candidate": 0.6496,
+          "imp_pct": 23.612417685794927
+        },
+        "query_beng": {
+          "base": 1.1704,
+          "candidate": 0.9198,
+          "imp_pct": 21.411483253588525
+        },
+        "query_mixed": {
+          "base": 0.8876,
+          "candidate": 0.6997,
+          "imp_pct": 21.16944569625957
+        },
+        "query_limit": {
+          "base": 0.9979,
+          "candidate": 0.9779,
+          "imp_pct": 2.0042088385609835
+        },
+        "query_class_mean_imp_pct": 17.049388868551002
+      },
+      "p3": {
+        "query_cn": {
+          "base": 0.8221,
+          "candidate": 0.67,
+          "imp_pct": 18.501398856586793
+        },
+        "query_beng": {
+          "base": 1.1571,
+          "candidate": 0.9265,
+          "imp_pct": 19.92913317777202
+        },
+        "query_mixed": {
+          "base": 0.888,
+          "candidate": 0.7067,
+          "imp_pct": 20.41666666666667
+        },
+        "query_limit": {
+          "base": 0.9961,
+          "candidate": 0.9898,
+          "imp_pct": 0.6324666198172846
+        },
+        "query_class_mean_imp_pct": 14.869916330210692
+      }
+    },
+    "paired_median_imp_pct": {
+      "query_cn": 19.497622241190104,
+      "query_beng": 19.92913317777202,
+      "query_mixed": 20.41666666666667,
+      "query_limit": 0.7930859176410787
+    },
+    "hits_ok": true,
+    "gate_ok": true,
+    "paired_improvements_pct": {
+      "query_cn": [
+        19.497622241190104,
+        23.612417685794927,
+        18.501398856586793
+      ],
+      "query_beng": [
+        17.983892379856627,
+        21.411483253588525,
+        19.92913317777202
+      ],
+      "query_mixed": [
+        18.41683825211623,
+        21.16944569625957,
+        20.41666666666667
+      ],
+      "query_limit": [
+        0.7930859176410787,
+        2.0042088385609835,
+        0.6324666198172846
+      ]
+    },
+    "query_class_mean_median_imp_pct": 14.869916330210692,
+    "peak_rss_kb": {
+      "p1-base": 726800,
+      "p1-candidate": 727792,
+      "p2-candidate": 725312,
+      "p2-base": 728688,
+      "p3-base": 724752,
+      "p3-candidate": 721328
+    }
+  },
+  "correctness": {
+    "projection_diff_lines": 1734,
+    "projection_diff_sha256": "539253c0017d7375c482d2173b716d54d6cec5674d282597cd85de88613d0815",
+    "projection_clean_identical": true,
+    "extra_diff_lines": 17,
+    "extra_diff_sha256": "648374b665bb91cbee6c442edb1b2f9f0512ea9e7dc72f7182a8d5899cbdb9ed",
+    "extra_h2_identical": true,
+    "explain_contexts": [
+      "official_count   calc_relevance=false",
+      "score_output     calc_relevance=true",
+      "order_by_score   calc_relevance=true",
+      "threshold_gt5    NO_CALC_RELEVANCE_ANNOTATION",
+      "hit_gt0          NO_CALC_RELEVANCE_ANNOTATION",
+      "boolean_mode     calc_relevance=true",
+      "with_limit       calc_relevance=true",
+      "extra_filter     calc_relevance=false",
+      "single_column     calc_relevance=true"
+    ],
+    "regression_fts_index": [
+      "PASS basic_dml",
+      "PASS basic_dml_sequel",
+      "PASS cn_word",
+      "PASS create_fts_index_afterward",
+      "PASS create_table_with_fts_index",
+      "PASS domain_id_merge_with_compare_null",
+      "PASS drop_index",
+      "PASS index_view",
+      "PASS load_data",
+      "PASS offline_ddl_with_fts_index",
+      "PASS online_ddl_on_table_with_fts_index",
+      "PASS parser_properties",
+      "FAIL partitioned_simple_query (rc=1)",
+      "PASS simple_query",
+      "PASS tokenize_function",
+      "pass=14 fail=1"
+    ]
+  },
+  "linux": {
+    "h2_ab_query_paired_median_pct": {
+      "query_cn": 5.87,
+      "query_beng": 5.15,
+      "query_mixed": 6.06,
+      "query_limit": 0.81,
+      "source": "legion results/ab-run2; hits pass; gate false only on unchanged-code tokenize_ik -1.68% noise"
+    },
+    "h3_ab": "pending: SSH link to legion timed out after guard build started; results not yet fetched"
+  }
+}
