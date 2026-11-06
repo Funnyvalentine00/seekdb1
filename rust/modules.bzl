@@ -3,6 +3,12 @@
 load("//rust/sql-nio:features.bzl", "FEATURES")
 
 MODULES = {
+    "mvt": {"bridge": "src/bridge.rs"},
+    "standby-rpc": {
+        "bridge": "src/bridge.rs",
+        "headers": ["include/service.h"],
+        "exclude_platforms": ["emscripten"],
+    },
     "local": {
         "bridge": "src/bridge.rs",
         "headers": ["include/callbacks.h"],
@@ -13,12 +19,14 @@ MODULES = {
         "deps": [":local_headers"],
     },
     "logger": {"bridge": "src/bridge.rs"},
+    "number-parser": {"bridge": "src/bridge.rs"},
     "sql-nio": {
         "bridge": "src/bridge.rs",
         "headers": ["include/callbacks.h"],
         "features": FEATURES,
     },
     "regex-engine": {"bridge": "src/bridge.rs"},
+    "spatial-covering": {"bridge": "src/bridge.rs"},
     "uuid-generator": {"bridge": "src/bridge.rs"},
     "in-process": {
         "bridge": "src/bridge.rs",
