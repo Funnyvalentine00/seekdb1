@@ -85,6 +85,19 @@ query 类均值配对中位数 **+2.73%**。`query_limit` 单对出现 -1.62% �
 - 阶段 2 的非 batch 回退分支未被测试路径覆盖；正式提测前建议补一个非 batch 投影用例，或经代码审查确认该分支不可达后删除。
 - `query_limit` 的 BMW top-k 路径未优化；query 类目标 45% 仍需后续方向（H3/BMW）。
 
+## 6.1 Linux 节点复核（2026-11-06，非官方 CI）
+
+`legion`（x86-64 WSL2）完整构建 H2 候选并跑 3 对交替官方负载（ROWS=20000 BATCH=500 ROUNDS=3000 QUERY_ROUNDS=200 SAMPLES=3 WARMUP=30 SKIP_LOAD=0）：
+
+| 指标 | 配对中位数改善 |
+|---|---:|
+| query_cn | **+5.87%** |
+| query_beng | **+5.15%** |
+| query_mixed | **+6.06%** |
+| query_limit（对照） | +0.81% |
+
+四条 hits 全对；query 结果与 macOS 指令数方向一致。`tokenize_ik` 配对中位数 −1.68%（三对 −2.66/−1.01/+7.65）是**未改代码路径**的噪声，`build`/`tokenize` 其余项在噪声内；本机 wall gate 仅因该噪声项标红。峰值 RSS 基线/候选均约 2.2 GB，无上升。该结果来自本地 Linux 节点，不等同官方 CI `/benchmark`；H3 的 Linux 复核因 SSH/Tailscale 链路中断暂挂。
+
 ## 7. 证据索引
 
 - 证据 JSON：`handoff/fts-tuning/daat-batch-projection-evidence.json`（含 40 位 commit SHA、workload、指令/墙钟 μ 与轮间范围、A/A 对照、差分 SHA、回归结果）。

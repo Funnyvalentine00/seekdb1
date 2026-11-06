@@ -336,5 +336,18 @@
       1.242172261574792,
       -1.6248603635624859
     ]
+  },
+  "linux_node_ab": {
+    "node": "legion (LAPTOP-7QH1J139) x86_64 Ubuntu 22.04 WSL2, 3 pairs, full official load",
+    "query_paired_median_imp_pct": {
+      "query_cn": 5.87,
+      "query_beng": 5.15,
+      "query_mixed": 6.06,
+      "query_limit": 0.81
+    },
+    "hits_ok": true,
+    "gate_note": "wall gate false only on unchanged-code tokenize_ik -1.68% noise; query gains confirmed",
+    "source": "/Users/xiazihan/seekdb-work/results/h2-daat-batch-20261106/linux-ab/",
+    "note": "local Linux node, not official CI; H3 Linux verification pending"
   }
 }
