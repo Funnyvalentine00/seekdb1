@@ -444,20 +444,36 @@ int ObSRDaaTIterImpl::project_results(const int64_t count)
 
   if (eval_ctx->is_vectorized()) {
     sql::ObBitVector &id_evaluated_flags = id_proj_expr->get_evaluated_flags(*eval_ctx);
-    for (int64_t i = 0; i < count; ++i) {
-      guard.set_batch_idx(i);
-      ObDatum &id_proj_datum = id_proj_expr->locate_datum_for_write(*eval_ctx);
-      set_datum_func_(id_proj_datum, buffered_domain_ids_[i]);
+    if (OB_LIKELY(id_proj_expr->is_batch_result())) {
+      ObDatum *id_datums = id_proj_expr->locate_datums_for_update(*eval_ctx, count);
+      const ObDocIdExt *domain_ids = buffered_domain_ids_.get_data();
+      for (int64_t i = 0; i < count; ++i) {
+        set_datum_func_(id_datums[i], domain_ids[i]);
+      }
+    } else {
+      for (int64_t i = 0; i < count; ++i) {
+        guard.set_batch_idx(i);
+        ObDatum &id_proj_datum = id_proj_expr->locate_datum_for_write(*eval_ctx);
+        set_datum_func_(id_proj_datum, buffered_domain_ids_[i]);
+      }
     }
     // Expression-level flags apply to the whole batch; row bits cover exactly [0, count).
     id_evaluated_flags.set_all(static_cast<int64_t>(0), count);
     id_proj_expr->set_evaluated_projected(*eval_ctx);
     if (iter_param_->need_project_relevance()) {
       sql::ObBitVector &relevance_evaluated_flags = relevance_proj_expr->get_evaluated_flags(*eval_ctx);
-      for (int64_t i = 0; i < count; ++i) {
-        guard.set_batch_idx(i);
-        ObDatum &relevance_proj_datum = relevance_proj_expr->locate_datum_for_write(*eval_ctx);
-        relevance_proj_datum.set_double(buffered_relevances_[i]);
+      if (OB_LIKELY(relevance_proj_expr->is_batch_result())) {
+        ObDatum *relevance_datums = relevance_proj_expr->locate_datums_for_update(*eval_ctx, count);
+        const double *relevances = buffered_relevances_.get_data();
+        for (int64_t i = 0; i < count; ++i) {
+          relevance_datums[i].set_double(relevances[i]);
+        }
+      } else {
+        for (int64_t i = 0; i < count; ++i) {
+          guard.set_batch_idx(i);
+          ObDatum &relevance_proj_datum = relevance_proj_expr->locate_datum_for_write(*eval_ctx);
+          relevance_proj_datum.set_double(buffered_relevances_[i]);
+        }
       }
       relevance_evaluated_flags.set_all(static_cast<int64_t>(0), count);
       relevance_proj_expr->set_evaluated_projected(*eval_ctx);
