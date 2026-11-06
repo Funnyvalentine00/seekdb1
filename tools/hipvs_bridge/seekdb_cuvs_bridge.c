@@ -559,8 +559,10 @@ static int build_bruteforce_graph(sk_cuvs_index *h, const float *base, long n, l
                   n, dim, gd, tq, tbm);
         }
       } else if (grc != 2) {
-        fprintf(stderr, "[seekdb_cuvs] bf-gemm path failed rc=%d\n", grc);
-        goto done;
+        /* Fail-soft: any GEMM-path runtime failure (device function missing,
+         * OOM, sticky errors) falls back to the proven cuVS bf path so a DDL
+         * never dies because of the new engine. */
+        fprintf(stderr, "[seekdb_cuvs] bf-gemm path failed rc=%d, falling back\n", grc);
       }
     }
     if (!gemm_done) {

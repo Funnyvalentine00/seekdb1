@@ -270,6 +270,7 @@ extern "C" int sk_bf_gemm_topk128(void* res_p, const void* d_base, long n,
 #ifdef SK_USE_ROCWMA
       if (g_use_wmma && (tb % 64) == 0 && (m % 64) == 0) {
         dim3 g((unsigned)(tb / 64), (unsigned)(m / 64));
+        hipGetLastError();  /* consume any sticky error before the launch */
         sk_wmma_gemm_kernel<<<g, 512, 0, 0>>>(
             (const unsigned short*)d_base + bo * dim,
             (const unsigned short*)d_base + qo * dim,
