@@ -1,0 +1,17 @@
+{
+  "src/observer/composition/retrieval/ob_das_legacy_tr_merge_iter.cpp": "bab6058eece1b7b088c5dd305185014aeb5dd13bda219a419714e14f098053a3",
+  "src/sql/das/iter/ob_das_iter_utils.cpp": "a2efe05f0e29882990f39643ddb69bb0a7614601e0b1f077828bcdc7d6eb67db",
+  "src/sql/engine/expr/ob_expr_tokenize.cpp": "14a11888c07d96e088e5d0dd3ddc8f621080e8cad0691c16a0196225177a665c",
+  "src/sql/optimizer/ob_log_plan.cpp": "dead8409814701af276630f1f848b257c581182ca9f48fc8705aef30e348e2e0",
+  "src/sql/rewrite/ob_transform_utils.cpp": "c5d9b5e6124d58be4a8d12dfefc95e57d858fade7d7f57e5b2ea8c16572667a8",
+  "src/sql/rewrite/ob_transform_utils.h": "bc0f5c8a74c4759ba8643849af095e2b2bb682263415109dcf5976beaccdadef",
+  "src/storage/fts/ob_fts_parser_helper.cpp": "53db8c0dd8a1686b02d6d11d59ba6874c60f3f3ba8211a6c092364b1ff3b3721",
+  "src/storage/retrieval/ob_sparse_bmw_iter.cpp": "98ec55dbf1933ec69d29bd9a1dfe8d64a41908cf25476363439b865a20a8bac7",
+  "src/storage/retrieval/ob_sparse_bmw_iter.h": "5a70730128415d4a3d054b03c375e047d8941ae90494985328e75de2a1ee02c3",
+  "src/storage/retrieval/ob_sparse_daat_iter.cpp": "88b659bbefa02569799b959ee9241fea866604b6e39f7ef11e765d7de1fce7b8",
+  "src/storage/retrieval/ob_sparse_daat_iter.h": "3aaac94c2a1bb45603e1749a13e5b1b61eb3f59bd21bad37629bc074fc7fb97d",
+  "src/storage/retrieval/ob_sparse_utils.h": "2a88ee1271b333e1e074e20b19878451a40069a6e940f4796423000f3e192d23",
+  "src/storage/retrieval/ob_text_daat_iter.cpp": "421f7888e8e35cb8ce47308394d62a0c322fd779426546f8533bee3ef68d2626",
+  "src/storage/retrieval/ob_text_retrieval_token_iter.cpp": "6c3dfb9bfffd3239186509ac8a07aae4d6369f904d7de646737e21ce20218cf8",
+  "src/storage/retrieval/ob_text_retrieval_token_iter.h": "d1af25c27ce857059c858f3ce625bd6ca6165d401c3332e009e0c876c8558f23"
+}

@@ -1,0 +1,444 @@
+{
+  "v3": {
+    "semantics": {
+      "projection": {
+        "rc": 0,
+        "stdout_sha256": "13188e0221fee95c1b70d4ec895c844f30dc5115b9000e41687018e08b609c37",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "score-controls": {
+        "rc": 0,
+        "stdout_sha256": "648374b665bb91cbee6c442edb1b2f9f0512ea9e7dc72f7182a8d5899cbdb9ed",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "tokenize": {
+        "rc": 1,
+        "stdout_sha256": "586f6c03f4804d2a5c276dcf7b9ef26ab4e21426a0f89e3d21c3dcc661e6c40f",
+        "stderr_sha256": "1375e5609ef15f90e108aecb3d00e1c153897f142ff6e8a4557976f6c54bfd93"
+      }
+    },
+    "edges": {
+      "lookup_projection": {
+        "rc": 0,
+        "rss_after": {
+          "VmHWM": 434421760,
+          "VmRSS": 363716608
+        },
+        "stdout_sha256": "713f4bf5d64e61d386b36ce9a3b3d138e39870a7ef7c26d51b3de0b2c60d5145",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "long_query": {
+        "rc": 0,
+        "rss_after": {
+          "VmHWM": 434421760,
+          "VmRSS": 371941376
+        },
+        "stdout_sha256": "83c02ac2d48c863dab2ccf6870455aadfc2cec073b8db269b517c879d76aa6d9",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "tiny_partition": {
+        "rc": 0,
+        "rss_after": {
+          "VmHWM": 434421760,
+          "VmRSS": 376442880
+        },
+        "stdout_sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "tokens_255": {
+        "rc": 0,
+        "rss_after": {
+          "VmHWM": 434421760,
+          "VmRSS": 389566464
+        },
+        "stdout_sha256": "83c02ac2d48c863dab2ccf6870455aadfc2cec073b8db269b517c879d76aa6d9",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "tokens_256": {
+        "rc": 0,
+        "rss_after": {
+          "VmHWM": 434421760,
+          "VmRSS": 396996608
+        },
+        "stdout_sha256": "83c02ac2d48c863dab2ccf6870455aadfc2cec073b8db269b517c879d76aa6d9",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "tokens_257": {
+        "rc": 0,
+        "rss_after": {
+          "VmHWM": 434421760,
+          "VmRSS": 401211392
+        },
+        "stdout_sha256": "83c02ac2d48c863dab2ccf6870455aadfc2cec073b8db269b517c879d76aa6d9",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "tokens_1024": {
+        "rc": 0,
+        "rss_after": {
+          "VmHWM": 434421760,
+          "VmRSS": 405659648
+        },
+        "stdout_sha256": "83c02ac2d48c863dab2ccf6870455aadfc2cec073b8db269b517c879d76aa6d9",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "prepared_crossing": {
+        "rc": 0,
+        "rss_after": {
+          "VmHWM": 434421760,
+          "VmRSS": 410804224
+        },
+        "stdout_sha256": "c7bfa5a812f83af470dd0556774608d90d330b40b5f8f6f759e4baf9412bd5a5",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "forced_primary_lookup": {
+        "rc": 0,
+        "rss_after": {
+          "VmHWM": 434421760,
+          "VmRSS": 414457856
+        },
+        "stdout_sha256": "67d4ff71d43921d5739f387da09746f405e425b07d727e4c69d029461d1f051f",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "regression": {
+      "fts_index": [
+        {
+          "case": "basic_dml",
+          "rc": 1,
+          "adapters": []
+        },
+        {
+          "case": "basic_dml_sequel",
+          "rc": 0,
+          "adapters": []
+        },
+        {
+          "case": "cn_word",
+          "rc": 0,
+          "adapters": [
+            "Use existing root instead of creating admin account"
+          ]
+        },
+        {
+          "case": "create_fts_index_afterward",
+          "rc": 0,
+          "adapters": []
+        },
+        {
+          "case": "create_table_with_fts_index",
+          "rc": 0,
+          "adapters": []
+        },
+        {
+          "case": "domain_id_merge_with_compare_null",
+          "rc": 0,
+          "adapters": []
+        },
+        {
+          "case": "drop_index",
+          "rc": 0,
+          "adapters": []
+        },
+        {
+          "case": "index_view",
+          "rc": 0,
+          "adapters": []
+        },
+        {
+          "case": "load_data",
+          "rc": 0,
+          "adapters": []
+        },
+        {
+          "case": "offline_ddl_with_fts_index",
+          "rc": 0,
+          "adapters": []
+        },
+        {
+          "case": "online_ddl_on_table_with_fts_index",
+          "rc": 0,
+          "adapters": []
+        },
+        {
+          "case": "parser_properties",
+          "rc": 0,
+          "adapters": []
+        },
+        {
+          "case": "partitioned_simple_query",
+          "rc": 1,
+          "adapters": [
+            "Use existing root instead of creating admin account"
+          ]
+        },
+        {
+          "case": "simple_query",
+          "rc": 0,
+          "adapters": []
+        },
+        {
+          "case": "tokenize_function",
+          "rc": 0,
+          "adapters": []
+        }
+      ],
+      "file_sql": [
+        {
+          "case": "file_sql_basic",
+          "rc": 0,
+          "adapters": [
+            "Local fixture deployment replaces SSH/scp only; original SQL and golden preserved"
+          ]
+        }
+      ],
+      "ai_column": [
+        {
+          "case": "ai_column_ddl",
+          "rc": 0,
+          "adapters": []
+        },
+        {
+          "case": "ai_column_retry_strict",
+          "rc": 1,
+          "adapters": []
+        },
+        {
+          "case": "ai_column_t1_dml",
+          "rc": 0,
+          "adapters": []
+        },
+        {
+          "case": "ai_column_vector_index",
+          "rc": 0,
+          "adapters": []
+        },
+        {
+          "case": "ai_column_worker",
+          "rc": 0,
+          "adapters": []
+        }
+      ]
+    }
+  },
+  "fixed": {
+    "semantics": {
+      "projection": {
+        "rc": 0,
+        "stdout_sha256": "13188e0221fee95c1b70d4ec895c844f30dc5115b9000e41687018e08b609c37",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "score-controls": {
+        "rc": 0,
+        "stdout_sha256": "648374b665bb91cbee6c442edb1b2f9f0512ea9e7dc72f7182a8d5899cbdb9ed",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "tokenize": {
+        "rc": 1,
+        "stdout_sha256": "586f6c03f4804d2a5c276dcf7b9ef26ab4e21426a0f89e3d21c3dcc661e6c40f",
+        "stderr_sha256": "1375e5609ef15f90e108aecb3d00e1c153897f142ff6e8a4557976f6c54bfd93"
+      }
+    },
+    "edges": {
+      "lookup_projection": {
+        "rc": 0,
+        "rss_after": {
+          "VmHWM": 436076544,
+          "VmRSS": 369352704
+        },
+        "stdout_sha256": "713f4bf5d64e61d386b36ce9a3b3d138e39870a7ef7c26d51b3de0b2c60d5145",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "long_query": {
+        "rc": 0,
+        "rss_after": {
+          "VmHWM": 436076544,
+          "VmRSS": 376795136
+        },
+        "stdout_sha256": "83c02ac2d48c863dab2ccf6870455aadfc2cec073b8db269b517c879d76aa6d9",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "tiny_partition": {
+        "rc": 0,
+        "rss_after": {
+          "VmHWM": 436076544,
+          "VmRSS": 381501440
+        },
+        "stdout_sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "tokens_255": {
+        "rc": 0,
+        "rss_after": {
+          "VmHWM": 436076544,
+          "VmRSS": 394801152
+        },
+        "stdout_sha256": "83c02ac2d48c863dab2ccf6870455aadfc2cec073b8db269b517c879d76aa6d9",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "tokens_256": {
+        "rc": 0,
+        "rss_after": {
+          "VmHWM": 436076544,
+          "VmRSS": 402337792
+        },
+        "stdout_sha256": "83c02ac2d48c863dab2ccf6870455aadfc2cec073b8db269b517c879d76aa6d9",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "tokens_257": {
+        "rc": 0,
+        "rss_after": {
+          "VmHWM": 436076544,
+          "VmRSS": 406835200
+        },
+        "stdout_sha256": "83c02ac2d48c863dab2ccf6870455aadfc2cec073b8db269b517c879d76aa6d9",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "tokens_1024": {
+        "rc": 0,
+        "rss_after": {
+          "VmHWM": 436076544,
+          "VmRSS": 424734720
+        },
+        "stdout_sha256": "83c02ac2d48c863dab2ccf6870455aadfc2cec073b8db269b517c879d76aa6d9",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "prepared_crossing": {
+        "rc": 0,
+        "rss_after": {
+          "VmHWM": 436076544,
+          "VmRSS": 428994560
+        },
+        "stdout_sha256": "c7bfa5a812f83af470dd0556774608d90d330b40b5f8f6f759e4baf9412bd5a5",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "forced_primary_lookup": {
+        "rc": 0,
+        "rss_after": {
+          "VmHWM": 436076544,
+          "VmRSS": 428224512
+        },
+        "stdout_sha256": "67d4ff71d43921d5739f387da09746f405e425b07d727e4c69d029461d1f051f",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    },
+    "regression": {
+      "fts_index": [
+        {
+          "case": "basic_dml",
+          "rc": 1,
+          "adapters": []
+        },
+        {
+          "case": "basic_dml_sequel",
+          "rc": 0,
+          "adapters": []
+        },
+        {
+          "case": "cn_word",
+          "rc": 0,
+          "adapters": [
+            "Use existing root instead of creating admin account"
+          ]
+        },
+        {
+          "case": "create_fts_index_afterward",
+          "rc": 0,
+          "adapters": []
+        },
+        {
+          "case": "create_table_with_fts_index",
+          "rc": 0,
+          "adapters": []
+        },
+        {
+          "case": "domain_id_merge_with_compare_null",
+          "rc": 0,
+          "adapters": []
+        },
+        {
+          "case": "drop_index",
+          "rc": 0,
+          "adapters": []
+        },
+        {
+          "case": "index_view",
+          "rc": 0,
+          "adapters": []
+        },
+        {
+          "case": "load_data",
+          "rc": 0,
+          "adapters": []
+        },
+        {
+          "case": "offline_ddl_with_fts_index",
+          "rc": 0,
+          "adapters": []
+        },
+        {
+          "case": "online_ddl_on_table_with_fts_index",
+          "rc": 0,
+          "adapters": []
+        },
+        {
+          "case": "parser_properties",
+          "rc": 0,
+          "adapters": []
+        },
+        {
+          "case": "partitioned_simple_query",
+          "rc": 1,
+          "adapters": [
+            "Use existing root instead of creating admin account"
+          ]
+        },
+        {
+          "case": "simple_query",
+          "rc": 0,
+          "adapters": []
+        },
+        {
+          "case": "tokenize_function",
+          "rc": 0,
+          "adapters": []
+        }
+      ],
+      "file_sql": [
+        {
+          "case": "file_sql_basic",
+          "rc": 0,
+          "adapters": [
+            "Local fixture deployment replaces SSH/scp only; original SQL and golden preserved"
+          ]
+        }
+      ],
+      "ai_column": [
+        {
+          "case": "ai_column_ddl",
+          "rc": 0,
+          "adapters": []
+        },
+        {
+          "case": "ai_column_retry_strict",
+          "rc": 0,
+          "adapters": []
+        },
+        {
+          "case": "ai_column_t1_dml",
+          "rc": 0,
+          "adapters": []
+        },
+        {
+          "case": "ai_column_vector_index",
+          "rc": 0,
+          "adapters": []
+        },
+        {
+          "case": "ai_column_worker",
+          "rc": 0,
+          "adapters": []
+        }
+      ]
+    }
+  }
+}

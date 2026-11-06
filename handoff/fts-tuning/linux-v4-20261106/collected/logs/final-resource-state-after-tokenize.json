@@ -1,0 +1,25 @@
+{
+  "kernel": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.35",
+  "cpu": "Intel(R) Core(TM) Ultra 9 275HX",
+  "data_dirs": [],
+  "du -sh /home/xiazihan/benchmark/fts-v4-integration-20261106": {
+    "rc": 0,
+    "out": "9.5G\t/home/xiazihan/benchmark/fts-v4-integration-20261106\n",
+    "err": ""
+  },
+  "ss -ltnp": {
+    "rc": 0,
+    "out": "",
+    "err": ""
+  },
+  "tmux list-sessions": {
+    "rc": 1,
+    "out": "",
+    "err": "no server running on /tmp/tmux-1001/default\n"
+  },
+  "python3 /home/xiazihan/benchmark/fts-v4-integration-20261106/resource_guard.py": {
+    "rc": 0,
+    "out": "RESOURCE_GUARD {\"host_D_free_GiB\": 140.44, \"linux_free_GiB\": 532.9, \"memory_available_GiB\": 14.25}\n",
+    "err": ""
+  }
+}

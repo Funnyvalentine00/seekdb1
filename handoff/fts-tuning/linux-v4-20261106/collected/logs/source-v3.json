@@ -1,0 +1,17 @@
+{
+  "src/observer/composition/retrieval/ob_das_legacy_tr_merge_iter.cpp": "74916027ec367168e60ab7e98cff78b61fc1eb0be1ae0477168879cdf206725a",
+  "src/sql/das/iter/ob_das_iter_utils.cpp": "0326581b1928b07fc21e1f150ac2a369ab44aec62241f5e497cdf01e3c9e0fc4",
+  "src/sql/engine/expr/ob_expr_tokenize.cpp": "14a11888c07d96e088e5d0dd3ddc8f621080e8cad0691c16a0196225177a665c",
+  "src/sql/optimizer/ob_log_plan.cpp": "8500b76eac70dedbe14bb2797e3716fde172e8ef9620c073c823730c3286c099",
+  "src/sql/rewrite/ob_transform_utils.cpp": "8fad75eb2825a7d0f79cceb0d62ff8a6a3f15976fc742acc870d370ec6fd21a5",
+  "src/sql/rewrite/ob_transform_utils.h": "5461956420e9374dc563fe904c84dfc4803445aed7545d4a045df5789ff5a197",
+  "src/storage/fts/ob_fts_parser_helper.cpp": "53db8c0dd8a1686b02d6d11d59ba6874c60f3f3ba8211a6c092364b1ff3b3721",
+  "src/storage/retrieval/ob_sparse_bmw_iter.cpp": "39d6e898646596fe5e10c11a80d4723a74a85fe0fd2e0dbbe833c06c52519fdc",
+  "src/storage/retrieval/ob_sparse_bmw_iter.h": "fb7aaab7aa7a74303a34bf8d924bb38628b5135e0b76cf3f5ee38edb82cff5dc",
+  "src/storage/retrieval/ob_sparse_daat_iter.cpp": "cb6a3642dd6c7804edda4e7b293173002fdc86b8ccd9c72a33a28d734d779159",
+  "src/storage/retrieval/ob_sparse_daat_iter.h": "c152d2cc50a049f7217d2c62a062185209f8d74406af0f4e647f90280b731f65",
+  "src/storage/retrieval/ob_sparse_utils.h": "a72a53beecc4a7a6038f39d50b8c95f2d0d3d1e18f48a9507dc6ff8777bc060d",
+  "src/storage/retrieval/ob_text_daat_iter.cpp": "17590000c1f5422bb8cad665debf67df8d4093a00edd5bc840ace1527b2ceabb",
+  "src/storage/retrieval/ob_text_retrieval_token_iter.cpp": "8d5b917b465189b60a57b81290ab0946b453a354174106ea12c53b611a7e8de9",
+  "src/storage/retrieval/ob_text_retrieval_token_iter.h": "d1af25c27ce857059c858f3ce625bd6ca6165d401c3332e009e0c876c8558f23"
+}

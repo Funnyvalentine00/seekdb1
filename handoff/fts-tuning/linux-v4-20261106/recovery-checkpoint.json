@@ -1,0 +1,38 @@
+{
+  "date": "2026-11-06",
+  "timezone": "Asia/Shanghai",
+  "standard_commit": "e0eb06c82",
+  "code_commit": "194150497aca9a69e395317bd6d5a64f26340a61",
+  "ssh_user": "xiazihan",
+  "ssh_port": 2222,
+  "node_root": "/home/xiazihan/benchmark/fts-v4-integration-20261106",
+  "initial_health": {
+    "write_fsync_read": true,
+    "root_mount": "rw without emergency_ro",
+    "Windows_D_free_bytes": 142500679680,
+    "available_RAM_GiB": 14.21
+  },
+  "last_observed_build": "both variants complete and SHA verified",
+  "last_observed_available_RAM_GiB": 14.25,
+  "last_observed_status": "Linux build and acceptance execution completed; acceptance gates FAILED",
+  "recovery_attempts": [
+    {
+      "target": "100.111.229.87:2222",
+      "result": "timeout after Tailscale direct path responded"
+    },
+    {
+      "target": "10.21.205.53:2222",
+      "result": "timeout; original host key identity required"
+    }
+  ],
+  "tailscale_ping_ms": 9,
+  "important": "Do not repeat completed build or overwrite result tags. Original 2914 remains unchanged; no push. See linux-acceptance-evidence.json and Linux handoff report.",
+  "remote_git_push": false,
+  "policy_file": "resource-policy.json",
+  "binary_sha256": {
+    "v3": "2cae5186cb29e6ffca0db46b9ba3dbb2455005f61a5966114c5a77ea61db0788",
+    "fixed": "9544ca38c4d6cc336adb079f362eff1fa220739d58ce70bc2d0f1d948d5ade32"
+  },
+  "full_acceptance": false,
+  "tests_executed": true
+}

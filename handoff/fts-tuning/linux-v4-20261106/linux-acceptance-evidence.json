@@ -1,0 +1,1344 @@
+{
+  "platform": "Linux x86_64 WSL2",
+  "pairs": 6,
+  "order": "3 v3-first, 3 fixed-first",
+  "baseline_commit": "7accd1ace8ee5d035b3ef8aaf426c46b1d0a595e",
+  "candidate_code_commit": "194150497aca9a69e395317bd6d5a64f26340a61",
+  "expected_hits": {
+    "query_cn_hits": 8001,
+    "query_beng_hits": 11000,
+    "query_mixed_hits": 7332,
+    "query_limit_hits": 20
+  },
+  "all_hits_exact": true,
+  "benchmark_runs_with_exact_hits": 16,
+  "wall": {
+    "build_ik_all_sec": {
+      "statistics": {
+        "v3": {
+          "samples": [
+            5.053,
+            5.051,
+            5.048,
+            4.949,
+            5.064,
+            5.054
+          ],
+          "mean": 5.0365,
+          "stdev": 0.043205323746038624,
+          "median": 5.052
+        },
+        "fixed": {
+          "samples": [
+            5.058,
+            5.047,
+            5.066,
+            5.05,
+            5.055,
+            4.945
+          ],
+          "mean": 5.036833333333333,
+          "stdev": 0.04547270243417086,
+          "median": 5.0525
+        }
+      },
+      "paired_improvement_pct": [
+        -0.0989511181476388,
+        0.07919223916057483,
+        -0.3565768621236032,
+        -2.0408163265306145,
+        0.17772511848341832,
+        2.1567075583696083
+      ],
+      "median_improvement_pct": -0.009879439493531983,
+      "ratio_of_medians_improvement_pct": -0.009897070467146385
+    },
+    "build_ik_content_sec": {
+      "statistics": {
+        "v3": {
+          "samples": [
+            3.629,
+            3.74,
+            3.63,
+            3.627,
+            3.733,
+            3.737
+          ],
+          "mean": 3.6826666666666665,
+          "stdev": 0.05920360349393171,
+          "median": 3.6814999999999998
+        },
+        "fixed": {
+          "samples": [
+            3.629,
+            3.864,
+            4.232,
+            3.733,
+            3.736,
+            3.73
+          ],
+          "mean": 3.820666666666667,
+          "stdev": 0.21488756750139523,
+          "median": 3.7345
+        }
+      },
+      "paired_improvement_pct": [
+        0.0,
+        -3.3155080213903565,
+        -16.584022038567504,
+        -2.92252550317067,
+        -0.0803643182426983,
+        0.18731602890018628
+      ],
+      "median_improvement_pct": -1.501444910706684,
+      "ratio_of_medians_improvement_pct": -1.4396305853592306
+    },
+    "build_beng_en_sec": {
+      "statistics": {
+        "v3": {
+          "samples": [
+            2.131,
+            2.127,
+            2.128,
+            2.125,
+            2.129,
+            2.126
+          ],
+          "mean": 2.1276666666666664,
+          "stdev": 0.0021602468994692545,
+          "median": 2.1275
+        },
+        "fixed": {
+          "samples": [
+            2.134,
+            2.129,
+            2.138,
+            2.126,
+            2.142,
+            2.127
+          ],
+          "mean": 2.1326666666666667,
+          "stdev": 0.006439461675223079,
+          "median": 2.1315
+        }
+      },
+      "paired_improvement_pct": [
+        -0.1407789770061063,
+        -0.09402914903620108,
+        -0.46992481203007586,
+        -0.04705882352940005,
+        -0.6106153123532021,
+        -0.04703668861711918
+      ],
+      "median_improvement_pct": -0.11740406302115369,
+      "ratio_of_medians_improvement_pct": -0.18801410105757643
+    },
+    "tokenize_ik_avg_ms": {
+      "statistics": {
+        "v3": {
+          "samples": [
+            0.2304,
+            0.2547,
+            0.2608,
+            0.2583,
+            0.2342,
+            0.2606
+          ],
+          "mean": 0.24983333333333332,
+          "stdev": 0.013810237748375895,
+          "median": 0.25649999999999995
+        },
+        "fixed": {
+          "samples": [
+            0.2293,
+            0.2252,
+            0.2535,
+            0.251,
+            0.2362,
+            0.2306
+          ],
+          "mean": 0.23763333333333334,
+          "stdev": 0.011882536205148573,
+          "median": 0.2334
+        }
+      },
+      "paired_improvement_pct": [
+        0.4774305555555469,
+        11.582253631723582,
+        2.799079754601219,
+        2.8261711188540373,
+        -0.853970964987183,
+        11.511895625479662
+      ],
+      "median_improvement_pct": 2.812625436727628,
+      "ratio_of_medians_improvement_pct": 9.005847953216362
+    },
+    "tokenize_beng_avg_ms": {
+      "statistics": {
+        "v3": {
+          "samples": [
+            0.1921,
+            0.2099,
+            0.1746,
+            0.2088,
+            0.1976,
+            0.1916
+          ],
+          "mean": 0.19576666666666667,
+          "stdev": 0.013052305032700804,
+          "median": 0.19485
+        },
+        "fixed": {
+          "samples": [
+            0.2026,
+            0.2109,
+            0.197,
+            0.1801,
+            0.2051,
+            0.187
+          ],
+          "mean": 0.19711666666666666,
+          "stdev": 0.011625044802781048,
+          "median": 0.1998
+        }
+      },
+      "paired_improvement_pct": [
+        -5.465903175429476,
+        -0.4764173415912287,
+        -12.829324169530354,
+        13.745210727969347,
+        -3.7955465587044657,
+        2.4008350730688854
+      ],
+      "median_improvement_pct": -2.135981950147847,
+      "ratio_of_medians_improvement_pct": -2.5404157043879882
+    },
+    "query_cn_avg_ms": {
+      "statistics": {
+        "v3": {
+          "samples": [
+            1.0901,
+            1.1623,
+            1.1538,
+            1.1461,
+            1.091,
+            1.1078
+          ],
+          "mean": 1.1251833333333332,
+          "stdev": 0.03266676700664862,
+          "median": 1.12695
+        },
+        "fixed": {
+          "samples": [
+            0.7654,
+            0.7715,
+            0.7619,
+            0.7905,
+            0.8015,
+            0.8058
+          ],
+          "mean": 0.7827666666666666,
+          "stdev": 0.019001228030489672,
+          "median": 0.7809999999999999
+        }
+      },
+      "paired_improvement_pct": [
+        29.786258141454923,
+        33.62298890131636,
+        33.96602530767897,
+        31.026960998167695,
+        26.5352887259395,
+        27.26123849070229
+      ],
+      "median_improvement_pct": 30.40660956981131,
+      "ratio_of_medians_improvement_pct": 30.697901415324548
+    },
+    "query_beng_avg_ms": {
+      "statistics": {
+        "v3": {
+          "samples": [
+            1.5654,
+            1.5651,
+            1.565,
+            1.5721,
+            1.4965,
+            1.5553
+          ],
+          "mean": 1.5532333333333332,
+          "stdev": 0.028306159518144938,
+          "median": 1.5650499999999998
+        },
+        "fixed": {
+          "samples": [
+            1.0831,
+            1.1003,
+            1.0684,
+            1.084,
+            1.0606,
+            1.0835
+          ],
+          "mean": 1.0799833333333333,
+          "stdev": 0.013862671700169022,
+          "median": 1.0833
+        }
+      },
+      "paired_improvement_pct": [
+        30.810016609173374,
+        29.69778288927224,
+        31.73162939297124,
+        31.047643279689584,
+        29.12796525225526,
+        30.334983604449306
+      ],
+      "median_improvement_pct": 30.57250010681134,
+      "ratio_of_medians_improvement_pct": 30.781764160889423
+    },
+    "query_mixed_avg_ms": {
+      "statistics": {
+        "v3": {
+          "samples": [
+            1.279,
+            1.2452,
+            1.2746,
+            1.2846,
+            1.2391,
+            1.2698
+          ],
+          "mean": 1.2653833333333333,
+          "stdev": 0.01874741759994331,
+          "median": 1.2722
+        },
+        "fixed": {
+          "samples": [
+            0.913,
+            0.8905,
+            0.8918,
+            0.9094,
+            0.8892,
+            0.875
+          ],
+          "mean": 0.8948166666666667,
+          "stdev": 0.014108779772420678,
+          "median": 0.89115
+        }
+      },
+      "paired_improvement_pct": [
+        28.61610633307271,
+        28.485383874076465,
+        30.032951514200523,
+        29.207535419585863,
+        28.23823743039303,
+        31.091510474090413
+      ],
+      "median_improvement_pct": 28.911820876329287,
+      "ratio_of_medians_improvement_pct": 29.952051564219463
+    },
+    "query_limit_avg_ms": {
+      "statistics": {
+        "v3": {
+          "samples": [
+            1.4549,
+            1.387,
+            1.3418,
+            1.314,
+            1.3425,
+            1.3252
+          ],
+          "mean": 1.3609,
+          "stdev": 0.052334844988783547,
+          "median": 1.3421500000000002
+        },
+        "fixed": {
+          "samples": [
+            1.2728,
+            1.2587,
+            1.2924,
+            1.2522,
+            1.2661,
+            1.3188
+          ],
+          "mean": 1.2768333333333333,
+          "stdev": 0.024781498475004837,
+          "median": 1.26945
+        }
+      },
+      "paired_improvement_pct": [
+        12.516324145989422,
+        9.250180245133388,
+        3.6816217021910957,
+        4.703196347031968,
+        5.6908752327746726,
+        0.4829459704195571
+      ],
+      "median_improvement_pct": 5.19703578990332,
+      "ratio_of_medians_improvement_pct": 5.4166821890250905
+    },
+    "build_total_sec": {
+      "statistics": {
+        "v3": {
+          "samples": [
+            10.821,
+            10.928,
+            10.816,
+            10.709,
+            10.937,
+            10.926
+          ],
+          "mean": 10.856166666666667,
+          "stdev": 0.09064086642716236,
+          "median": 10.8735
+        },
+        "fixed": {
+          "samples": [
+            10.83,
+            11.048,
+            11.443,
+            10.916,
+            10.943,
+            10.811
+          ],
+          "mean": 10.9985,
+          "stdev": 0.23386555967050798,
+          "median": 10.9295
+        }
+      },
+      "paired_improvement_pct": [
+        -0.0831716107568603,
+        -1.0980966325036423,
+        -5.7969674556212825,
+        -1.932953590437947,
+        -0.054859650726890585,
+        1.0525352370492458
+      ],
+      "median_improvement_pct": -0.5906341216302513,
+      "ratio_of_medians_improvement_pct": -0.5150135650894505
+    }
+  },
+  "benchmark_parameters": {
+    "ROWS": 20000,
+    "BATCH": 500,
+    "ROUNDS": 3000,
+    "QUERY_ROUNDS": 200,
+    "SAMPLES": 3,
+    "WARMUP": 30,
+    "SKIP_LOAD": 0
+  },
+  "query_median_improvements_mean_pct": 23.771991585713813,
+  "aa": {
+    "raw": {
+      "a": {
+        "git_dirty": 1.0,
+        "rows": 20000.0,
+        "batch": 500.0,
+        "rounds": 3000.0,
+        "query_rounds": 200.0,
+        "samples": 3.0,
+        "warmup": 30.0,
+        "skip_load": 0.0,
+        "select1_avg_ms": 0.172,
+        "select1_stdev_ms": 0.0053,
+        "raw_load_sec": 0.192,
+        "raw_load_rows_per_sec": 104166.7,
+        "build_ik_all_sec": 5.154,
+        "build_ik_content_sec": 3.629,
+        "build_beng_en_sec": 2.124,
+        "build_total_sec": 10.917,
+        "tokenize_ik_avg_ms": 0.2433,
+        "tokenize_ik_median_ms": 0.243,
+        "tokenize_ik_stdev_ms": 0.007,
+        "tokenize_beng_avg_ms": 0.1916,
+        "tokenize_beng_median_ms": 0.1881,
+        "tokenize_beng_stdev_ms": 0.0052,
+        "query_cn_hits": 8001.0,
+        "query_cn_avg_ms": 1.1126,
+        "query_cn_stdev_ms": 0.006,
+        "query_beng_hits": 11000.0,
+        "query_beng_avg_ms": 1.4929,
+        "query_beng_stdev_ms": 0.0266,
+        "query_mixed_hits": 7332.0,
+        "query_mixed_avg_ms": 1.2322,
+        "query_mixed_stdev_ms": 0.0635,
+        "query_limit_hits": 20.0,
+        "query_limit_avg_ms": 1.3588,
+        "query_limit_stdev_ms": 0.0424
+      },
+      "b": {
+        "git_dirty": 1.0,
+        "rows": 20000.0,
+        "batch": 500.0,
+        "rounds": 3000.0,
+        "query_rounds": 200.0,
+        "samples": 3.0,
+        "warmup": 30.0,
+        "skip_load": 0.0,
+        "select1_avg_ms": 0.1679,
+        "select1_stdev_ms": 0.0114,
+        "raw_load_sec": 0.188,
+        "raw_load_rows_per_sec": 106383.0,
+        "build_ik_all_sec": 5.153,
+        "build_ik_content_sec": 3.628,
+        "build_beng_en_sec": 2.142,
+        "build_total_sec": 10.932,
+        "tokenize_ik_avg_ms": 0.2496,
+        "tokenize_ik_median_ms": 0.2536,
+        "tokenize_ik_stdev_ms": 0.0247,
+        "tokenize_beng_avg_ms": 0.1841,
+        "tokenize_beng_median_ms": 0.1823,
+        "tokenize_beng_stdev_ms": 0.0065,
+        "query_cn_hits": 8001.0,
+        "query_cn_avg_ms": 1.1291,
+        "query_cn_stdev_ms": 0.0128,
+        "query_beng_hits": 11000.0,
+        "query_beng_avg_ms": 1.5095,
+        "query_beng_stdev_ms": 0.0328,
+        "query_mixed_hits": 7332.0,
+        "query_mixed_avg_ms": 1.2589,
+        "query_mixed_stdev_ms": 0.0117,
+        "query_limit_hits": 20.0,
+        "query_limit_avg_ms": 1.3697,
+        "query_limit_stdev_ms": 0.0239
+      }
+    },
+    "improvement_pct": {
+      "build_ik_all_sec": 0.01940240589833886,
+      "build_ik_content_sec": 0.027555800496004146,
+      "build_beng_en_sec": -0.8474576271186418,
+      "tokenize_ik_avg_ms": -2.5893958076448786,
+      "tokenize_beng_avg_ms": 3.9144050104384043,
+      "query_cn_avg_ms": -1.4830127628977063,
+      "query_beng_avg_ms": -1.1119298010583645,
+      "query_mixed_avg_ms": -2.166856029865283,
+      "query_limit_avg_ms": -0.8021783926994264
+    }
+  },
+  "semantics_equal": true,
+  "semantics_records": {
+    "projection": {
+      "rc": 0,
+      "stdout_sha256": "13188e0221fee95c1b70d4ec895c844f30dc5115b9000e41687018e08b609c37",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "score-controls": {
+      "rc": 0,
+      "stdout_sha256": "648374b665bb91cbee6c442edb1b2f9f0512ea9e7dc72f7182a8d5899cbdb9ed",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "tokenize": {
+      "rc": 1,
+      "stdout_sha256": "586f6c03f4804d2a5c276dcf7b9ef26ab4e21426a0f89e3d21c3dcc661e6c40f",
+      "stderr_sha256": "1375e5609ef15f90e108aecb3d00e1c153897f142ff6e8a4557976f6c54bfd93"
+    }
+  },
+  "original_tokenize_coverage_note": "Original batch stopped at line 6 NULL error; later SELECTs were not exercised in that batch. Per-statement supplemental results cover all original SELECTs.",
+  "tokenize_statements": {
+    "v3": [
+      {
+        "original_line": 2,
+        "query": "SELECT tokenize('The quick brown fox jumps over the lazy dog. THE The the', 'beng');",
+        "rc": 0,
+        "stdout_sha256": "bc7a9f02352cb27db408aa0d915b90cfbe24beda8a6244e46bef0f24e7b71c21",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "original_line": 3,
+        "query": "SELECT tokenize('OceanBase\u662f\u4e00\u6b3e\u975e\u5e38\u7a33\u5b9a\u7684\u6570\u636e\u5e93\uff0coceanbase OCEANBASE OceanBase', 'ik');",
+        "rc": 0,
+        "stdout_sha256": "c29431f3048a676f076f558e8b135e2b71b38ee7094371f143e380895c9e2ed4",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "original_line": 4,
+        "query": "SELECT tokenize('\u4e2d\u6587 English 123 abc ABC \u4e2d\u6587', 'ik');",
+        "rc": 0,
+        "stdout_sha256": "71d97f7d69d07afc8d6a30957d9691a3b612d60cb6b5bc643ab11cc5c445f74f",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "original_line": 5,
+        "query": "SELECT tokenize('', 'ik');",
+        "rc": 0,
+        "stdout_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "original_line": 6,
+        "query": "SELECT tokenize(NULL, 'ik');",
+        "rc": 1,
+        "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderr_sha256": "d3425c289f84acd847eb6687cf492cfa48b4b1172c22fbdc845797483c41d9c3"
+      },
+      {
+        "original_line": 7,
+        "query": "SELECT tokenize('a the and with from where about www com', 'beng');",
+        "rc": 0,
+        "stdout_sha256": "a75e80fa5fd0fae0f527e2c34d372f148a679b4f4c6799e7d5f3d88925aad3ed",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "original_line": 8,
+        "query": "SELECT tokenize('aaaa aaaa AAAA aAaA \u4e2d\u6587\u4e2d\u6587 \u4e2d\u6587\u4e2d\u6587', 'beng');",
+        "rc": 0,
+        "stdout_sha256": "dc0af811d6531462dc650f653a5a49f705da0cba0f1e52f04653b7d955eece20",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "original_line": 9,
+        "query": "SELECT tokenize('OceanBase\u662f\u4e00\u6b3e\u975e\u5e38\u7a33\u5b9a\u7684\u6570\u636e\u5e93\uff0c\u5168\u6587\u7d22\u5f15\u7684\u5206\u8bcd\u5668\u70ed\u8def\u5f84\u4f18\u5316\u5305\u62ec\u89e3\u6790\u5668\u5b9e\u4f8b\u590d\u7528\u3001\u505c\u7528\u8bcd\u5168\u5c40\u5355\u4f8b\u3001\u5185\u5b58\u6c60\u5316\u6570\u636e\u7ed3\u6784\u7b49\u6280\u672f\u3002The Quick Brown Fox jumps over the lazy dog.', 'ik');",
+        "rc": 0,
+        "stdout_sha256": "4c832a9325703db7499eca48fa500c8cc9c2d70f525347fc2a796773a868bf24",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "original_line": 10,
+        "query": "SELECT tokenize('The quick brown fox jumps over the lazy dog. Full-text search indexing requires efficient tokenization on the hot path.', 'beng');",
+        "rc": 0,
+        "stdout_sha256": "6acc8228e481f8d77b395f3c5543412a90d0eb74c183a10d19637c6c33d70a4f",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "original_line": 11,
+        "query": "SELECT tokenize('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA BBBBBB bbbbbb BbBbBb \u4e2d\u4e2d\u4e2d\u4e2d\u4e2d\u4e2d\u4e2d\u4e2d\u4e2d\u4e2d', 'ik');",
+        "rc": 0,
+        "stdout_sha256": "a7f52681e648843aed37e93b8b69ced31befcb84baacc6165ce839a2f1a4ed0c",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "original_line": 12,
+        "query": "SELECT tokenize('The quick brown fox jumps over the lazy dog. Full-text search indexing requires efficient tokenization on the hot path.', 'beng', '[]');",
+        "rc": 0,
+        "stdout_sha256": "6acc8228e481f8d77b395f3c5543412a90d0eb74c183a10d19637c6c33d70a4f",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "original_line": 13,
+        "query": "SELECT tokenize('cafe caf\u00e9 CAFE', 'ik');",
+        "rc": 0,
+        "stdout_sha256": "e252078228a541336dce18706e285f83ace95852a52e8cd959a43ada9eb7ff50",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "original_line": 14,
+        "query": "SELECT tokenize('\uff21\uff22\uff23 abc ABC', 'ik');",
+        "rc": 0,
+        "stdout_sha256": "7e69ae627e3d2f0b3ef409f68ba15bacd81b42f75804dd03f501c1e80e7619a7",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "original_line": 15,
+        "query": "SELECT tokenize('stra\u00dfe strasse STRASSE', 'beng');",
+        "rc": 0,
+        "stdout_sha256": "b3e14642ba5a3fd5f4025ad6b4a98dc9d5bb879b00381008703a91398fb4cfdc",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "original_line": 16,
+        "query": "SELECT tokenize('r\u00e9sum\u00e9 resume RESUME', 'beng');",
+        "rc": 0,
+        "stdout_sha256": "389a6ffdc4aadd70e560db4c7ac76bb6344177426b2a00319dce14e728d283ae",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "original_line": 17,
+        "query": "SELECT tokenize('caf\u00e9 CAF\u00c9 cafe Cafe', 'ik');",
+        "rc": 0,
+        "stdout_sha256": "e252078228a541336dce18706e285f83ace95852a52e8cd959a43ada9eb7ff50",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "original_line": 18,
+        "query": "SELECT tokenize('The quick brown fox jumps', 'space');",
+        "rc": 0,
+        "stdout_sha256": "77ccfc5bd442a017c9acfdc7e50b91f3c84f7bac691263e8346658731e27673e",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "original_line": 19,
+        "query": "SELECT tokenize('abcdef', 'ngram');",
+        "rc": 0,
+        "stdout_sha256": "a0bffa21faa4aefc76e74a6599f6fd27373b47a2dadf077d6b8bbdf9ad8def0f",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "original_line": 20,
+        "query": "SELECT tokenize('abcdef', 'ngram2');",
+        "rc": 0,
+        "stdout_sha256": "c05a0a5ed84b727d5e9ab066f931f59ed8b0ae7ab5a3c2da26c5de8bf072ed16",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "original_line": 21,
+        "query": "SELECT tokenize('abcdef', 'ngram', '[{\"additional_args\":[{\"ngram_token_size\":3}]}]');",
+        "rc": 0,
+        "stdout_sha256": "e96db4fd7a4f73b15d52e69a5fea72cdcc04cc8c4a2c5e7324080cc539ef00a3",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "original_line": 22,
+        "query": "SELECT tokenize('\u4e2d\u6587\u6570\u636e\u5e93 OceanBase \u7a33\u5b9a', 'ik', '[{\"additional_args\":[{\"ik_mode\":\"max_word\"}]}]');",
+        "rc": 0,
+        "stdout_sha256": "22fdf0b67e0319e945f323e3a06d42cd3f9a791f881707e1e75b212ff59d47ab",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "original_line": 23,
+        "query": "SELECT tokenize('The quick brown fox', 'beng', '[{\"additional_args\":[{\"min_token_size\":4}]}]');",
+        "rc": 0,
+        "stdout_sha256": "061474e585518353fbf462009f471d8eb49341e26822cc2458d48b3b8f66422a",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    ],
+    "fixed": [
+      {
+        "original_line": 2,
+        "query": "SELECT tokenize('The quick brown fox jumps over the lazy dog. THE The the', 'beng');",
+        "rc": 0,
+        "stdout_sha256": "bc7a9f02352cb27db408aa0d915b90cfbe24beda8a6244e46bef0f24e7b71c21",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "original_line": 3,
+        "query": "SELECT tokenize('OceanBase\u662f\u4e00\u6b3e\u975e\u5e38\u7a33\u5b9a\u7684\u6570\u636e\u5e93\uff0coceanbase OCEANBASE OceanBase', 'ik');",
+        "rc": 0,
+        "stdout_sha256": "c29431f3048a676f076f558e8b135e2b71b38ee7094371f143e380895c9e2ed4",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "original_line": 4,
+        "query": "SELECT tokenize('\u4e2d\u6587 English 123 abc ABC \u4e2d\u6587', 'ik');",
+        "rc": 0,
+        "stdout_sha256": "71d97f7d69d07afc8d6a30957d9691a3b612d60cb6b5bc643ab11cc5c445f74f",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "original_line": 5,
+        "query": "SELECT tokenize('', 'ik');",
+        "rc": 0,
+        "stdout_sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "original_line": 6,
+        "query": "SELECT tokenize(NULL, 'ik');",
+        "rc": 1,
+        "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderr_sha256": "d3425c289f84acd847eb6687cf492cfa48b4b1172c22fbdc845797483c41d9c3"
+      },
+      {
+        "original_line": 7,
+        "query": "SELECT tokenize('a the and with from where about www com', 'beng');",
+        "rc": 0,
+        "stdout_sha256": "a75e80fa5fd0fae0f527e2c34d372f148a679b4f4c6799e7d5f3d88925aad3ed",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "original_line": 8,
+        "query": "SELECT tokenize('aaaa aaaa AAAA aAaA \u4e2d\u6587\u4e2d\u6587 \u4e2d\u6587\u4e2d\u6587', 'beng');",
+        "rc": 0,
+        "stdout_sha256": "dc0af811d6531462dc650f653a5a49f705da0cba0f1e52f04653b7d955eece20",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "original_line": 9,
+        "query": "SELECT tokenize('OceanBase\u662f\u4e00\u6b3e\u975e\u5e38\u7a33\u5b9a\u7684\u6570\u636e\u5e93\uff0c\u5168\u6587\u7d22\u5f15\u7684\u5206\u8bcd\u5668\u70ed\u8def\u5f84\u4f18\u5316\u5305\u62ec\u89e3\u6790\u5668\u5b9e\u4f8b\u590d\u7528\u3001\u505c\u7528\u8bcd\u5168\u5c40\u5355\u4f8b\u3001\u5185\u5b58\u6c60\u5316\u6570\u636e\u7ed3\u6784\u7b49\u6280\u672f\u3002The Quick Brown Fox jumps over the lazy dog.', 'ik');",
+        "rc": 0,
+        "stdout_sha256": "4c832a9325703db7499eca48fa500c8cc9c2d70f525347fc2a796773a868bf24",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "original_line": 10,
+        "query": "SELECT tokenize('The quick brown fox jumps over the lazy dog. Full-text search indexing requires efficient tokenization on the hot path.', 'beng');",
+        "rc": 0,
+        "stdout_sha256": "6acc8228e481f8d77b395f3c5543412a90d0eb74c183a10d19637c6c33d70a4f",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "original_line": 11,
+        "query": "SELECT tokenize('AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA BBBBBB bbbbbb BbBbBb \u4e2d\u4e2d\u4e2d\u4e2d\u4e2d\u4e2d\u4e2d\u4e2d\u4e2d\u4e2d', 'ik');",
+        "rc": 0,
+        "stdout_sha256": "a7f52681e648843aed37e93b8b69ced31befcb84baacc6165ce839a2f1a4ed0c",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "original_line": 12,
+        "query": "SELECT tokenize('The quick brown fox jumps over the lazy dog. Full-text search indexing requires efficient tokenization on the hot path.', 'beng', '[]');",
+        "rc": 0,
+        "stdout_sha256": "6acc8228e481f8d77b395f3c5543412a90d0eb74c183a10d19637c6c33d70a4f",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "original_line": 13,
+        "query": "SELECT tokenize('cafe caf\u00e9 CAFE', 'ik');",
+        "rc": 0,
+        "stdout_sha256": "e252078228a541336dce18706e285f83ace95852a52e8cd959a43ada9eb7ff50",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "original_line": 14,
+        "query": "SELECT tokenize('\uff21\uff22\uff23 abc ABC', 'ik');",
+        "rc": 0,
+        "stdout_sha256": "7e69ae627e3d2f0b3ef409f68ba15bacd81b42f75804dd03f501c1e80e7619a7",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "original_line": 15,
+        "query": "SELECT tokenize('stra\u00dfe strasse STRASSE', 'beng');",
+        "rc": 0,
+        "stdout_sha256": "b3e14642ba5a3fd5f4025ad6b4a98dc9d5bb879b00381008703a91398fb4cfdc",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "original_line": 16,
+        "query": "SELECT tokenize('r\u00e9sum\u00e9 resume RESUME', 'beng');",
+        "rc": 0,
+        "stdout_sha256": "389a6ffdc4aadd70e560db4c7ac76bb6344177426b2a00319dce14e728d283ae",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "original_line": 17,
+        "query": "SELECT tokenize('caf\u00e9 CAF\u00c9 cafe Cafe', 'ik');",
+        "rc": 0,
+        "stdout_sha256": "e252078228a541336dce18706e285f83ace95852a52e8cd959a43ada9eb7ff50",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "original_line": 18,
+        "query": "SELECT tokenize('The quick brown fox jumps', 'space');",
+        "rc": 0,
+        "stdout_sha256": "77ccfc5bd442a017c9acfdc7e50b91f3c84f7bac691263e8346658731e27673e",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "original_line": 19,
+        "query": "SELECT tokenize('abcdef', 'ngram');",
+        "rc": 0,
+        "stdout_sha256": "a0bffa21faa4aefc76e74a6599f6fd27373b47a2dadf077d6b8bbdf9ad8def0f",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "original_line": 20,
+        "query": "SELECT tokenize('abcdef', 'ngram2');",
+        "rc": 0,
+        "stdout_sha256": "c05a0a5ed84b727d5e9ab066f931f59ed8b0ae7ab5a3c2da26c5de8bf072ed16",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "original_line": 21,
+        "query": "SELECT tokenize('abcdef', 'ngram', '[{\"additional_args\":[{\"ngram_token_size\":3}]}]');",
+        "rc": 0,
+        "stdout_sha256": "e96db4fd7a4f73b15d52e69a5fea72cdcc04cc8c4a2c5e7324080cc539ef00a3",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "original_line": 22,
+        "query": "SELECT tokenize('\u4e2d\u6587\u6570\u636e\u5e93 OceanBase \u7a33\u5b9a', 'ik', '[{\"additional_args\":[{\"ik_mode\":\"max_word\"}]}]');",
+        "rc": 0,
+        "stdout_sha256": "22fdf0b67e0319e945f323e3a06d42cd3f9a791f881707e1e75b212ff59d47ab",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "original_line": 23,
+        "query": "SELECT tokenize('The quick brown fox', 'beng', '[{\"additional_args\":[{\"min_token_size\":4}]}]');",
+        "rc": 0,
+        "stdout_sha256": "061474e585518353fbf462009f471d8eb49341e26822cc2458d48b3b8f66422a",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    ]
+  },
+  "tokenize_statements_equal": true,
+  "boundary_outputs_equal": true,
+  "boundary_success": true,
+  "boundary_cases_per_version": 9,
+  "regression": {
+    "v3": {
+      "fts_index": {
+        "passed": 13,
+        "total": 15,
+        "failures": [
+          "basic_dml",
+          "partitioned_simple_query"
+        ],
+        "cases": [
+          {
+            "case": "basic_dml",
+            "rc": 1,
+            "adapters": []
+          },
+          {
+            "case": "basic_dml_sequel",
+            "rc": 0,
+            "adapters": []
+          },
+          {
+            "case": "cn_word",
+            "rc": 0,
+            "adapters": [
+              "Use existing root instead of creating admin account"
+            ]
+          },
+          {
+            "case": "create_fts_index_afterward",
+            "rc": 0,
+            "adapters": []
+          },
+          {
+            "case": "create_table_with_fts_index",
+            "rc": 0,
+            "adapters": []
+          },
+          {
+            "case": "domain_id_merge_with_compare_null",
+            "rc": 0,
+            "adapters": []
+          },
+          {
+            "case": "drop_index",
+            "rc": 0,
+            "adapters": []
+          },
+          {
+            "case": "index_view",
+            "rc": 0,
+            "adapters": []
+          },
+          {
+            "case": "load_data",
+            "rc": 0,
+            "adapters": []
+          },
+          {
+            "case": "offline_ddl_with_fts_index",
+            "rc": 0,
+            "adapters": []
+          },
+          {
+            "case": "online_ddl_on_table_with_fts_index",
+            "rc": 0,
+            "adapters": []
+          },
+          {
+            "case": "parser_properties",
+            "rc": 0,
+            "adapters": []
+          },
+          {
+            "case": "partitioned_simple_query",
+            "rc": 1,
+            "adapters": [
+              "Use existing root instead of creating admin account"
+            ]
+          },
+          {
+            "case": "simple_query",
+            "rc": 0,
+            "adapters": []
+          },
+          {
+            "case": "tokenize_function",
+            "rc": 0,
+            "adapters": []
+          }
+        ]
+      },
+      "file_sql": {
+        "passed": 1,
+        "total": 1,
+        "failures": [],
+        "cases": [
+          {
+            "case": "file_sql_basic",
+            "rc": 0,
+            "adapters": [
+              "Local fixture deployment replaces SSH/scp only; original SQL and golden preserved"
+            ]
+          }
+        ]
+      },
+      "ai_column": {
+        "passed": 4,
+        "total": 5,
+        "failures": [
+          "ai_column_retry_strict"
+        ],
+        "cases": [
+          {
+            "case": "ai_column_ddl",
+            "rc": 0,
+            "adapters": []
+          },
+          {
+            "case": "ai_column_retry_strict",
+            "rc": 1,
+            "adapters": []
+          },
+          {
+            "case": "ai_column_t1_dml",
+            "rc": 0,
+            "adapters": []
+          },
+          {
+            "case": "ai_column_vector_index",
+            "rc": 0,
+            "adapters": []
+          },
+          {
+            "case": "ai_column_worker",
+            "rc": 0,
+            "adapters": []
+          }
+        ]
+      }
+    },
+    "fixed": {
+      "fts_index": {
+        "passed": 13,
+        "total": 15,
+        "failures": [
+          "basic_dml",
+          "partitioned_simple_query"
+        ],
+        "cases": [
+          {
+            "case": "basic_dml",
+            "rc": 1,
+            "adapters": []
+          },
+          {
+            "case": "basic_dml_sequel",
+            "rc": 0,
+            "adapters": []
+          },
+          {
+            "case": "cn_word",
+            "rc": 0,
+            "adapters": [
+              "Use existing root instead of creating admin account"
+            ]
+          },
+          {
+            "case": "create_fts_index_afterward",
+            "rc": 0,
+            "adapters": []
+          },
+          {
+            "case": "create_table_with_fts_index",
+            "rc": 0,
+            "adapters": []
+          },
+          {
+            "case": "domain_id_merge_with_compare_null",
+            "rc": 0,
+            "adapters": []
+          },
+          {
+            "case": "drop_index",
+            "rc": 0,
+            "adapters": []
+          },
+          {
+            "case": "index_view",
+            "rc": 0,
+            "adapters": []
+          },
+          {
+            "case": "load_data",
+            "rc": 0,
+            "adapters": []
+          },
+          {
+            "case": "offline_ddl_with_fts_index",
+            "rc": 0,
+            "adapters": []
+          },
+          {
+            "case": "online_ddl_on_table_with_fts_index",
+            "rc": 0,
+            "adapters": []
+          },
+          {
+            "case": "parser_properties",
+            "rc": 0,
+            "adapters": []
+          },
+          {
+            "case": "partitioned_simple_query",
+            "rc": 1,
+            "adapters": [
+              "Use existing root instead of creating admin account"
+            ]
+          },
+          {
+            "case": "simple_query",
+            "rc": 0,
+            "adapters": []
+          },
+          {
+            "case": "tokenize_function",
+            "rc": 0,
+            "adapters": []
+          }
+        ]
+      },
+      "file_sql": {
+        "passed": 1,
+        "total": 1,
+        "failures": [],
+        "cases": [
+          {
+            "case": "file_sql_basic",
+            "rc": 0,
+            "adapters": [
+              "Local fixture deployment replaces SSH/scp only; original SQL and golden preserved"
+            ]
+          }
+        ]
+      },
+      "ai_column": {
+        "passed": 5,
+        "total": 5,
+        "failures": [],
+        "cases": [
+          {
+            "case": "ai_column_ddl",
+            "rc": 0,
+            "adapters": []
+          },
+          {
+            "case": "ai_column_retry_strict",
+            "rc": 0,
+            "adapters": []
+          },
+          {
+            "case": "ai_column_t1_dml",
+            "rc": 0,
+            "adapters": []
+          },
+          {
+            "case": "ai_column_vector_index",
+            "rc": 0,
+            "adapters": []
+          },
+          {
+            "case": "ai_column_worker",
+            "rc": 0,
+            "adapters": []
+          }
+        ]
+      }
+    }
+  },
+  "isolated_ai_retest": {
+    "v3": [
+      {
+        "case": "ai_column_ddl",
+        "rc": 0,
+        "adapters": []
+      },
+      {
+        "case": "ai_column_retry_strict",
+        "rc": 0,
+        "adapters": []
+      },
+      {
+        "case": "ai_column_t1_dml",
+        "rc": 0,
+        "adapters": []
+      },
+      {
+        "case": "ai_column_vector_index",
+        "rc": 0,
+        "adapters": []
+      },
+      {
+        "case": "ai_column_worker",
+        "rc": 0,
+        "adapters": []
+      }
+    ],
+    "fixed": [
+      {
+        "case": "ai_column_ddl",
+        "rc": 0,
+        "adapters": []
+      },
+      {
+        "case": "ai_column_retry_strict",
+        "rc": 0,
+        "adapters": []
+      },
+      {
+        "case": "ai_column_t1_dml",
+        "rc": 0,
+        "adapters": []
+      },
+      {
+        "case": "ai_column_vector_index",
+        "rc": 0,
+        "adapters": []
+      },
+      {
+        "case": "ai_column_worker",
+        "rc": 0,
+        "adapters": []
+      }
+    ]
+  },
+  "isolated_ai_retest_passed": true,
+  "initial_ai_failure_root_cause": "Unproven; original failure retained; inline --real_sleep parsing hypothesis ruled out.",
+  "strict_regression_gate_passed": false,
+  "nine_metric_gate_passed": false,
+  "metric_gate_failures": [
+    "build_ik_content_sec",
+    "tokenize_beng_avg_ms"
+  ],
+  "peak_rss_bytes": {
+    "v3": [
+      420196352,
+      429862912,
+      421285888,
+      425676800,
+      429658112,
+      434348032
+    ],
+    "fixed": [
+      431157248,
+      443711488,
+      444665856,
+      421593088,
+      443699200,
+      434495488
+    ]
+  },
+  "peak_rss_statistics": {
+    "v3": {
+      "samples": [
+        420196352,
+        429862912,
+        421285888,
+        425676800,
+        429658112,
+        434348032
+      ],
+      "mean": 426838016,
+      "stdev": 5473381.517786313,
+      "median": 427667456.0
+    },
+    "fixed": {
+      "samples": [
+        431157248,
+        443711488,
+        444665856,
+        421593088,
+        443699200,
+        434495488
+      ],
+      "mean": 436553728,
+      "stdev": 9222548.633716907,
+      "median": 439097344.0
+    }
+  },
+  "rss_median_change_pct": 2.672611123349067,
+  "gates": {
+    "max_nine_metric_slowdown_pct": 1,
+    "rss_increase_allowed": false,
+    "fts_required": "14/15; only partitioned_simple_query excepted"
+  },
+  "binary_sha256": {
+    "v3": "2cae5186cb29e6ffca0db46b9ba3dbb2455005f61a5966114c5a77ea61db0788",
+    "fixed": "9544ca38c4d6cc336adb079f362eff1fa220739d58ce70bc2d0f1d948d5ade32"
+  },
+  "toolchain": {
+    "system_rust": {
+      "rc": 0,
+      "out": [
+        "rustc 1.75.0 (82e1608df 2023-12-21) (built from a source tarball)"
+      ],
+      "err": ""
+    },
+    "project_rust": {
+      "rc": 0,
+      "out": "rustc 1.98.1 (48a229cea 2026-09-01)",
+      "err": ""
+    },
+    "project_cargo": {
+      "rc": 0,
+      "out": "cargo 1.98.1 (797e8a9bc 2026-08-05)",
+      "err": ""
+    },
+    "cmake": {
+      "rc": 0,
+      "out": [
+        "cmake version 3.22.1",
+        ""
+      ],
+      "err": ""
+    },
+    "compiler": {
+      "rc": 0,
+      "out": [
+        "clang version 17.0.6 (git@gitlab.oceanbase-dev.com:oceanbase-ce-publish/ob-deps.git e363299bcdda429f8e7c00590d1dfeac7656ad3c)",
+        "Target: x86_64-unknown-linux-gnu"
+      ],
+      "err": ""
+    },
+    "v3_sha256": "2cae5186cb29e6ffca0db46b9ba3dbb2455005f61a5966114c5a77ea61db0788  ../saved-binaries/seekdb-v3\n",
+    "project_pin": "# Pin the toolchain so the staticlib is built the same way everywhere.\n# An exact version, not a channel: `stable` floats to whatever is newest at\n# install time, so two runners weeks apart would compile the network engine\n# with different compilers. Bump deliberately, in its own reviewed commit.\n[toolchain]\nchannel = \"1.98.1\"\nprofile = \"minimal\"\n# The cross-compilation targets keep Android and iOS builds and Windows `cargo check`\n# on the same pinned toolchain as native builds. The windows-gnu target keeps\n# the cfg(windows) transport code compiling without a Windows runner in CI.\n# gnu, not msvc: ring (rustls) compiles C in its build script, and mingw\n# is the only Windows C toolchain a Linux/mac host can provide. The\n# production Windows target stays msvc and is exercised by a real runner.\ntargets = [\"x86_64-unknown-linux-gnu\", \"x86_64-pc-windows-gnu\", \"aarch64-linux-android\",\n           \"aarch64-apple-ios\", \"aarch64-apple-ios-sim\"]\n# clippy gates CI (`cargo clippy -- -D warnings`); ship it with the toolchain\n# so the minimal-profile CI install has it too.\ncomponents = [\"clippy\"]\n"
+  },
+  "resource_policy": {
+    "ssh": "ssh -l xiazihan legion (port 2222)",
+    "run_dir": "/home/xiazihan/benchmark/fts-v4-integration-20261106",
+    "make_jobs": 2,
+    "cargo_jobs": 2,
+    "lld_threads": 2,
+    "server_memory_budget": "2G",
+    "server_vector_memory_limit": "512M",
+    "datafile_size": "2G",
+    "datafile_maxsize": "2G",
+    "log_disk_size": "2G",
+    "maximum_concurrent_servers": 1,
+    "test_data_cleanup": "Only owned marker-identified directories after process termination; preserve output and bounded internal log tails",
+    "windows_host_D_min_free_GiB": 30,
+    "linux_min_free_GiB": 15,
+    "available_RAM_min_GiB": 3,
+    "continuous_monitor_seconds": 30,
+    "benchmark_parameters_changed": false,
+    "remote_git_push": false
+  },
+  "final_resources": {
+    "kernel": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.35",
+    "cpu": "Intel(R) Core(TM) Ultra 9 275HX",
+    "data_dirs": [],
+    "du -sh /home/xiazihan/benchmark/fts-v4-integration-20261106": {
+      "rc": 0,
+      "out": "9.5G\t/home/xiazihan/benchmark/fts-v4-integration-20261106\n",
+      "err": ""
+    },
+    "ss -ltnp": {
+      "rc": 0,
+      "out": "",
+      "err": ""
+    },
+    "tmux list-sessions": {
+      "rc": 1,
+      "out": "",
+      "err": "no server running on /tmp/tmux-1001/default\n"
+    },
+    "python3 /home/xiazihan/benchmark/fts-v4-integration-20261106/resource_guard.py": {
+      "rc": 0,
+      "out": "RESOURCE_GUARD {\"host_D_free_GiB\": 140.44, \"linux_free_GiB\": 532.9, \"memory_available_GiB\": 14.25}\n",
+      "err": ""
+    }
+  },
+  "interruption_marker_regression": {
+    "old": {
+      "process_rc": -1,
+      "marker": "0"
+    },
+    "fixed": {
+      "process_rc": 129,
+      "marker": "129"
+    }
+  },
+  "hardware_counters": "Not collected: matching WSL kernel perf tool unavailable.",
+  "full_acceptance": false,
+  "scope": "Local Linux acceptance only; no official CI score inferred."
+}

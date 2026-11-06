@@ -1,6 +1,6 @@
 # FTS Issue #6 本地交接说明（2026-11-06）
 
-> **最新承接状态（按用户要求暂停，等待新命令；仅本地保存，未推送）**：本地已增加 `194150497`，修复原 v4 的三处 MATCH 边界错误。查询收益经6对A/B确认，但build_ik_content仍未过1%门禁，File SQL待Linux；因此2914仍为原PID31133，尚未按条件切换。详情见 [V4_INTEGRATION_ACCEPTANCE_2026-11-06.md](V4_INTEGRATION_ACCEPTANCE_2026-11-06.md)。以下1–5节是此前交接快照。
+> **最新承接状态（Linux 验收已执行，未通过；仅本地保存，未推送）**：产品候选为 `194150497`，修复原 v4 三处 MATCH 边界错误。Linux 六对 A/B 四项 query 改善中位数平均 +23.77%，但 build_ik_content -1.50%、tokenize_beng -2.14%、峰值 RSS +2.67%，FTS 两版 13/15，门禁未过。File SQL 两版 1/1；AI 独立复测两版原生 5/5，首次 v3 4/5 仍保留。2914 仍为原 PID31133，未切换。施工规范已写入 AGENTS.md / AGENT_ENGINEERING_STANDARD.md（`e0eb06c82`）。最新 Linux 结果见 [LINUX_V4_ACCEPTANCE_2026-11-06.md](LINUX_V4_ACCEPTANCE_2026-11-06.md)，macOS 结果见 [V4_INTEGRATION_ACCEPTANCE_2026-11-06.md](V4_INTEGRATION_ACCEPTANCE_2026-11-06.md)。**以下 1–5 节是 16:24 原始交接快照，其“未测/空库”描述不代表当前状态。**
 
 本文件用于交接给其他 agent。**所有分支均未推送**；除已注明的 H3 PR #13 外，没有远端动作。
 

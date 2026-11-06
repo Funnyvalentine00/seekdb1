@@ -1,0 +1,56 @@
+{
+  "v3": [
+    {
+      "case": "ai_column_ddl",
+      "rc": 0,
+      "adapters": []
+    },
+    {
+      "case": "ai_column_retry_strict",
+      "rc": 0,
+      "adapters": []
+    },
+    {
+      "case": "ai_column_t1_dml",
+      "rc": 0,
+      "adapters": []
+    },
+    {
+      "case": "ai_column_vector_index",
+      "rc": 0,
+      "adapters": []
+    },
+    {
+      "case": "ai_column_worker",
+      "rc": 0,
+      "adapters": []
+    }
+  ],
+  "fixed": [
+    {
+      "case": "ai_column_ddl",
+      "rc": 0,
+      "adapters": []
+    },
+    {
+      "case": "ai_column_retry_strict",
+      "rc": 0,
+      "adapters": []
+    },
+    {
+      "case": "ai_column_t1_dml",
+      "rc": 0,
+      "adapters": []
+    },
+    {
+      "case": "ai_column_vector_index",
+      "rc": 0,
+      "adapters": []
+    },
+    {
+      "case": "ai_column_worker",
+      "rc": 0,
+      "adapters": []
+    }
+  ]
+}

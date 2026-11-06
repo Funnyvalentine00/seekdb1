@@ -1,0 +1,20 @@
+{
+  "ssh": "ssh -l xiazihan legion (port 2222)",
+  "run_dir": "/home/xiazihan/benchmark/fts-v4-integration-20261106",
+  "make_jobs": 2,
+  "cargo_jobs": 2,
+  "lld_threads": 2,
+  "server_memory_budget": "2G",
+  "server_vector_memory_limit": "512M",
+  "datafile_size": "2G",
+  "datafile_maxsize": "2G",
+  "log_disk_size": "2G",
+  "maximum_concurrent_servers": 1,
+  "test_data_cleanup": "Only owned marker-identified directories after process termination; preserve output and bounded internal log tails",
+  "windows_host_D_min_free_GiB": 30,
+  "linux_min_free_GiB": 15,
+  "available_RAM_min_GiB": 3,
+  "continuous_monitor_seconds": 30,
+  "benchmark_parameters_changed": false,
+  "remote_git_push": false
+}

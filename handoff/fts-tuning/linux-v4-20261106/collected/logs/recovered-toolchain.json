@@ -1,0 +1,37 @@
+{
+  "system_rust": {
+    "rc": 0,
+    "out": [
+      "rustc 1.75.0 (82e1608df 2023-12-21) (built from a source tarball)"
+    ],
+    "err": ""
+  },
+  "project_rust": {
+    "rc": 0,
+    "out": "rustc 1.98.1 (48a229cea 2026-09-01)",
+    "err": ""
+  },
+  "project_cargo": {
+    "rc": 0,
+    "out": "cargo 1.98.1 (797e8a9bc 2026-08-05)",
+    "err": ""
+  },
+  "cmake": {
+    "rc": 0,
+    "out": [
+      "cmake version 3.22.1",
+      ""
+    ],
+    "err": ""
+  },
+  "compiler": {
+    "rc": 0,
+    "out": [
+      "clang version 17.0.6 (git@gitlab.oceanbase-dev.com:oceanbase-ce-publish/ob-deps.git e363299bcdda429f8e7c00590d1dfeac7656ad3c)",
+      "Target: x86_64-unknown-linux-gnu"
+    ],
+    "err": ""
+  },
+  "v3_sha256": "2cae5186cb29e6ffca0db46b9ba3dbb2455005f61a5966114c5a77ea61db0788  ../saved-binaries/seekdb-v3\n",
+  "project_pin": "# Pin the toolchain so the staticlib is built the same way everywhere.\n# An exact version, not a channel: `stable` floats to whatever is newest at\n# install time, so two runners weeks apart would compile the network engine\n# with different compilers. Bump deliberately, in its own reviewed commit.\n[toolchain]\nchannel = \"1.98.1\"\nprofile = \"minimal\"\n# The cross-compilation targets keep Android and iOS builds and Windows `cargo check`\n# on the same pinned toolchain as native builds. The windows-gnu target keeps\n# the cfg(windows) transport code compiling without a Windows runner in CI.\n# gnu, not msvc: ring (rustls) compiles C in its build script, and mingw\n# is the only Windows C toolchain a Linux/mac host can provide. The\n# production Windows target stays msvc and is exercised by a real runner.\ntargets = [\"x86_64-unknown-linux-gnu\", \"x86_64-pc-windows-gnu\", \"aarch64-linux-android\",\n           \"aarch64-apple-ios\", \"aarch64-apple-ios-sim\"]\n# clippy gates CI (`cargo clippy -- -D warnings`); ship it with the toolchain\n# so the minimal-profile CI install has it too.\ncomponents = [\"clippy\"]\n"
+}

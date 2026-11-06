@@ -1,0 +1,14 @@
+{
+  "inline": {
+    "elapsed_seconds": 0.5077199760000894,
+    "rc": 0,
+    "stdout": "wait_complete\n",
+    "stderr": ""
+  },
+  "newline": {
+    "elapsed_seconds": 0.5075588639999751,
+    "rc": 0,
+    "stdout": "wait_complete\n",
+    "stderr": ""
+  }
+}
