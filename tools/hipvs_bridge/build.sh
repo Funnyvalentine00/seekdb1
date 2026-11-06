@@ -47,12 +47,10 @@ fi
 # The GEMM unit ships device code, so pin the offload target explicitly to the
 # GPU this machine actually has (hipcc's default is unpredictable on hosts
 # without a visible GPU). Falls back to gfx1100 (the contest pool GPU).
-ARCH_FLAGS=""
-if [[ -n "$WMA_FLAGS" ]]; then
-  GPU_ARCH=$("$ROCM_ROOT/bin/rocminfo" 2>/dev/null | grep -om1 'gfx[0-9a-f]*' || true)
-  [[ -z "$GPU_ARCH" ]] && GPU_ARCH="gfx1100"
-  ARCH_FLAGS="--offload-arch=$GPU_ARCH"
-fi
+# Norm, copy and merge kernels also contain device code without rocWMMA.
+GPU_ARCH=$("$ROCM_ROOT/bin/rocminfo" 2>/dev/null | grep -om1 'gfx[0-9a-f]*' || true)
+[[ -z "$GPU_ARCH" ]] && GPU_ARCH="gfx1100"
+ARCH_FLAGS="--offload-arch=$GPU_ARCH"
 
 "$HIPCC" -c "${COMMON[@]}" $WMA_FLAGS "$SCRIPT_DIR/seekdb_cuvs_bridge.c" \
   -o "$SCRIPT_DIR/.bridge_c.o"

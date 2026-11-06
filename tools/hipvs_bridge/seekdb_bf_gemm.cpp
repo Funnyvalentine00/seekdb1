@@ -6,7 +6,7 @@
  * path with
  *   - one fp16 GEMM per (query-tile x base-tile) block computing
  *     dist = -2<a,b> + ||b||^2 (the query norm is a per-row constant and does
- *     not affect the ordering, so it is skipped), accumulated in fp32 by
+ *     not affect the ordering, so it is restored only at output), accumulated in fp32 by
  *     rocBLAS on tensor cores, and
  *   - cuVS select_k (the same radix-select family cuVS brute force uses) to
  *     keep the top-gd neighbours per row, merged into a running device-side
@@ -30,8 +30,9 @@
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
-#include <ctime>
-#include <pthread.h>
+#include <chrono>
+#include <cmath>
+#include <climits>
 
 #ifdef SK_USE_ROCWMA
 #include <rocwmma/rocwmma.hpp>
@@ -58,24 +59,9 @@ void select_k(const raft::resources& handle,
     if (e_ != hipSuccess) {                                                  \
       fprintf(stderr, "[seekdb_bf_gemm] hip error %d (%s) at %s:%d\n",       \
               (int)e_, hipGetErrorString(e_), __FILE__, __LINE__);           \
-      return 1;                                                              \
+      goto done;                                                             \
     }                                                                        \
   } while (0)
-
-static pthread_mutex_t g_blas_mu = PTHREAD_MUTEX_INITIALIZER;
-static rocblas_handle g_blas = NULL;
-
-static rocblas_handle sk_get_blas(void)
-{
-  pthread_mutex_lock(&g_blas_mu);
-  if (g_blas == NULL) {
-    if (rocblas_create_handle(&g_blas) != rocblas_status_success) {
-      g_blas = NULL;
-    }
-  }
-  pthread_mutex_unlock(&g_blas_mu);
-  return g_blas;
-}
 
 /* ||b||^2 for every base row (fp16 input, fp32 accumulate). */
 __global__ static void sk_row_norm2_kernel(const unsigned short* x, float* out,
@@ -139,19 +125,19 @@ __global__ __launch_bounds__(512) static void sk_wmma_gemm_kernel(
 
 __global__ static void sk_merge_tile_kernel(const float* td, const int* ti,
                                             long tb_off, float* bd,
-                                            unsigned* bid, long m, int gd)
+                                            unsigned* bid, long m, int gd, int tile_k)
 {
   const long r = (long)blockIdx.x * blockDim.x + threadIdx.x;
   if (r >= m) { return; }
   float* a_d = bd + r * gd;
   unsigned* a_i = bid + r * gd;
-  const float* b_d = td + r * gd;
-  const int* b_i = ti + r * gd;
+  const float* b_d = td + r * tile_k;
+  const int* b_i = ti + r * tile_k;
   float od[SK_GEMM_MAX_GD];
   unsigned oi[SK_GEMM_MAX_GD];
   int ia = 0, ib = 0;
   for (int k = 0; k < gd; k++) {
-    if (ia < gd && (ib >= gd || a_d[ia] <= b_d[ib])) {
+    if (ia < gd && (ib >= tile_k || a_d[ia] <= b_d[ib])) {
       od[k] = a_d[ia]; oi[k] = a_i[ia]; ia++;
     } else {
       od[k] = b_d[ib]; oi[k] = (unsigned)(b_i[ib] + tb_off); ib++;
@@ -163,14 +149,25 @@ __global__ static void sk_merge_tile_kernel(const float* td, const int* ti,
 /* First tile: just copy. */
 __global__ static void sk_copy_tile_kernel(const float* td, const int* ti,
                                            long tb_off, float* bd,
-                                           unsigned* bid, long m, int gd)
+                                           unsigned* bid, long m, int gd, int tile_k)
 {
   const long r = (long)blockIdx.x * blockDim.x + threadIdx.x;
   if (r >= m) { return; }
   for (int k = 0; k < gd; k++) {
-    bd[r * gd + k] = td[r * gd + k];
-    bid[r * gd + k] = (unsigned)(ti[r * gd + k] + tb_off);
+    bd[r * gd + k] = (k < tile_k) ? td[r * tile_k + k] : INFINITY;
+    bid[r * gd + k] = (k < tile_k) ? (unsigned)(ti[r * tile_k + k] + tb_off) : UINT_MAX;
   }
+}
+
+/* Restore complete squared L2 distances only for the final top-k. The bridge's
+ * optional symmetrization compares edges from different query rows, so the
+ * omitted query norm must not escape this function. Cost: O(n * gd), not O(n^2). */
+__global__ static void sk_restore_norm_kernel(float* d, const float* qnorm,
+                                              long m, int gd)
+{
+  const long r = (long)blockIdx.x * blockDim.x + threadIdx.x;
+  if (r >= m) { return; }
+  for (int k = 0; k < gd; k++) { d[r * gd + k] += qnorm[r]; }
 }
 
 static int sk_select_topk(raft::resources& res, const float* in, long m,
@@ -193,14 +190,7 @@ static int sk_select_topk(raft::resources& res, const float* in, long m,
 }
 
 /* SEEKDB_CUVS_GEMM_SELALGO: 0=kAuto 1=radix8 2=radix11 3=radix11+extra 4=warpAuto */
-static int env_sel_algo = 0;
-#ifdef SK_USE_ROCWMA
-static int g_use_wmma = 1;
-#else
-static int g_use_wmma = 0;
-#endif
-
-static raft::matrix::SelectAlgo sk_env_algo(void)
+static raft::matrix::SelectAlgo sk_env_algo(int env_sel_algo)
 {
   switch (env_sel_algo) {
     case 1: return raft::matrix::SelectAlgo::kRadix8bits;
@@ -215,30 +205,33 @@ extern "C" int sk_bf_gemm_topk128(void* res_p, const void* d_base, long n,
                                   long dim, long gd, float* host_d,
                                   unsigned* host_id, long tile_q, long tile_b)
 {
-  if (gd <= 0 || gd > SK_GEMM_MAX_GD) { return 2; }
+  if (gd <= 0 || gd > SK_GEMM_MAX_GD || n < gd || dim <= 0 || dim > INT_MAX) { return 2; }
+  if (res_p == NULL || d_base == NULL || host_d == NULL || host_id == NULL) { return 2; }
   if (tile_q <= 0 || tile_b <= 0) { return 2; }
+  tile_q = (tile_q < n) ? tile_q : n;
+  tile_b = (tile_b < n) ? tile_b : n;
+  if (tile_q > INT_MAX || tile_b > INT_MAX || n > UINT_MAX) { return 2; }
   raft::resources& res = *reinterpret_cast<raft::resources*>(res_p);
-  rocblas_handle blas = sk_get_blas();
-  if (blas == NULL) { return 1; }
+  // A global handle could be destroyed by another concurrent build. Own the
+  // handle (and its current-device workspace) for exactly this invocation.
+  rocblas_handle blas = NULL;
 
-  /* GEMM distances carry ~1e-7 relative noise, enough to shuffle the last few
-   * candidates around the k boundary. Selecting a slightly larger pool and
-   * handing the bridge the top-gd of the merged list restores the exact-kNN
-   * recall at negligible cost. */
-  const long ksel = (gd + 32 <= SK_GEMM_MAX_GD) ? (gd + 32) : gd;
-
-  {
-    const char* sa = getenv("SEEKDB_CUVS_GEMM_SELALGO");
-    if (sa != NULL && sa[0] != '\0') { env_sel_algo = atoi(sa); }
-    const char* wm = getenv("SEEKDB_CUVS_GEMM_WMA");
-    g_use_wmma = (wm == NULL || wm[0] != '0');
-  }
+  /* A row outside a tile's top-gd cannot enter the global top-gd. Keeping
+   * gd+32 and then truncating without recomputing distances cannot improve
+   * numerical accuracy; it only increases selection, merge and buffer cost. */
+  const long ksel = gd;
+  const char* sa = getenv("SEEKDB_CUVS_GEMM_SELALGO");
+  const int env_sel_algo = (sa != NULL) ? atoi(sa) : 0;
+  const raft::matrix::SelectAlgo algo = sk_env_algo(env_sel_algo);
+#ifdef SK_USE_ROCWMA
+  const char* wm = getenv("SEEKDB_CUVS_GEMM_WMA");
+  const bool use_wmma = (wm == NULL || wm[0] != '0') && (dim % 16 == 0);
+#else
+  const bool use_wmma = false;
+#endif
 
   const int do_time = (getenv("SEEKDB_CUVS_TIME") != NULL);
-  hipEvent_t ev_g0 = NULL, ev_g1 = NULL, ev_s1 = NULL;
-  if (do_time) {
-    hipEventCreate(&ev_g0); hipEventCreate(&ev_g1); hipEventCreate(&ev_s1);
-  }
+  const auto started = std::chrono::steady_clock::now();
   float* d_normb = NULL;
   float* d_scratch = NULL;
   float* d_best_d = NULL;
@@ -246,6 +239,10 @@ extern "C" int sk_bf_gemm_topk128(void* res_p, const void* d_base, long n,
   float* d_tdist = NULL;
   int* d_tidx = NULL;
   int rc = 1;
+  const float alpha = -2.0f;
+  const float beta = 0.0f;
+
+  if (rocblas_create_handle(&blas) != rocblas_status_success) { goto done; }
 
   SK_HIP_CHECK(hipMalloc(&d_normb, sizeof(float) * (size_t)n));
   sk_row_norm2_kernel<<<dim3((unsigned)n), 256, 0, 0>>>(
@@ -258,17 +255,14 @@ extern "C" int sk_bf_gemm_topk128(void* res_p, const void* d_base, long n,
   SK_HIP_CHECK(hipMalloc(&d_tdist, sizeof(float) * (size_t)tile_q * ksel));
   SK_HIP_CHECK(hipMalloc(&d_tidx, sizeof(int) * (size_t)tile_q * ksel));
 
-  const float alpha = -2.0f;
-  const float beta = 0.0f;
-  if (do_time) { hipEventRecord(ev_g0, 0); }
-
   for (long qo = 0; qo < n; qo += tile_q) {
     const long m = (n - qo < tile_q) ? (n - qo) : tile_q;
     for (long bo = 0; bo < n; bo += tile_b) {
       const long tb = (n - bo < tile_b) ? (n - bo) : tile_b;
+      const int tile_k = (tb < ksel) ? (int)tb : (int)ksel;
       /* dist = -2 * base^T @ query, C stored row-major [m x tb] */
 #ifdef SK_USE_ROCWMA
-      if (g_use_wmma && (tb % 64) == 0 && (m % 64) == 0) {
+      if (use_wmma && (tb % 64) == 0 && (m % 64) == 0) {
         dim3 g((unsigned)(tb / 64), (unsigned)(m / 64));
         hipGetLastError();  /* consume any sticky error before the launch */
         sk_wmma_gemm_kernel<<<g, 512, 0, 0>>>(
@@ -276,7 +270,7 @@ extern "C" int sk_bf_gemm_topk128(void* res_p, const void* d_base, long n,
             (const unsigned short*)d_base + qo * dim,
             d_scratch, m, tb, dim);
         SK_HIP_CHECK(hipGetLastError());
-        sk_add_normb_kernel<<<4096, 256, 0, 0>>>(d_scratch, d_normb,
+        sk_add_normb_kernel<<<4096, 256, 0, 0>>>(d_scratch, d_normb + bo,
                                                  m * tb, tb, -2);
       } else
 #endif
@@ -295,24 +289,27 @@ extern "C" int sk_bf_gemm_topk128(void* res_p, const void* d_base, long n,
           fprintf(stderr, "[seekdb_bf_gemm] rocblas_gemm_ex failed: %d\n", (int)gs);
           goto done;
         }
-        sk_add_normb_kernel<<<4096, 256, 0, 0>>>(d_scratch, d_normb,
+        sk_add_normb_kernel<<<4096, 256, 0, 0>>>(d_scratch, d_normb + bo,
                                                  m * tb, tb, 1);
       }
       SK_HIP_CHECK(hipGetLastError());
-      if (sk_select_topk(res, d_scratch, m, tb, ksel, d_tdist, d_tidx,
-                         sk_env_algo()) != 0) {
+      if (sk_select_topk(res, d_scratch, m, tb, tile_k, d_tdist, d_tidx,
+                         algo) != 0) {
         fprintf(stderr, "[seekdb_bf_gemm] select_k threw\n");
         goto done;
       }
       if (bo == 0) {
         sk_copy_tile_kernel<<<(unsigned)((m + 255) / 256), 256, 0, 0>>>(
-            d_tdist, d_tidx, bo, d_best_d, d_best_i, m, ksel);
+            d_tdist, d_tidx, bo, d_best_d, d_best_i, m, ksel, tile_k);
       } else {
         sk_merge_tile_kernel<<<(unsigned)((m + 255) / 256), 256, 0, 0>>>(
-            d_tdist, d_tidx, bo, d_best_d, d_best_i, m, ksel);
+            d_tdist, d_tidx, bo, d_best_d, d_best_i, m, ksel, tile_k);
       }
       SK_HIP_CHECK(hipGetLastError());
     }
+    sk_restore_norm_kernel<<<(unsigned)((m + 255) / 256), 256, 0, 0>>>(
+        d_best_d, d_normb + qo, m, ksel);
+    SK_HIP_CHECK(hipGetLastError());
     SK_HIP_CHECK(hipMemcpy2D(host_d + (size_t)qo * gd, sizeof(float) * gd,
                              d_best_d, sizeof(float) * ksel,
                              sizeof(float) * gd, (size_t)m, hipMemcpyDeviceToHost));
@@ -322,32 +319,22 @@ extern "C" int sk_bf_gemm_topk128(void* res_p, const void* d_base, long n,
   }
   rc = 0;
 done:
-  if (do_time) {
-    hipEventRecord(ev_g1, 0);
-    hipEventSynchronize(ev_g1);
-    float gms = 0.f, sms = 0.f, wall = 0.f;
-    hipEventElapsedTime(&gms, ev_g0, ev_g1);
-    hipEventRecord(ev_s1, 0);
-    hipEventSynchronize(ev_s1);
-    hipEventElapsedTime(&sms, ev_g1, ev_s1);
-    fprintf(stderr, "[seekdb_bf_gemm] n=%ld dim=%ld gd=%ld ksel=%ld tiles %ldx%ld "
-                    "algo=%d wma=%d gemm+norm=%.0fms select+merge=%.0fms rc=%d\n",
-            n, dim, gd, ksel, tile_q, tile_b, env_sel_algo, g_use_wmma, gms, sms, rc);
-  }
-  if (ev_g0 != NULL) { hipEventDestroy(ev_g0); }
-  if (ev_g1 != NULL) { hipEventDestroy(ev_g1); }
-  if (ev_s1 != NULL) { hipEventDestroy(ev_s1); }
   /* release the rocblas handle (and its device workspace pool) right away so
    * the resident VRAM footprint of a built index does not carry the GEMM
    * scratch into the 256-D build that follows in the same process. */
-  pthread_mutex_lock(&g_blas_mu);
-  if (g_blas != NULL) { rocblas_destroy_handle(g_blas); g_blas = NULL; }
-  pthread_mutex_unlock(&g_blas_mu);
+  if (blas != NULL) { rocblas_destroy_handle(blas); }
   if (d_normb != NULL) { hipFree(d_normb); }
   if (d_scratch != NULL) { hipFree(d_scratch); }
   if (d_best_d != NULL) { hipFree(d_best_d); }
   if (d_best_i != NULL) { hipFree(d_best_i); }
   if (d_tdist != NULL) { hipFree(d_tdist); }
   if (d_tidx != NULL) { hipFree(d_tidx); }
+  if (do_time) {
+    const double wall_ms = std::chrono::duration<double, std::milli>(
+        std::chrono::steady_clock::now() - started).count();
+    fprintf(stderr, "[seekdb_bf_gemm] n=%ld dim=%ld gd=%ld ksel=%ld tiles %ldx%ld "
+                    "algo=%d wma=%d total_wall=%.0fms rc=%d\n",
+            n, dim, gd, ksel, tile_q, tile_b, env_sel_algo, (int)use_wmma, wall_ms, rc);
+  }
   return rc;
 }
