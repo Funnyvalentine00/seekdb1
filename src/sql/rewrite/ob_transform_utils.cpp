@@ -12858,6 +12858,54 @@ int ObTransformUtils::inner_check_need_calc_match_score(ObExecContext *exec_ctx,
   return ret;
 }
 
+int ObTransformUtils::check_need_calc_match_score(ObExecContext *exec_ctx,
+                                                  const ObDMLStmt *stmt,
+                                                  ObRawExpr *match_expr,
+                                                  bool &need_calc,
+                                                  ObIArray<ObExprConstraint> &constraints)
+{
+  int ret = OB_SUCCESS;
+  need_calc = true;
+  ObSEArray<ObRawExpr *, 16> relation_exprs;
+  ObMatchFunRawExpr *match_fun = nullptr;
+  if (OB_ISNULL(exec_ctx) || OB_ISNULL(stmt) || OB_ISNULL(match_expr)) {
+    // Keep the conservative answer when the check context is unavailable.
+  } else if (OB_UNLIKELY(T_FUN_MATCH_AGAINST != match_expr->get_expr_type())) {
+    // Only the natural-language MATCH function is analyzed in the first round.
+  } else if (OB_FALSE_IT(match_fun = static_cast<ObMatchFunRawExpr *>(match_expr))) {
+  } else if (OB_UNLIKELY(!stmt->is_select_stmt()
+             || NATURAL_LANGUAGE_MODE != match_fun->get_mode_flag()
+             || match_fun->get_match_columns().count() <= 1
+             || stmt->has_limit()
+             || stmt->get_subquery_expr_size() > 0
+             || stmt->get_table_items().count() != 1
+             || OB_ISNULL(stmt->get_table_items().at(0))
+             || stmt->get_table_items().at(0)->is_joined_table()
+             || static_cast<const ObSelectStmt *>(stmt)->get_window_func_count() > 0)) {
+    // First round: single-table natural-language hit query without LIMIT/subquery/join/window.
+  } else if (OB_FAIL(stmt->get_relation_exprs(relation_exprs))) {
+    LOG_WARN("failed to get relation exprs for match score check", K(ret));
+  } else {
+    need_calc = false;
+    for (int64_t i = 0; OB_SUCC(ret) && !need_calc && i < relation_exprs.count(); ++i) {
+      bool tmp_need_calc = false;
+      if (OB_FAIL(inner_check_need_calc_match_score(exec_ctx,
+                                                    relation_exprs.at(i),
+                                                    match_expr,
+                                                    tmp_need_calc,
+                                                    constraints))) {
+        LOG_WARN("failed to check need calc match score", K(ret));
+      } else if (tmp_need_calc) {
+        need_calc = true;
+      }
+    }
+  }
+  if (OB_FAIL(ret)) {
+    need_calc = true;
+  }
+  return ret;
+}
+
 int ObTransformUtils::check_expr_eq_zero(ObExecContext *ctx,
                                          ObRawExpr *expr, 
                                          bool &eq_zero, 
