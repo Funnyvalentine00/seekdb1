@@ -512,10 +512,12 @@ int ObTextRetrievalDaaTTokenIter::save_relevances_and_docids()
     cur_idx_ = 0;
     const ObDatumVector &relevance_datum = relevance_expr_->locate_expr_datumvector(*eval_ctx_);
     const ObDatumVector &doc_id_datum = inv_scan_domain_id_col_->locate_expr_datumvector(*eval_ctx_);
+    ObDocIdExt *doc_ids = doc_id_.get_data();
+    double *relevances = relevance_.get_data();
     for (int64_t i = 0; OB_SUCC(ret) && i < count_; ++i) {
       if (OB_LIKELY(!token_iter_->get_skip()->at(i))) {
-        relevance_[i] = relevance_datum.at(i)->get_double();
-        if (OB_FAIL(doc_id_[i].from_datum(*doc_id_datum.at(i)))) {
+        relevances[i] = relevance_datum.at(i)->get_double();
+        if (OB_FAIL(doc_ids[i].from_datum(*doc_id_datum.at(i)))) {
         }
       }
     }
@@ -531,9 +533,10 @@ int ObTextRetrievalDaaTTokenIter::save_docids()
   } else {
     cur_idx_ = 0;
     const ObDatumVector &doc_id_datum = inv_scan_domain_id_col_->locate_expr_datumvector(*eval_ctx_);
+    ObDocIdExt *doc_ids = doc_id_.get_data();
     for (int64_t i = 0; OB_SUCC(ret) && i < count_; ++i) {
       if (OB_LIKELY(!token_iter_->get_skip()->at(i))) {
-        if (OB_FAIL(doc_id_[i].from_datum(*doc_id_datum.at(i)))) {
+        if (OB_FAIL(doc_ids[i].from_datum(*doc_id_datum.at(i)))) {
         };
       }
     }
@@ -557,7 +560,13 @@ int ObTextRetrievalDaaTTokenIter::advance_to(const ObDatum &id_datum)
       const int64_t lhs_len = lhs.len_;
       const int64_t rhs_len = rhs.len_;
       const int64_t min_len = lhs_len < rhs_len ? lhs_len : rhs_len;
-      int c = min_len > 0 ? memcmp(lhs.ptr_, rhs.ptr_, min_len) : 0;
+      int c = 0;
+      if (OB_LIKELY(8 == min_len)) {
+        // domain ids are fixed 8-byte values; a constant-size compare is inlined
+        c = memcmp(lhs.ptr_, rhs.ptr_, 8);
+      } else if (min_len > 0) {
+        c = memcmp(lhs.ptr_, rhs.ptr_, min_len);
+      }
       if (0 == c) {
         c = lhs_len > rhs_len ? 1 : (lhs_len < rhs_len ? -1 : 0);
       }
@@ -573,7 +582,7 @@ int ObTextRetrievalDaaTTokenIter::advance_to(const ObDatum &id_datum)
   }
   while (OB_SUCC(ret) && !find) {
     if (cur_idx_ < count_) {
-      if (OB_FAIL(cmp_ids(id_datum, doc_id_[cur_idx_].get_datum(), result))) {
+      if (OB_FAIL(cmp_ids(id_datum, doc_id_.get_data()[cur_idx_].get_datum(), result))) {
       } else if (result <= 0) {
         find = true;
       } else {
@@ -587,7 +596,7 @@ int ObTextRetrievalDaaTTokenIter::advance_to(const ObDatum &id_datum)
       }
     } else if (cur_idx_ != 0) {
       ret = OB_ERR_UNEXPECTED;
-    } else if (OB_FAIL(cmp_ids(id_datum, doc_id_[cur_idx_].get_datum(), result))) {
+    } else if (OB_FAIL(cmp_ids(id_datum, doc_id_.get_data()[cur_idx_].get_datum(), result))) {
     } else if (result <= 0) {
       find = true;
     } else {
@@ -600,10 +609,10 @@ int ObTextRetrievalDaaTTokenIter::advance_to(const ObDatum &id_datum)
 int ObTextRetrievalDaaTTokenIter::get_curr_score(double &score) const
 {
   int ret = OB_SUCCESS;
-  if (OB_UNLIKELY(cur_idx_ >= count_)) {
+  if (OB_UNLIKELY(cur_idx_ < 0) || OB_UNLIKELY(cur_idx_ >= count_)) {
     ret = OB_ARRAY_OUT_OF_RANGE;
   } else if (relevance_expr_) {
-    score = relevance_[cur_idx_];
+    score = relevance_.get_data()[cur_idx_];
   }
   return ret;
 }
@@ -611,10 +620,10 @@ int ObTextRetrievalDaaTTokenIter::get_curr_score(double &score) const
 int ObTextRetrievalDaaTTokenIter::get_curr_id(const ObDatum *&id_datum) const
 {
   int ret = OB_SUCCESS;
-  if (OB_UNLIKELY(cur_idx_ >= count_)) {
+  if (OB_UNLIKELY(cur_idx_ < 0) || OB_UNLIKELY(cur_idx_ >= count_)) {
     ret = OB_ARRAY_OUT_OF_RANGE;
   } else {
-    id_datum = &doc_id_[cur_idx_].get_datum();
+    id_datum = &doc_id_.get_data()[cur_idx_].get_datum();
   }
   return ret;
 }

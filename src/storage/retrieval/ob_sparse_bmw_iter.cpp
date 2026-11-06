@@ -220,7 +220,7 @@ int ObSRBMWIterImpl::process_collected_row(const ObDatum &id_datum, const double
   if (OB_UNLIKELY(top_k_heap_.count() > top_k_count_)) {
     ret = OB_ERR_UNEXPECTED;
   } else if (top_k_heap_.count() < top_k_count_) {
-    if (OB_FAIL(id_cache_.at(top_k_heap_.count()).from_datum(id_datum))) {
+    if (OB_FAIL(id_cache_.get_data()[top_k_heap_.count()].from_datum(id_datum))) {
     } else if (OB_FAIL(top_k_heap_.push(TopKItem(relevance, top_k_heap_.count())))) {
     }
   } else {
@@ -228,7 +228,7 @@ int ObSRBMWIterImpl::process_collected_row(const ObDatum &id_datum, const double
     const double top_k_threshold = get_top_k_threshold();
     if (relevance <= top_k_threshold) {
       // not a new top k candidate
-    } else if (OB_FAIL(id_cache_.at(cache_idx).from_datum(id_datum))) {
+    } else if (OB_FAIL(id_cache_.get_data()[cache_idx].from_datum(id_datum))) {
     } else if (OB_FAIL(top_k_heap_.pop())) {
     } else if (OB_FAIL(top_k_heap_.push(TopKItem(relevance, cache_idx)))) {
     }
@@ -257,7 +257,7 @@ int ObSRBMWIterImpl::next_pivot(int64_t &pivot_iter_idx)
     } else if (FALSE_IT(max_score += iter_score)) {
     } else if (OB_FAIL(merge_heap_->pop())) {
     } else {
-      next_round_iter_idxes_[next_round_cnt_++] = iter_idx;
+      next_round_iter_idxes_.get_data()[next_round_cnt_++] = iter_idx;
       found_pivot = max_score > top_k_threshold && curr_id_end;
     }
   }
@@ -290,7 +290,7 @@ int ObSRBMWIterImpl::next_pivot_range(int64_t &skip_range_cnt)
   const ObDatum *minimum_max_domain_id = nullptr;
   int64_t next_round_iter_end_cnt = 0;
   for (int64_t i = 0; OB_SUCC(ret) && i < next_round_cnt_; ++i) {
-    const int64_t iter_idx = next_round_iter_idxes_[i];
+    const int64_t iter_idx = next_round_iter_idxes_.get_data()[i];
     const ObMaxScoreTuple *max_score_tuple = nullptr;
     int cmp_ret = 0;
     ObISRDimBlockMaxIter *iter = nullptr;
@@ -403,7 +403,7 @@ int ObSRBMWIterImpl::evaluate_pivot_range(const int64_t pivot_iter_idx, bool &is
   double block_max_score = 0.0;
   const ObMaxScoreTuple *max_score_tuple = nullptr;
   for (int64_t i = 0; OB_SUCC(ret) && i < next_round_cnt_; ++i) {
-    const int64_t iter_idx = next_round_iter_idxes_[i];
+    const int64_t iter_idx = next_round_iter_idxes_.get_data()[i];
     ObISRDimBlockMaxIter *iter = get_iter(iter_idx);
     if (OB_ISNULL(iter) || OB_UNLIKELY(is_next_round_iter_end(i))) {
       ret = OB_ERR_UNEXPECTED;
@@ -440,7 +440,7 @@ int ObSRBMWIterImpl::fill_merge_heap_with_shallow_dims(const ObDatum *last_range
 
   ObSRMergeItem item;
   for (int64_t i = 0; OB_SUCC(ret) && i < next_round_cnt_; ++i) {
-    const int64_t iter_idx = next_round_iter_idxes_[i];
+    const int64_t iter_idx = next_round_iter_idxes_.get_data()[i];
     ObISRDimBlockMaxIter *iter = nullptr;
     if (is_next_round_iter_end(i)) {
       // skip
@@ -451,7 +451,7 @@ int ObSRBMWIterImpl::fill_merge_heap_with_shallow_dims(const ObDatum *last_range
       } else {
         ret = OB_SUCCESS;
       }
-    } else if (OB_FAIL(iter->get_curr_id(iter_domain_ids_[iter_idx]))) {
+    } else if (OB_FAIL(iter->get_curr_id(iter_domain_ids_.get_data()[iter_idx]))) {
     } else {
       item.iter_idx_ = iter_idx;
       item.relevance_ = 0.0;
@@ -523,7 +523,7 @@ int ObSRBMWIterImpl::try_generate_next_range_from_merge_heap(
       if (OB_FAIL(ret) || curr_range_reach_end) {
       } else if (OB_FAIL(merge_heap_->pop())) {
       } else {
-        next_round_iter_idxes_[next_round_cnt_++] = iter_idx;
+        next_round_iter_idxes_.get_data()[next_round_cnt_++] = iter_idx;
         max_score += max_score_tuple->max_score_;
         if (max_score > top_k_threshold) {
           // found a new top k candidate range
@@ -568,7 +568,7 @@ int ObSRBMWIterImpl::project_rows_from_top_k_heap(const int64_t capacity, int64_
     for (int64_t i = 0; OB_SUCC(ret) && i < capacity && !top_k_heap_.empty(); ++i) {
       guard.set_batch_idx(i);
       const TopKItem &top_k_item = top_k_heap_.top();
-      const ObDocIdExt &id = id_cache_.at(top_k_item.cache_idx_);
+      const ObDocIdExt &id = id_cache_.get_data()[top_k_item.cache_idx_];
       set_datum_func_(id_datums[i], id);
       id_evaluated_flags.set(i);
       id_proj_expr->set_evaluated_projected(*eval_ctx);
@@ -592,7 +592,7 @@ int ObSRBMWIterImpl::unify_dim_iters_for_next_round()
 
   ObDatum *curr_domain_id = nullptr;
   for (int64_t i = 0; OB_SUCC(ret) && i < next_round_cnt_; ++i) {
-    const int64_t iter_idx = next_round_iter_idxes_[i];
+    const int64_t iter_idx = next_round_iter_idxes_.get_data()[i];
     ObISRDimBlockMaxIter *iter = get_iter(iter_idx);
     const ObDatum *curr_domain_id = nullptr;
     if (OB_ISNULL(iter)) {
@@ -614,7 +614,7 @@ int ObSRBMWIterImpl::advance_dim_iters_for_next_round(
   int ret = OB_SUCCESS;
   ObSRMergeItem item;
   for (int64_t i = 0; OB_SUCC(ret) && i < next_round_cnt_; ++i) {
-    const int64_t iter_idx = next_round_iter_idxes_[i];
+    const int64_t iter_idx = next_round_iter_idxes_.get_data()[i];
     ObISRDimBlockMaxIter *iter = nullptr;
     if (is_next_round_iter_end(i)) {
       if (!iter_end_available) {
@@ -627,7 +627,7 @@ int ObSRBMWIterImpl::advance_dim_iters_for_next_round(
       } else {
         ret = OB_SUCCESS;
       }
-    } else if (OB_FAIL(iter->get_curr_id(iter_domain_ids_[iter_idx]))) {
+    } else if (OB_FAIL(iter->get_curr_id(iter_domain_ids_.get_data()[iter_idx]))) {
     } else if (OB_FAIL(iter->get_curr_score(item.relevance_))) {
     } else if (FALSE_IT(item.iter_idx_ = iter_idx)) {
     } else if (OB_FAIL(merge_heap_->push(item))) {

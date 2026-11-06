@@ -74,7 +74,13 @@ int ObSRMergeCmp::cmp(
       const int64_t l_len = l_datum.len_;
       const int64_t r_len = r_datum.len_;
       const int64_t min_len = l_len < r_len ? l_len : r_len;
-      int c = min_len > 0 ? memcmp(l_datum.ptr_, r_datum.ptr_, min_len) : 0;
+      int c = 0;
+      if (OB_LIKELY(8 == min_len)) {
+        // domain ids are fixed 8-byte values; a constant-size compare is inlined
+        c = memcmp(l_datum.ptr_, r_datum.ptr_, 8);
+      } else if (min_len > 0) {
+        c = memcmp(l_datum.ptr_, r_datum.ptr_, min_len);
+      }
       if (0 == c) {
         c = l_len > r_len ? 1 : (l_len < r_len ? -1 : 0);
       }
@@ -352,12 +358,12 @@ int ObSRDaaTIterImpl::collect_dims_by_id(const ObDatum *&id_datum, double &relev
     } else if (FALSE_IT(iter_idx = top_item->iter_idx_)) {
     } else if (OB_FAIL(merge_heap_->pop())) {
     } else {
-      next_round_iter_idxes_[next_round_cnt_++] = iter_idx;
+      next_round_iter_idxes_.get_data()[next_round_cnt_++] = iter_idx;
     }
   }
 
   if (OB_SUCC(ret)) {
-    id_datum = iter_domain_ids_[iter_idx];
+    id_datum = iter_domain_ids_.get_data()[iter_idx];
     if (OB_ISNULL(id_datum)) {
       ret = OB_ERR_UNEXPECTED;
     } else if (OB_FAIL(relevance_collector_->get_result(relevance, got_valid_id))) {
@@ -423,8 +429,8 @@ int ObSRDaaTIterImpl::cache_result(int64_t &count, const ObDatum &id_datum, cons
   } else if (OB_UNLIKELY(count >= buffered_domain_ids_.count() || count >= buffered_relevances_.count())) {
     ret = OB_INVALID_ARGUMENT;
   } else {
-    buffered_domain_ids_[count].from_datum(id_datum);
-    buffered_relevances_[count] = relevance;
+    buffered_domain_ids_.get_data()[count].from_datum(id_datum);
+    buffered_relevances_.get_data()[count] = relevance;
     ++count;
     ++output_row_cnt_;
     if (limit_param->is_valid() && output_row_cnt_ >= limit) {
@@ -454,7 +460,7 @@ int ObSRDaaTIterImpl::project_results(const int64_t count)
       for (int64_t i = 0; i < count; ++i) {
         guard.set_batch_idx(i);
         ObDatum &id_proj_datum = id_proj_expr->locate_datum_for_write(*eval_ctx);
-        set_datum_func_(id_proj_datum, buffered_domain_ids_[i]);
+        set_datum_func_(id_proj_datum, buffered_domain_ids_.get_data()[i]);
       }
     }
     // Expression-level flags apply to the whole batch; row bits cover exactly [0, count).
@@ -472,7 +478,7 @@ int ObSRDaaTIterImpl::project_results(const int64_t count)
         for (int64_t i = 0; i < count; ++i) {
           guard.set_batch_idx(i);
           ObDatum &relevance_proj_datum = relevance_proj_expr->locate_datum_for_write(*eval_ctx);
-          relevance_proj_datum.set_double(buffered_relevances_[i]);
+          relevance_proj_datum.set_double(buffered_relevances_.get_data()[i]);
         }
       }
       relevance_evaluated_flags.set_all(static_cast<int64_t>(0), count);
