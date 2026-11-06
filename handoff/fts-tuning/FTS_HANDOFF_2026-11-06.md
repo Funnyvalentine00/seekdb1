@@ -1,5 +1,7 @@
 # FTS Issue #6 本地交接说明（2026-11-06）
 
+> **最新承接状态（按用户要求暂停，等待新命令；仅本地保存，未推送）**：本地已增加 `194150497`，修复原 v4 的三处 MATCH 边界错误。查询收益经6对A/B确认，但build_ik_content仍未过1%门禁，File SQL待Linux；因此2914仍为原PID31133，尚未按条件切换。详情见 [V4_INTEGRATION_ACCEPTANCE_2026-11-06.md](V4_INTEGRATION_ACCEPTANCE_2026-11-06.md)。以下1–5节是此前交接快照。
+
 本文件用于交接给其他 agent。**所有分支均未推送**；除已注明的 H3 PR #13 外，没有远端动作。
 
 ## 1. 保留的优化
@@ -7,7 +9,7 @@
 | 优化 | 分支 | 代码提交 | 效果（本机 macOS A/B） | 状态 |
 |---|---|---|---|---|
 | H2 DaaT 批量投影 | `feat/fts-daat-batch-projection` | `9fa0416e5`、`f8819ff6d` | 指令 −5.36/−4.91/−4.62%（cn/beng/mixed）；墙钟 +4.08/+3.52/+4.75%；Linux 节点 +5.87/+5.15/+6.06% | 已验证，fts_index 14/15 |
-| H3 命中专用 MATCH（无多列） | `feat/fts-skip-match-score` | `853ccd8ed` | 墙钟 +19.50/+19.93/+20.42%，query 类均 +14.87% | 已验证，fts_index 14/15；PR #13（head `42cb1308e`）已推送待 CI |
+| H3 命中专用多列 MATCH | `feat/fts-skip-match-score` | `853ccd8ed` | 墙钟 +19.50/+19.93/+20.42%，query 类均 +14.87% | 已验证，fts_index 14/15；PR #13（head `42cb1308e`）已推送待 CI |
 | H7 稀疏检索热循环裸数组访问 | `feat/fts-merge-raw-access` | `1e57459dfcec` | 墙钟 +12.19/+9.87/+10.16/+10.28%，类均 +10.62%；稳态指令 −15.50（beng）/−15.05（mixed） | 已验证，hits/差分一致，fts_index 14/15；证据 `a67744d91` |
 
 H7 详情见 `handoff/fts-tuning/RAW_ARRAY_ACCESS_2026-11-06.md` 与 `raw-array-access-evidence.json`。

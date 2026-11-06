@@ -1,0 +1,716 @@
+diff --git a/src/observer/composition/retrieval/ob_das_legacy_tr_merge_iter.cpp b/src/observer/composition/retrieval/ob_das_legacy_tr_merge_iter.cpp
+index 56516ce8f..3451d6426 100644
+--- a/src/observer/composition/retrieval/ob_das_legacy_tr_merge_iter.cpp
++++ b/src/observer/composition/retrieval/ob_das_legacy_tr_merge_iter.cpp
+@@ -105,7 +105,7 @@ int ObDASLegacyTRMergeIter::init_das_iter_scan_params()
+ {
+   int ret = OB_SUCCESS;
+   const int64_t dim_iter_cnt = taat_mode_ ? 1 : query_tokens_.count();
+-  if (!ir_ctdef_->need_estimate_total_doc_cnt() && 0 != dim_iter_cnt) {
++  if (ir_ctdef_->need_calc_relevance() && !ir_ctdef_->need_estimate_total_doc_cnt() && 0 != dim_iter_cnt) {
+     void *buf = nullptr;
+     if (OB_ISNULL(buf = myself_allocator_.alloc(sizeof(ObTableScanParam)))) {
+       ret = OB_ALLOCATE_MEMORY_FAILED;
+@@ -380,7 +380,7 @@ int ObDASLegacyTRMergeIter::create_sparse_retrieval_iter()
+   sr_iter_param_.id_proj_expr_ = ir_ctdef_->inv_scan_domain_id_col_;
+   sr_iter_param_.relevance_expr_ = ir_ctdef_->relevance_expr_;
+   sr_iter_param_.relevance_proj_expr_ = ir_ctdef_->relevance_proj_col_;
+-  sr_iter_param_.filter_expr_ = ir_ctdef_->match_filter_;
++  sr_iter_param_.filter_expr_ = ir_ctdef_->need_calc_relevance() ? ir_ctdef_->match_filter_ : nullptr;
+   sr_iter_param_.topk_limit_ = topk_limit_;
+   if (OB_NOT_NULL(ir_ctdef_->field_boost_expr_)) {
+     ObDatum *boost_datum = nullptr;
+@@ -473,28 +473,37 @@ int ObDASLegacyTRMergeIter::init_daat_iter_param(ObTextDaaTParam &iter_param)
+   iter_param.allocator_ = &myself_allocator_;
+   iter_param.mode_flag_ = ir_ctdef_->mode_flag_;
+   iter_param.function_lookup_mode_ = function_lookup_mode_;
+-  iter_param.bm25_param_est_ctx_.total_doc_cnt_expr_
+-      = ir_ctdef_->get_doc_agg_ctdef()->pd_expr_spec_.pd_storage_aggregate_output_.at(0);
+-  iter_param.bm25_param_est_ctx_.estimated_total_doc_cnt_ = ir_ctdef_->estimated_total_doc_cnt_;
+-  iter_param.bm25_param_est_ctx_.need_est_avg_doc_token_cnt_ = ir_ctdef_->need_avg_doc_len_est();
+-  iter_param.bm25_param_est_ctx_.can_est_by_sum_skip_index_ = ir_ctdef_->avg_doc_len_est_spec_.can_est_by_sum_skip_index_;
+-  iter_param.bm25_param_est_ctx_.avg_doc_token_cnt_expr_ = ir_ctdef_->avg_doc_token_cnt_expr_;
+-  iter_param.bm25_param_est_ctx_.doc_length_est_param_ = &doc_length_est_param_;
+-  if (query_tokens_.count() == 0) {
+-    // do nothing
+-  } else if (OB_ISNULL(iter_param.bm25_param_est_ctx_.total_doc_cnt_expr_)) {
+-    ret = OB_ERR_UNEXPECTED;
+-  } else if (OB_FAIL(init_doc_length_est_param())) {
+-  } else if (!ir_ctdef_->need_estimate_total_doc_cnt()) {
+-    if (OB_UNLIKELY(!static_cast<sql::ObStoragePushdownFlag>(total_doc_cnt_scan_param_->pd_storage_flag_).is_aggregate_pushdown())) {
+-      ret = OB_NOT_IMPLEMENT;
+-      LOG_ERROR("aggregate without pushdown not implemented", K(ret));
+-    } else {
+-      iter_param.bm25_param_est_ctx_.total_doc_cnt_iter_ = static_cast<sql::ObDASScanIter*>(children_[children_cnt_ - 1]);
++  if (ir_ctdef_->need_calc_relevance()) {
++    iter_param.bm25_param_est_ctx_.total_doc_cnt_expr_
++        = ir_ctdef_->get_doc_agg_ctdef()->pd_expr_spec_.pd_storage_aggregate_output_.at(0);
++    iter_param.bm25_param_est_ctx_.estimated_total_doc_cnt_ = ir_ctdef_->estimated_total_doc_cnt_;
++    iter_param.bm25_param_est_ctx_.need_est_avg_doc_token_cnt_ = ir_ctdef_->need_avg_doc_len_est();
++    iter_param.bm25_param_est_ctx_.can_est_by_sum_skip_index_ = ir_ctdef_->avg_doc_len_est_spec_.can_est_by_sum_skip_index_;
++    iter_param.bm25_param_est_ctx_.avg_doc_token_cnt_expr_ = ir_ctdef_->avg_doc_token_cnt_expr_;
++    iter_param.bm25_param_est_ctx_.doc_length_est_param_ = &doc_length_est_param_;
++    if (query_tokens_.count() == 0) {
++      // do nothing
++    } else if (OB_ISNULL(iter_param.bm25_param_est_ctx_.total_doc_cnt_expr_)) {
++      ret = OB_ERR_UNEXPECTED;
++    } else if (OB_FAIL(init_doc_length_est_param())) {
++    } else if (!ir_ctdef_->need_estimate_total_doc_cnt()) {
++      if (OB_UNLIKELY(!static_cast<sql::ObStoragePushdownFlag>(total_doc_cnt_scan_param_->pd_storage_flag_).is_aggregate_pushdown())) {
++        ret = OB_NOT_IMPLEMENT;
++        LOG_ERROR("aggregate without pushdown not implemented", K(ret));
++      } else {
++        iter_param.bm25_param_est_ctx_.total_doc_cnt_iter_ = static_cast<sql::ObDASScanIter*>(children_[children_cnt_ - 1]);
++      }
+     }
+   }
+   if (OB_SUCC(ret)) {
+-    if (BOOLEAN_MODE == ir_ctdef_->mode_flag_) {
++    if (!ir_ctdef_->need_calc_relevance()) {
++      ObSRDaaTNoScoreRelevanceCollector *no_score_collector = nullptr;
++      if (OB_ISNULL(no_score_collector = OB_NEWx(ObSRDaaTNoScoreRelevanceCollector, &myself_allocator_))) {
++        ret = OB_ALLOCATE_MEMORY_FAILED;
++      } else {
++        iter_param.relevance_collector_ = no_score_collector;
++      }
++    } else if (BOOLEAN_MODE == ir_ctdef_->mode_flag_) {
+       ObSRDaaTBooleanRelevanceCollector *boolean_relevance_collector = nullptr;
+       if (OB_ISNULL(boolean_relevance_collector = OB_NEWx(ObSRDaaTBooleanRelevanceCollector, &myself_allocator_))) {
+         ret = OB_ALLOCATE_MEMORY_FAILED;
+@@ -519,6 +528,13 @@ int ObDASLegacyTRMergeIter::init_daat_iter_param(ObTextDaaTParam &iter_param)
+ int ObDASLegacyTRMergeIter::init_taat_iter_param(ObTextTaaTParam &iter_param)
+ {
+   int ret = OB_SUCCESS;
++  if (OB_UNLIKELY(!ir_ctdef_->need_calc_relevance())) {
++    ret = OB_NOT_SUPPORTED;
++    LOG_WARN("taat without relevance calculation is not supported", K(ret));
++  }
++  if (OB_FAIL(ret)) {
++    return ret;
++  }
+   iter_param.query_tokens_ = &query_tokens_;
+   iter_param.base_param_ = &sr_iter_param_;
+   iter_param.allocator_ = &myself_allocator_;
+diff --git a/src/sql/das/iter/ob_das_iter_utils.cpp b/src/sql/das/iter/ob_das_iter_utils.cpp
+index c12f71aeb..8098514f0 100644
+--- a/src/sql/das/iter/ob_das_iter_utils.cpp
++++ b/src/sql/das/iter/ob_das_iter_utils.cpp
+@@ -1496,8 +1496,11 @@ int ObDASIterUtils::create_text_retrieval_sub_tree(
+     if (ir_scan_ctdef->has_pushdown_topk() && !has_duplicate_boolean_tokens) {
+       merge_iter_param.topk_mode_ = 1;
+       merge_iter_param.daat_mode_ = 1;
+-    } else if (merge_iter_param.query_tokens_.count() > OB_MAX_TEXT_RETRIEVAL_TOKEN_CNT
+-        || (!is_func_lookup && !ir_scan_ctdef->need_proj_relevance_score())) {
++    // Scoreless ctdefs have no BM25/aggregate children for TAAT. The active
++    // sparse DaaT iterator sizes its arrays dynamically, also for long queries.
++    } else if (ir_scan_ctdef->need_calc_relevance()
++        && (merge_iter_param.query_tokens_.count() > OB_MAX_TEXT_RETRIEVAL_TOKEN_CNT
++            || (!is_func_lookup && !ir_scan_ctdef->need_proj_relevance_score()))) {
+       if (BOOLEAN_MODE == ir_scan_ctdef->mode_flag_) {
+         ret = OB_NOT_SUPPORTED;
+         LOG_USER_ERROR(OB_NOT_SUPPORTED, "Boolean mode with more than 256 tokens is");
+@@ -1537,7 +1540,8 @@ int ObDASIterUtils::create_text_retrieval_sub_tree(
+   }
+ 
+   if (OB_FAIL(ret)) {
+-  } else if (size > 0 && !ir_scan_ctdef->need_estimate_total_doc_cnt()) {
++  } else if (size > 0 && ir_scan_ctdef->need_calc_relevance()
++      && !ir_scan_ctdef->need_estimate_total_doc_cnt()) {
+     ObDASScanIterParam doc_cnt_agg_param;
+     ObDASScanIter *doc_cnt_agg_iter = nullptr;
+     init_scan_iter_param(doc_cnt_agg_param, ir_scan_ctdef->get_doc_agg_ctdef(), ir_scan_rtdef);
+diff --git a/src/sql/optimizer/ob_log_plan.cpp b/src/sql/optimizer/ob_log_plan.cpp
+index 8488d4f64..dae5a6173 100644
+--- a/src/sql/optimizer/ob_log_plan.cpp
++++ b/src/sql/optimizer/ob_log_plan.cpp
+@@ -12051,6 +12051,22 @@ int ObLogPlan::prepare_text_retrieval_scan(const ObIArray<ObRawExpr *> &scan_mat
+     }
+   }
+ 
++  // Only a driving MATCH scan can omit scoring. Function lookups and index
++  // merge callers still require the score-capable ctdef/projection contract.
++  if (OB_SUCC(ret)) {
++    ObTextRetrievalInfo &tr_info = table_scan->get_text_retrieval_info();
++    ObSEArray<ObExprConstraint, 2> constraints;
++    if (OB_FAIL(ObTransformUtils::check_need_calc_match_score(
++            get_optimizer_context().get_exec_ctx(), get_stmt(), match_against,
++            tr_info.need_calc_relevance_, constraints))) {
++      LOG_WARN("failed to check need calc relevance", K(ret));
++    } else if (!tr_info.need_calc_relevance_ &&
++               OB_FAIL(append_array_no_dup(
++                   get_optimizer_context().get_query_ctx()->all_expr_constraints_, constraints))) {
++      LOG_WARN("failed to append array no dup", K(ret));
++    }
++  }
++
+   for (int64_t i = 0; OB_SUCC(ret) && i < all_match_filters.count(); ++i) {
+     ObRawExpr *curr_filter = all_match_filters.at(i);
+     if (curr_filter != match_pred) {
+@@ -12185,8 +12201,6 @@ int ObLogPlan::prepare_text_retrieval_info(const uint64_t ref_table_id,
+   uint64_t fwd_idx_tid = OB_INVALID_ID;
+   uint64_t inv_idx_tid = OB_INVALID_ID;
+   ObSEArray<ObAuxTableMetaInfo, 4> index_infos;
+-  bool need_calc_relevance = true;
+-  ObSEArray<ObExprConstraint, 2> constraints;
+   uint64_t docid_col_id = OB_INVALID_ID;
+   if (OB_ISNULL(match_against) || OB_ISNULL(get_stmt()) || OB_ISNULL(get_optimizer_context().get_query_ctx())) {
+     ret = OB_INVALID_ARGUMENT;
+@@ -12253,18 +12267,6 @@ int ObLogPlan::prepare_text_retrieval_info(const uint64_t ref_table_id,
+     }
+   }
+   if (OB_SUCC(ret)) {
+-    /*
+-    if (OB_FAIL(ObTransformUtils::check_need_calc_match_score(get_optimizer_context().get_exec_ctx(),
+-                                                              get_stmt(),
+-                                                              match_against,
+-                                                              need_calc_relevance,
+-                                                              constraints))) {
+-      LOG_WARN("failed to check need calc relevance", K(ret));
+-    } else if (!need_calc_relevance &&
+-               OB_FAIL(append_array_no_dup(get_optimizer_context().get_query_ctx()->all_expr_constraints_, constraints))) {
+-      LOG_WARN("failed to append array no dup", K(ret));
+-    }
+-    */
+     tr_info.match_expr_ = match_against;
+     tr_info.inv_idx_tid_ = inv_idx_tid;
+     tr_info.fwd_idx_tid_ = fwd_idx_tid;
+@@ -12272,7 +12274,7 @@ int ObLogPlan::prepare_text_retrieval_info(const uint64_t ref_table_id,
+     tr_info.rowkey_idx_tid_ = rowkey_doc_tid;
+     tr_info.data_table_id_ = ref_table_id;
+     tr_info.pushdown_match_filter_ = nullptr;
+-    tr_info.need_calc_relevance_ = need_calc_relevance;
++    tr_info.need_calc_relevance_ = true;
+   }
+   return ret;
+ }
+diff --git a/src/sql/rewrite/ob_transform_utils.cpp b/src/sql/rewrite/ob_transform_utils.cpp
+index 909a8d928..929375fa8 100644
+--- a/src/sql/rewrite/ob_transform_utils.cpp
++++ b/src/sql/rewrite/ob_transform_utils.cpp
+@@ -12864,6 +12864,54 @@ int ObTransformUtils::inner_check_need_calc_match_score(ObExecContext *exec_ctx,
+   return ret;
+ }
+ 
++int ObTransformUtils::check_need_calc_match_score(ObExecContext *exec_ctx,
++                                                  const ObDMLStmt *stmt,
++                                                  ObRawExpr *match_expr,
++                                                  bool &need_calc,
++                                                  ObIArray<ObExprConstraint> &constraints)
++{
++  int ret = OB_SUCCESS;
++  need_calc = true;
++  ObSEArray<ObRawExpr *, 16> relation_exprs;
++  ObMatchFunRawExpr *match_fun = nullptr;
++  if (OB_ISNULL(exec_ctx) || OB_ISNULL(stmt) || OB_ISNULL(match_expr)) {
++    // Keep the conservative answer when the check context is unavailable.
++  } else if (OB_UNLIKELY(T_FUN_MATCH_AGAINST != match_expr->get_expr_type())) {
++    // Only the natural-language MATCH function is analyzed in the first round.
++  } else if (OB_FALSE_IT(match_fun = static_cast<ObMatchFunRawExpr *>(match_expr))) {
++  } else if (OB_UNLIKELY(!stmt->is_select_stmt()
++             || NATURAL_LANGUAGE_MODE != match_fun->get_mode_flag()
++             || match_fun->get_match_columns().count() <= 1
++             || stmt->has_limit()
++             || stmt->get_subquery_expr_size() > 0
++             || stmt->get_table_items().count() != 1
++             || OB_ISNULL(stmt->get_table_items().at(0))
++             || stmt->get_table_items().at(0)->is_joined_table()
++             || static_cast<const ObSelectStmt *>(stmt)->get_window_func_count() > 0)) {
++    // First round: single-table natural-language hit query without LIMIT/subquery/join/window.
++  } else if (OB_FAIL(stmt->get_relation_exprs(relation_exprs))) {
++    LOG_WARN("failed to get relation exprs for match score check", K(ret));
++  } else {
++    need_calc = false;
++    for (int64_t i = 0; OB_SUCC(ret) && !need_calc && i < relation_exprs.count(); ++i) {
++      bool tmp_need_calc = false;
++      if (OB_FAIL(inner_check_need_calc_match_score(exec_ctx,
++                                                    relation_exprs.at(i),
++                                                    match_expr,
++                                                    tmp_need_calc,
++                                                    constraints))) {
++        LOG_WARN("failed to check need calc match score", K(ret));
++      } else if (tmp_need_calc) {
++        need_calc = true;
++      }
++    }
++  }
++  if (OB_FAIL(ret)) {
++    need_calc = true;
++  }
++  return ret;
++}
++
+ int ObTransformUtils::check_expr_eq_zero(ObExecContext *ctx,
+                                          ObRawExpr *expr, 
+                                          bool &eq_zero, 
+diff --git a/src/sql/rewrite/ob_transform_utils.h b/src/sql/rewrite/ob_transform_utils.h
+index 41afb9888..de5114739 100644
+--- a/src/sql/rewrite/ob_transform_utils.h
++++ b/src/sql/rewrite/ob_transform_utils.h
+@@ -2000,10 +2000,15 @@ private:
+                             ObIArray<ObRawExpr*> &view_exprs);
+ 
+ public:
+-  static int extract_shared_exprs(ObDMLStmt *parent, 
++  static int extract_shared_exprs(ObDMLStmt *parent,
+                                   ObSelectStmt *view_stmt,
+                                   ObIArray<ObRawExpr *> &common_exprs,
+                                   const ObIArray<ObRawExpr *> *extra_view_exprs = NULL);
++  static int check_need_calc_match_score(ObExecContext *exec_ctx,
++                                         const ObDMLStmt *stmt,
++                                         ObRawExpr *match_expr,
++                                         bool &need_calc,
++                                         ObIArray<ObExprConstraint> &constraints);
+ private:
+   static int is_scalar_expr(ObRawExpr* expr, bool &is_scalar);
+ 
+@@ -2041,8 +2046,8 @@ private:
+                                        ObIArray<TableItem*> &right_tables,
+                                        ObIArray<ObSEArray<ObRawExpr*, 4>> &new_outer_conds);
+   static int inner_check_need_calc_match_score(ObExecContext *exec_ctx,
+-                                              ObRawExpr* expr, 
+-                                              ObRawExpr* match_expr, 
++                                              ObRawExpr* expr,
++                                              ObRawExpr* match_expr,
+                                               bool &need_calc,
+                                               ObIArray<ObExprConstraint> &constraints);
+   static int check_stmt_can_trans_as_exists(ObSelectStmt *stmt,
+diff --git a/src/storage/retrieval/ob_sparse_bmw_iter.cpp b/src/storage/retrieval/ob_sparse_bmw_iter.cpp
+index bd54e3a01..84af795fd 100644
+--- a/src/storage/retrieval/ob_sparse_bmw_iter.cpp
++++ b/src/storage/retrieval/ob_sparse_bmw_iter.cpp
+@@ -220,7 +220,7 @@ int ObSRBMWIterImpl::process_collected_row(const ObDatum &id_datum, const double
+   if (OB_UNLIKELY(top_k_heap_.count() > top_k_count_)) {
+     ret = OB_ERR_UNEXPECTED;
+   } else if (top_k_heap_.count() < top_k_count_) {
+-    if (OB_FAIL(id_cache_.at(top_k_heap_.count()).from_datum(id_datum))) {
++    if (OB_FAIL(id_cache_.get_data()[top_k_heap_.count()].from_datum(id_datum))) {
+     } else if (OB_FAIL(top_k_heap_.push(TopKItem(relevance, top_k_heap_.count())))) {
+     }
+   } else {
+@@ -228,7 +228,7 @@ int ObSRBMWIterImpl::process_collected_row(const ObDatum &id_datum, const double
+     const double top_k_threshold = get_top_k_threshold();
+     if (relevance <= top_k_threshold) {
+       // not a new top k candidate
+-    } else if (OB_FAIL(id_cache_.at(cache_idx).from_datum(id_datum))) {
++    } else if (OB_FAIL(id_cache_.get_data()[cache_idx].from_datum(id_datum))) {
+     } else if (OB_FAIL(top_k_heap_.pop())) {
+     } else if (OB_FAIL(top_k_heap_.push(TopKItem(relevance, cache_idx)))) {
+     }
+@@ -257,7 +257,7 @@ int ObSRBMWIterImpl::next_pivot(int64_t &pivot_iter_idx)
+     } else if (FALSE_IT(max_score += iter_score)) {
+     } else if (OB_FAIL(merge_heap_->pop())) {
+     } else {
+-      next_round_iter_idxes_[next_round_cnt_++] = iter_idx;
++      next_round_iter_idxes_.get_data()[next_round_cnt_++] = iter_idx;
+       found_pivot = max_score > top_k_threshold && curr_id_end;
+     }
+   }
+@@ -290,7 +290,7 @@ int ObSRBMWIterImpl::next_pivot_range(int64_t &skip_range_cnt)
+   const ObDatum *minimum_max_domain_id = nullptr;
+   int64_t next_round_iter_end_cnt = 0;
+   for (int64_t i = 0; OB_SUCC(ret) && i < next_round_cnt_; ++i) {
+-    const int64_t iter_idx = next_round_iter_idxes_[i];
++    const int64_t iter_idx = next_round_iter_idxes_.get_data()[i];
+     const ObMaxScoreTuple *max_score_tuple = nullptr;
+     int cmp_ret = 0;
+     ObISRDimBlockMaxIter *iter = nullptr;
+@@ -403,7 +403,7 @@ int ObSRBMWIterImpl::evaluate_pivot_range(const int64_t pivot_iter_idx, bool &is
+   double block_max_score = 0.0;
+   const ObMaxScoreTuple *max_score_tuple = nullptr;
+   for (int64_t i = 0; OB_SUCC(ret) && i < next_round_cnt_; ++i) {
+-    const int64_t iter_idx = next_round_iter_idxes_[i];
++    const int64_t iter_idx = next_round_iter_idxes_.get_data()[i];
+     ObISRDimBlockMaxIter *iter = get_iter(iter_idx);
+     if (OB_ISNULL(iter) || OB_UNLIKELY(is_next_round_iter_end(i))) {
+       ret = OB_ERR_UNEXPECTED;
+@@ -440,7 +440,7 @@ int ObSRBMWIterImpl::fill_merge_heap_with_shallow_dims(const ObDatum *last_range
+ 
+   ObSRMergeItem item;
+   for (int64_t i = 0; OB_SUCC(ret) && i < next_round_cnt_; ++i) {
+-    const int64_t iter_idx = next_round_iter_idxes_[i];
++    const int64_t iter_idx = next_round_iter_idxes_.get_data()[i];
+     ObISRDimBlockMaxIter *iter = nullptr;
+     if (is_next_round_iter_end(i)) {
+       // skip
+@@ -451,7 +451,7 @@ int ObSRBMWIterImpl::fill_merge_heap_with_shallow_dims(const ObDatum *last_range
+       } else {
+         ret = OB_SUCCESS;
+       }
+-    } else if (OB_FAIL(iter->get_curr_id(iter_domain_ids_[iter_idx]))) {
++    } else if (OB_FAIL(iter->get_curr_id(iter_domain_ids_.get_data()[iter_idx]))) {
+     } else {
+       item.iter_idx_ = iter_idx;
+       item.relevance_ = 0.0;
+@@ -523,7 +523,7 @@ int ObSRBMWIterImpl::try_generate_next_range_from_merge_heap(
+       if (OB_FAIL(ret) || curr_range_reach_end) {
+       } else if (OB_FAIL(merge_heap_->pop())) {
+       } else {
+-        next_round_iter_idxes_[next_round_cnt_++] = iter_idx;
++        next_round_iter_idxes_.get_data()[next_round_cnt_++] = iter_idx;
+         max_score += max_score_tuple->max_score_;
+         if (max_score > top_k_threshold) {
+           // found a new top k candidate range
+@@ -568,7 +568,7 @@ int ObSRBMWIterImpl::project_rows_from_top_k_heap(const int64_t capacity, int64_
+     for (int64_t i = 0; OB_SUCC(ret) && i < capacity && !top_k_heap_.empty(); ++i) {
+       guard.set_batch_idx(i);
+       const TopKItem &top_k_item = top_k_heap_.top();
+-      const ObDocIdExt &id = id_cache_.at(top_k_item.cache_idx_);
++      const ObDocIdExt &id = id_cache_.get_data()[top_k_item.cache_idx_];
+       set_datum_func_(id_datums[i], id);
+       id_evaluated_flags.set(i);
+       id_proj_expr->set_evaluated_projected(*eval_ctx);
+@@ -592,7 +592,7 @@ int ObSRBMWIterImpl::unify_dim_iters_for_next_round()
+ 
+   ObDatum *curr_domain_id = nullptr;
+   for (int64_t i = 0; OB_SUCC(ret) && i < next_round_cnt_; ++i) {
+-    const int64_t iter_idx = next_round_iter_idxes_[i];
++    const int64_t iter_idx = next_round_iter_idxes_.get_data()[i];
+     ObISRDimBlockMaxIter *iter = get_iter(iter_idx);
+     const ObDatum *curr_domain_id = nullptr;
+     if (OB_ISNULL(iter)) {
+@@ -614,7 +614,7 @@ int ObSRBMWIterImpl::advance_dim_iters_for_next_round(
+   int ret = OB_SUCCESS;
+   ObSRMergeItem item;
+   for (int64_t i = 0; OB_SUCC(ret) && i < next_round_cnt_; ++i) {
+-    const int64_t iter_idx = next_round_iter_idxes_[i];
++    const int64_t iter_idx = next_round_iter_idxes_.get_data()[i];
+     ObISRDimBlockMaxIter *iter = nullptr;
+     if (is_next_round_iter_end(i)) {
+       if (!iter_end_available) {
+@@ -627,7 +627,7 @@ int ObSRBMWIterImpl::advance_dim_iters_for_next_round(
+       } else {
+         ret = OB_SUCCESS;
+       }
+-    } else if (OB_FAIL(iter->get_curr_id(iter_domain_ids_[iter_idx]))) {
++    } else if (OB_FAIL(iter->get_curr_id(iter_domain_ids_.get_data()[iter_idx]))) {
+     } else if (OB_FAIL(iter->get_curr_score(item.relevance_))) {
+     } else if (FALSE_IT(item.iter_idx_ = iter_idx)) {
+     } else if (OB_FAIL(merge_heap_->push(item))) {
+diff --git a/src/storage/retrieval/ob_sparse_bmw_iter.h b/src/storage/retrieval/ob_sparse_bmw_iter.h
+index 6c7e01080..49a09c078 100644
+--- a/src/storage/retrieval/ob_sparse_bmw_iter.h
++++ b/src/storage/retrieval/ob_sparse_bmw_iter.h
+@@ -67,8 +67,8 @@ private:
+   int project_rows_from_top_k_heap(const int64_t capacity, int64_t &count);
+   int unify_dim_iters_for_next_round();
+   int advance_dim_iters_for_next_round(const ObDatum &target_id, const bool iter_end_available);
+-  void set_next_round_iter_end(const int64_t idx) { next_round_iter_idxes_[idx] = -1; }
+-  bool is_next_round_iter_end(const int64_t idx) const { return next_round_iter_idxes_[idx] == -1; }
++  void set_next_round_iter_end(const int64_t idx) { next_round_iter_idxes_.get_data()[idx] = -1; }
++  bool is_next_round_iter_end(const int64_t idx) const { return next_round_iter_idxes_.get_data()[idx] == -1; }
+ 
+ protected:
+   enum BMWStatus{
+diff --git a/src/storage/retrieval/ob_sparse_daat_iter.cpp b/src/storage/retrieval/ob_sparse_daat_iter.cpp
+index 13ca0453a..ae4484bd2 100644
+--- a/src/storage/retrieval/ob_sparse_daat_iter.cpp
++++ b/src/storage/retrieval/ob_sparse_daat_iter.cpp
+@@ -74,7 +74,13 @@ int ObSRMergeCmp::cmp(
+       const int64_t l_len = l_datum.len_;
+       const int64_t r_len = r_datum.len_;
+       const int64_t min_len = l_len < r_len ? l_len : r_len;
+-      int c = min_len > 0 ? memcmp(l_datum.ptr_, r_datum.ptr_, min_len) : 0;
++      int c = 0;
++      if (OB_LIKELY(8 == min_len)) {
++        // domain ids are fixed 8-byte values; a constant-size compare is inlined
++        c = memcmp(l_datum.ptr_, r_datum.ptr_, 8);
++      } else if (min_len > 0) {
++        c = memcmp(l_datum.ptr_, r_datum.ptr_, min_len);
++      }
+       if (0 == c) {
+         c = l_len > r_len ? 1 : (l_len < r_len ? -1 : 0);
+       }
+@@ -352,12 +358,12 @@ int ObSRDaaTIterImpl::collect_dims_by_id(const ObDatum *&id_datum, double &relev
+     } else if (FALSE_IT(iter_idx = top_item->iter_idx_)) {
+     } else if (OB_FAIL(merge_heap_->pop())) {
+     } else {
+-      next_round_iter_idxes_[next_round_cnt_++] = iter_idx;
++      next_round_iter_idxes_.get_data()[next_round_cnt_++] = iter_idx;
+     }
+   }
+ 
+   if (OB_SUCC(ret)) {
+-    id_datum = iter_domain_ids_[iter_idx];
++    id_datum = iter_domain_ids_.get_data()[iter_idx];
+     if (OB_ISNULL(id_datum)) {
+       ret = OB_ERR_UNEXPECTED;
+     } else if (OB_FAIL(relevance_collector_->get_result(relevance, got_valid_id))) {
+@@ -423,8 +429,8 @@ int ObSRDaaTIterImpl::cache_result(int64_t &count, const ObDatum &id_datum, cons
+   } else if (OB_UNLIKELY(count >= buffered_domain_ids_.count() || count >= buffered_relevances_.count())) {
+     ret = OB_INVALID_ARGUMENT;
+   } else {
+-    buffered_domain_ids_[count].from_datum(id_datum);
+-    buffered_relevances_[count] = relevance;
++    buffered_domain_ids_.get_data()[count].from_datum(id_datum);
++    buffered_relevances_.get_data()[count] = relevance;
+     ++count;
+     ++output_row_cnt_;
+     if (limit_param->is_valid() && output_row_cnt_ >= limit) {
+@@ -444,22 +450,39 @@ int ObSRDaaTIterImpl::project_results(const int64_t count)
+ 
+   if (eval_ctx->is_vectorized()) {
+     sql::ObBitVector &id_evaluated_flags = id_proj_expr->get_evaluated_flags(*eval_ctx);
+-    for (int64_t i = 0; i < count; ++i) {
+-      guard.set_batch_idx(i);
+-      ObDatum &id_proj_datum = id_proj_expr->locate_datum_for_write(*eval_ctx);
+-      set_datum_func_(id_proj_datum, buffered_domain_ids_[i]);
+-      id_evaluated_flags.set(i);
+-      id_proj_expr->set_evaluated_projected(*eval_ctx);
++    if (OB_LIKELY(id_proj_expr->is_batch_result())) {
++      ObDatum *id_datums = id_proj_expr->locate_datums_for_update(*eval_ctx, count);
++      const ObDocIdExt *domain_ids = buffered_domain_ids_.get_data();
++      for (int64_t i = 0; i < count; ++i) {
++        set_datum_func_(id_datums[i], domain_ids[i]);
++      }
++    } else {
++      for (int64_t i = 0; i < count; ++i) {
++        guard.set_batch_idx(i);
++        ObDatum &id_proj_datum = id_proj_expr->locate_datum_for_write(*eval_ctx);
++        set_datum_func_(id_proj_datum, buffered_domain_ids_.get_data()[i]);
++      }
+     }
++    // Expression-level flags apply to the whole batch; row bits cover exactly [0, count).
++    id_evaluated_flags.set_all(static_cast<int64_t>(0), count);
++    id_proj_expr->set_evaluated_projected(*eval_ctx);
+     if (iter_param_->need_project_relevance()) {
+       sql::ObBitVector &relevance_evaluated_flags = relevance_proj_expr->get_evaluated_flags(*eval_ctx);
+-      for (int64_t i = 0; i < count; ++i) {
+-        guard.set_batch_idx(i);
+-        ObDatum &relevance_proj_datum = relevance_proj_expr->locate_datum_for_write(*eval_ctx);
+-        relevance_proj_datum.set_double(buffered_relevances_[i]);
+-        relevance_evaluated_flags.set(i);
+-        relevance_proj_expr->set_evaluated_projected(*eval_ctx);
++      if (OB_LIKELY(relevance_proj_expr->is_batch_result())) {
++        ObDatum *relevance_datums = relevance_proj_expr->locate_datums_for_update(*eval_ctx, count);
++        const double *relevances = buffered_relevances_.get_data();
++        for (int64_t i = 0; i < count; ++i) {
++          relevance_datums[i].set_double(relevances[i]);
++        }
++      } else {
++        for (int64_t i = 0; i < count; ++i) {
++          guard.set_batch_idx(i);
++          ObDatum &relevance_proj_datum = relevance_proj_expr->locate_datum_for_write(*eval_ctx);
++          relevance_proj_datum.set_double(buffered_relevances_.get_data()[i]);
++        }
+       }
++      relevance_evaluated_flags.set_all(static_cast<int64_t>(0), count);
++      relevance_proj_expr->set_evaluated_projected(*eval_ctx);
+     }
+   } else if (OB_UNLIKELY(1 != count)) {
+     ret = OB_ERR_UNEXPECTED;
+diff --git a/src/storage/retrieval/ob_sparse_daat_iter.h b/src/storage/retrieval/ob_sparse_daat_iter.h
+index 29e5dd4c7..c995b5252 100644
+--- a/src/storage/retrieval/ob_sparse_daat_iter.h
++++ b/src/storage/retrieval/ob_sparse_daat_iter.h
+@@ -48,7 +48,8 @@ struct ObSRMergeCmp
+ private:
+   inline const ObDatum &get_id_datum(const int64_t iter_idx)
+   {
+-    const ObDatum *datum = iter_ids_->at(iter_idx);
++    // iter_idx comes from a merge item that was pushed with a dim iterator index, always in range
++    const ObDatum *datum = iter_ids_->get_data()[iter_idx];
+     OB_ASSERT(nullptr != datum);
+     return *datum;
+   }
+diff --git a/src/storage/retrieval/ob_sparse_utils.h b/src/storage/retrieval/ob_sparse_utils.h
+index f076bce27..7f0b4c781 100644
+--- a/src/storage/retrieval/ob_sparse_utils.h
++++ b/src/storage/retrieval/ob_sparse_utils.h
+@@ -76,6 +76,22 @@ private:
+   ObFixedArray<double, ObIAllocator> boolean_relevances_;
+ };
+ 
++// Hit-only merge: the index already returns the matching doc set, so every merged id is valid.
++struct ObSRDaaTNoScoreRelevanceCollector : ObSRDaaTRelevanceCollector
++{
++  ObSRDaaTNoScoreRelevanceCollector() : ObSRDaaTRelevanceCollector() {}
++  virtual ~ObSRDaaTNoScoreRelevanceCollector() {}
++  virtual void reset() override {}
++  virtual void reuse() override {}
++  virtual int collect_one_dim(const int64_t, const double) override { return OB_SUCCESS; }
++  virtual int get_result(double &relevance, bool &is_valid) override
++  {
++    relevance = 1.0;
++    is_valid = true;
++    return OB_SUCCESS;
++  }
++};
++
+ } // namespace storage
+ } // namespace oceanbase
+ 
+diff --git a/src/storage/retrieval/ob_text_daat_iter.cpp b/src/storage/retrieval/ob_text_daat_iter.cpp
+index 7836d0f1f..c2fb6497f 100644
+--- a/src/storage/retrieval/ob_text_daat_iter.cpp
++++ b/src/storage/retrieval/ob_text_daat_iter.cpp
+@@ -30,7 +30,8 @@ int ObTextDaaTIter::init(const ObTextDaaTParam &param)
+     ret = OB_INVALID_ARGUMENT;
+   } else if (OB_FAIL(ObSRDaaTIterImpl::init(*param.base_param_, *param.dim_iters_,
+                                             *param.allocator_, *param.relevance_collector_))) {
+-  } else if (OB_FAIL(bm25_param_estimator_.init(param.bm25_param_est_ctx_))) {
++  } else if (OB_NOT_NULL(param.base_param_->relevance_expr_)
++             && OB_FAIL(bm25_param_estimator_.init(param.bm25_param_est_ctx_))) {
+   } else {
+     mode_flag_ = param.mode_flag_;
+     function_lookup_mode_ = param.function_lookup_mode_;
+@@ -70,7 +71,7 @@ int ObTextDaaTIter::pre_process()
+   int ret = OB_SUCCESS;
+   if (dim_iters_->count() == 0) {
+     ret = OB_ITER_END;
+-  } else if (iter_param_->need_project_relevance()) {
++  } else if (iter_param_->need_project_relevance() && OB_NOT_NULL(iter_param_->relevance_expr_)) {
+     if (OB_FAIL(bm25_param_estimator_.do_estimation(*iter_param_->eval_ctx_))) {
+     }
+   }
+diff --git a/src/storage/retrieval/ob_text_retrieval_token_iter.cpp b/src/storage/retrieval/ob_text_retrieval_token_iter.cpp
+index 3985d9022..ac5ca327d 100644
+--- a/src/storage/retrieval/ob_text_retrieval_token_iter.cpp
++++ b/src/storage/retrieval/ob_text_retrieval_token_iter.cpp
+@@ -73,17 +73,17 @@ int ObTextRetrievalTokenIter::init(const ObTextRetrievalScanIterParam &iter_para
+       OB_ISNULL(inv_scan_domain_id_col_) || OB_ISNULL(allocator_) || OB_ISNULL(mem_context_.ref_context())) {
+     ret = OB_ERR_UNEXPECTED;
+     LOG_WARN("inv_idx_scan_iter or eval_ctx is NULL", K(ret), K_(inv_idx_scan_iter), KPC_(eval_ctx), KPC_(inv_idx_scan_param), KP(allocator_), KP(mem_context_.ref_context()));
++  } else if (OB_ISNULL(skip_ = sql::to_bit_vector(
++                           allocator_->alloc(sql::ObBitVector::memory_size(max_batch_size_))))) {
++    ret = OB_ALLOCATE_MEMORY_FAILED;
++  } else if (FALSE_IT(skip_->init(max_batch_size_))) {
+   } else if (!need_calc_relevance()) {
++    // no scores; the skip vector is still used when saving doc ids
+   } else if (OB_ISNULL(relevance_expr_) || OB_ISNULL(inv_idx_agg_expr_) || OB_ISNULL(inv_idx_agg_iter_)) {
+     ret = OB_ERR_UNEXPECTED;
+   } else if (OB_ISNULL(inv_scan_doc_length_col_)) {
+     ret = OB_ERR_UNEXPECTED;
+   } else if (OB_FAIL(init_calc_exprs_in_relevance_expr())) {
+-  } else if (OB_ISNULL(skip_ = sql::to_bit_vector(
+-                           allocator_->alloc(sql::ObBitVector::memory_size(max_batch_size_))))) {
+-    ret = OB_ALLOCATE_MEMORY_FAILED;
+-  } else {
+-    skip_->init(max_batch_size_);
+   }
+   is_inited_ = true;
+   return ret;
+@@ -97,7 +97,7 @@ void ObTextRetrievalTokenIter::reset()
+ 
+ void ObTextRetrievalTokenIter::reuse()
+ {
+-  if (inv_idx_agg_cache_mode_ && !inv_idx_agg_param_->need_switch_param_) {
++  if (inv_idx_agg_cache_mode_ && OB_NOT_NULL(inv_idx_agg_param_) && !inv_idx_agg_param_->need_switch_param_) {
+     // do nothing
+   } else {
+     token_doc_cnt_calculated_ = false;
+@@ -204,7 +204,7 @@ int ObTextRetrievalTokenIter::get_next_row()
+   int ret = OB_SUCCESS;
+   if (IS_NOT_INIT) {
+     ret = OB_NOT_INIT;
+-  } else if (!token_doc_cnt_calculated_ && OB_FAIL(estimate_token_doc_cnt())) {
++  } else if (need_calc_relevance() && !token_doc_cnt_calculated_ && OB_FAIL(estimate_token_doc_cnt())) {
+   } else if (OB_FAIL(query::das_scan_next_row(inv_idx_scan_iter_))) {
+     if (OB_UNLIKELY(OB_ITER_END != ret)) {
+     }
+@@ -243,7 +243,7 @@ int ObTextRetrievalTokenIter::get_next_batch(const int64_t capacity, int64_t &co
+   count = 0;
+   if (IS_NOT_INIT) {
+     ret = OB_NOT_INIT;
+-  } else if (!token_doc_cnt_calculated_ && OB_FAIL(estimate_token_doc_cnt())) {
++  } else if (need_calc_relevance() && !token_doc_cnt_calculated_ && OB_FAIL(estimate_token_doc_cnt())) {
+   } else if (OB_FAIL(query::das_scan_next_rows(
+                  inv_idx_scan_iter_, count, OB_MIN(max_batch_size_, capacity)))) {
+     if (OB_UNLIKELY(OB_ITER_END != ret)) {
+@@ -303,7 +303,10 @@ int ObTextRetrievalTokenIter::advance_to(const ObDatum &id_datum)
+ int ObTextRetrievalTokenIter::update_scan_param(const ObString &token, common::ObArenaAllocator &allocator)
+ {
+   int ret = OB_SUCCESS;
+-  if (OB_UNLIKELY(inv_idx_agg_param_->key_ranges_.count() != 1)) {
++  if (OB_ISNULL(inv_idx_agg_param_)) {
++    ret = OB_NOT_SUPPORTED;
++    LOG_WARN("update scan param without inv idx agg param is not supported", K(ret));
++  } else if (OB_UNLIKELY(inv_idx_agg_param_->key_ranges_.count() != 1)) {
+     ret = OB_ERR_UNEXPECTED;
+   } else {
+     ObNewRange scan_range = inv_idx_agg_param_->key_ranges_.at(0);
+@@ -509,10 +512,12 @@ int ObTextRetrievalDaaTTokenIter::save_relevances_and_docids()
+     cur_idx_ = 0;
+     const ObDatumVector &relevance_datum = relevance_expr_->locate_expr_datumvector(*eval_ctx_);
+     const ObDatumVector &doc_id_datum = inv_scan_domain_id_col_->locate_expr_datumvector(*eval_ctx_);
++    ObDocIdExt *doc_ids = doc_id_.get_data();
++    double *relevances = relevance_.get_data();
+     for (int64_t i = 0; OB_SUCC(ret) && i < count_; ++i) {
+       if (OB_LIKELY(!token_iter_->get_skip()->at(i))) {
+-        relevance_[i] = relevance_datum.at(i)->get_double();
+-        if (OB_FAIL(doc_id_[i].from_datum(*doc_id_datum.at(i)))) {
++        relevances[i] = relevance_datum.at(i)->get_double();
++        if (OB_FAIL(doc_ids[i].from_datum(*doc_id_datum.at(i)))) {
+         }
+       }
+     }
+@@ -528,9 +533,10 @@ int ObTextRetrievalDaaTTokenIter::save_docids()
+   } else {
+     cur_idx_ = 0;
+     const ObDatumVector &doc_id_datum = inv_scan_domain_id_col_->locate_expr_datumvector(*eval_ctx_);
++    ObDocIdExt *doc_ids = doc_id_.get_data();
+     for (int64_t i = 0; OB_SUCC(ret) && i < count_; ++i) {
+       if (OB_LIKELY(!token_iter_->get_skip()->at(i))) {
+-        if (OB_FAIL(doc_id_[i].from_datum(*doc_id_datum.at(i)))) {
++        if (OB_FAIL(doc_ids[i].from_datum(*doc_id_datum.at(i)))) {
+         };
+       }
+     }
+@@ -554,7 +560,13 @@ int ObTextRetrievalDaaTTokenIter::advance_to(const ObDatum &id_datum)
+       const int64_t lhs_len = lhs.len_;
+       const int64_t rhs_len = rhs.len_;
+       const int64_t min_len = lhs_len < rhs_len ? lhs_len : rhs_len;
+-      int c = min_len > 0 ? memcmp(lhs.ptr_, rhs.ptr_, min_len) : 0;
++      int c = 0;
++      if (OB_LIKELY(8 == min_len)) {
++        // domain ids are fixed 8-byte values; a constant-size compare is inlined
++        c = memcmp(lhs.ptr_, rhs.ptr_, 8);
++      } else if (min_len > 0) {
++        c = memcmp(lhs.ptr_, rhs.ptr_, min_len);
++      }
+       if (0 == c) {
+         c = lhs_len > rhs_len ? 1 : (lhs_len < rhs_len ? -1 : 0);
+       }
+@@ -570,7 +582,7 @@ int ObTextRetrievalDaaTTokenIter::advance_to(const ObDatum &id_datum)
+   }
+   while (OB_SUCC(ret) && !find) {
+     if (cur_idx_ < count_) {
+-      if (OB_FAIL(cmp_ids(id_datum, doc_id_[cur_idx_].get_datum(), result))) {
++      if (OB_FAIL(cmp_ids(id_datum, doc_id_.get_data()[cur_idx_].get_datum(), result))) {
+       } else if (result <= 0) {
+         find = true;
+       } else {
+@@ -584,7 +596,7 @@ int ObTextRetrievalDaaTTokenIter::advance_to(const ObDatum &id_datum)
+       }
+     } else if (cur_idx_ != 0) {
+       ret = OB_ERR_UNEXPECTED;
+-    } else if (OB_FAIL(cmp_ids(id_datum, doc_id_[cur_idx_].get_datum(), result))) {
++    } else if (OB_FAIL(cmp_ids(id_datum, doc_id_.get_data()[cur_idx_].get_datum(), result))) {
+     } else if (result <= 0) {
+       find = true;
+     } else {
+@@ -597,10 +609,10 @@ int ObTextRetrievalDaaTTokenIter::advance_to(const ObDatum &id_datum)
+ int ObTextRetrievalDaaTTokenIter::get_curr_score(double &score) const
+ {
+   int ret = OB_SUCCESS;
+-  if (OB_UNLIKELY(cur_idx_ >= count_)) {
++  if (OB_UNLIKELY(cur_idx_ < 0) || OB_UNLIKELY(cur_idx_ >= count_)) {
+     ret = OB_ARRAY_OUT_OF_RANGE;
+   } else if (relevance_expr_) {
+-    score = relevance_[cur_idx_];
++    score = relevance_.get_data()[cur_idx_];
+   }
+   return ret;
+ }
+@@ -608,10 +620,10 @@ int ObTextRetrievalDaaTTokenIter::get_curr_score(double &score) const
+ int ObTextRetrievalDaaTTokenIter::get_curr_id(const ObDatum *&id_datum) const
+ {
+   int ret = OB_SUCCESS;
+-  if (OB_UNLIKELY(cur_idx_ >= count_)) {
++  if (OB_UNLIKELY(cur_idx_ < 0) || OB_UNLIKELY(cur_idx_ >= count_)) {
+     ret = OB_ARRAY_OUT_OF_RANGE;
+   } else {
+-    id_datum = &doc_id_[cur_idx_].get_datum();
++    id_datum = &doc_id_.get_data()[cur_idx_].get_datum();
+   }
+   return ret;
+ }
