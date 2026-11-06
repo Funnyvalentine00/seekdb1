@@ -290,5 +290,51 @@
     "stage1_basic_dml_alone": "PASS",
     "base_known_failures": "basic_dml PASS, partitioned_simple_query FAIL (known)",
     "stage2": "14/15 (only partitioned_simple_query known EXPLAIN diff)"
+  },
+  "aa_control": {
+    "definition": "round-to-round medians of the same binary (3 rounds x 5 reps); query_limit is a no-code-change control",
+    "stage1_instruction_round_range_pct": {
+      "query_cn": {
+        "base_round_range_pct": 0.03638902396320989,
+        "candidate_round_range_pct": 0.04607355490144463
+      },
+      "query_beng": {
+        "base_round_range_pct": 0.06616747864897958,
+        "candidate_round_range_pct": 0.0937785489021803
+      },
+      "query_mixed": {
+        "base_round_range_pct": 0.05468395331866888,
+        "candidate_round_range_pct": 0.07944192996902615
+      },
+      "query_limit": {
+        "base_round_range_pct": 0.014273625608921927,
+        "candidate_round_range_pct": 0.06284149441618227
+      }
+    },
+    "stage2_instruction_round_range_pct": {
+      "query_cn": {
+        "base_round_range_pct": 0.12452104912328033,
+        "candidate_round_range_pct": 0.0476707949015747
+      },
+      "query_beng": {
+        "base_round_range_pct": 0.08825374831589386,
+        "candidate_round_range_pct": 0.012713295444446032
+      },
+      "query_mixed": {
+        "base_round_range_pct": 0.09168513133343136,
+        "candidate_round_range_pct": 0.03189133935644835
+      },
+      "query_limit": {
+        "base_round_range_pct": 0.0857433103341667,
+        "candidate_round_range_pct": 0.08092291813164715
+      }
+    },
+    "stage1_query_limit_control_instr_pct": 0.03369650609297281,
+    "stage2_query_limit_control_instr_pct": 0.06782024222505845,
+    "stage2_wall_query_limit_control_paired_pct": [
+      0.7204610951008661,
+      1.242172261574792,
+      -1.6248603635624859
+    ]
   }
 }
