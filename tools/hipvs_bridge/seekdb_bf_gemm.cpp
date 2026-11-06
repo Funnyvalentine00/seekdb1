@@ -97,14 +97,15 @@ __global__ static void sk_add_normb_kernel(float* c, const float* nb,
   }
 }
 
-/* WMMA GEMM: dist[i][j] = -2 * <a_i, b_j>, row-major [m x tb] (ldc = tb).
+/* WMMA GEMM: dot products, optionally fused with norm[b]-2*dot, row-major [m x tb].
  * One 64x64 output tile per block (16 warps, 16x16 per warp), fp16 inputs,
  * fp32 accumulate on tensor cores. Tail tiles (not multiples of 64) fall
  * back to rocBLAS in the caller. Only built when rocwmma headers exist. */
 #ifdef SK_USE_ROCWMA
+template<bool FusedNorm = false>
 __global__ __launch_bounds__(512) static void sk_wmma_gemm_kernel(
     const unsigned short* base, const unsigned short* q, float* out,
-    long m, long tb, long dim)
+    long m, long tb, long dim, const float* normb = nullptr)
 {
   const int wx = (threadIdx.x / 32) & 3;
   const int wy = (threadIdx.x / 32) >> 2;
@@ -119,7 +120,20 @@ __global__ __launch_bounds__(512) static void sk_wmma_gemm_kernel(
     load_matrix_sync(fb, (const float16_t*)(q + i0 * dim + k), (unsigned)dim);
     mma_sync(fc, fa, fb, fc);
   }
-  store_matrix_sync((float32_t*)(out + i0 * tb + j0), fc, (unsigned)tb, mem_col_major);
+  if constexpr (FusedNorm) {
+    // Preserve rocWMMA's accumulator layout through its public store API.
+    // The block covers a complete 64x64 tile, so every thread reaches the barrier.
+    __shared__ __align__(16) float tile[64 * 64];
+    store_matrix_sync(tile + wx * 16 * 64 + wy * 16, fc, 64, mem_col_major);
+    __syncthreads();
+    for (int k = threadIdx.x; k < 64 * 64; k += blockDim.x) {
+      const long b = (long)blockIdx.x * 64 + k % 64;
+      const long row = (long)blockIdx.y * 64 + k / 64;
+      out[row * tb + b] = normb[b] - 2.0f * tile[k];
+    }
+  } else {
+    store_matrix_sync((float32_t*)(out + i0 * tb + j0), fc, (unsigned)tb, mem_col_major);
+  }
 }
 #endif  /* SK_USE_ROCWMA */
 
@@ -226,6 +240,8 @@ extern "C" int sk_bf_gemm_topk128(void* res_p, const void* d_base, long n,
 #ifdef SK_USE_ROCWMA
   const char* wm = getenv("SEEKDB_CUVS_GEMM_WMA");
   const bool use_wmma = (wm == NULL || wm[0] != '0') && (dim % 16 == 0);
+  const char* fn = getenv("SEEKDB_CUVS_GEMM_FUSED_NORM");
+  const bool fused_norm = fn == NULL || fn[0] != '0';
 #else
   const bool use_wmma = false;
 #endif
@@ -239,6 +255,7 @@ extern "C" int sk_bf_gemm_topk128(void* res_p, const void* d_base, long n,
   float* d_tdist = NULL;
   int* d_tidx = NULL;
   int rc = 1;
+  long fused_tiles = 0, wmma_tiles = 0, blas_tiles = 0;
   const float alpha = -2.0f;
   const float beta = 0.0f;
 
@@ -265,16 +282,26 @@ extern "C" int sk_bf_gemm_topk128(void* res_p, const void* d_base, long n,
       if (use_wmma && (tb % 64) == 0 && (m % 64) == 0) {
         dim3 g((unsigned)(tb / 64), (unsigned)(m / 64));
         hipGetLastError();  /* consume any sticky error before the launch */
-        sk_wmma_gemm_kernel<<<g, 512, 0, 0>>>(
-            (const unsigned short*)d_base + bo * dim,
-            (const unsigned short*)d_base + qo * dim,
-            d_scratch, m, tb, dim);
-        SK_HIP_CHECK(hipGetLastError());
-        sk_add_normb_kernel<<<4096, 256, 0, 0>>>(d_scratch, d_normb + bo,
-                                                 m * tb, tb, -2);
+        if (fused_norm) {
+          sk_wmma_gemm_kernel<true><<<g, 512, 0, 0>>>(
+              (const unsigned short*)d_base + bo * dim,
+              (const unsigned short*)d_base + qo * dim,
+              d_scratch, m, tb, dim, d_normb + bo);
+          ++fused_tiles;
+        } else {
+          sk_wmma_gemm_kernel<<<g, 512, 0, 0>>>(
+              (const unsigned short*)d_base + bo * dim,
+              (const unsigned short*)d_base + qo * dim,
+              d_scratch, m, tb, dim);
+          SK_HIP_CHECK(hipGetLastError());
+          sk_add_normb_kernel<<<4096, 256, 0, 0>>>(d_scratch, d_normb + bo,
+                                                   m * tb, tb, -2);
+        }
+        ++wmma_tiles;
       } else
 #endif
       {
+        ++blas_tiles;
         const rocblas_status gs = rocblas_gemm_ex(
             blas, rocblas_operation_transpose, rocblas_operation_none,
             (rocblas_int)tb, (rocblas_int)m, (rocblas_int)dim, &alpha,
@@ -333,8 +360,9 @@ done:
     const double wall_ms = std::chrono::duration<double, std::milli>(
         std::chrono::steady_clock::now() - started).count();
     fprintf(stderr, "[seekdb_bf_gemm] n=%ld dim=%ld gd=%ld ksel=%ld tiles %ldx%ld "
-                    "algo=%d wma=%d total_wall=%.0fms rc=%d\n",
-            n, dim, gd, ksel, tile_q, tile_b, env_sel_algo, (int)use_wmma, wall_ms, rc);
+                    "algo=%d wma=%d fused_tiles=%ld wmma_tiles=%ld blas_tiles=%ld total_wall=%.0fms rc=%d\n",
+            n, dim, gd, ksel, tile_q, tile_b, env_sel_algo, (int)use_wmma,
+            fused_tiles, wmma_tiles, blas_tiles, wall_ms, rc);
   }
   return rc;
 }
