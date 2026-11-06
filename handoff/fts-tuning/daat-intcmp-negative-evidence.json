@@ -1,0 +1,76 @@
+{
+  "date": "2026-11-06",
+  "baseline": "H2 stage 2 commit f8819ff6dffab44c4ba7cc77dced2493cec5830d",
+  "candidate": "uncommitted integer-comparator experiment (rejected)",
+  "candidate_binary_sha256": "c2c64dfaef3a39fd8a00c44680aacca445b01c986c6f30acbdf3748944db1bd3",
+  "workloads": {
+    "query_cn": {
+      "base_round_medians": [
+        19793959.47,
+        19791431.985,
+        19795666.34
+      ],
+      "candidate_round_medians": [
+        19768584.145,
+        19777930.56,
+        19768350.11
+      ],
+      "base_median_instr": 19793959.47,
+      "candidate_median_instr": 19768584.145,
+      "improvement_pct": 0.12819731715859595
+    },
+    "query_beng": {
+      "base_round_medians": [
+        29597028.975,
+        29591911.42,
+        29570264.62
+      ],
+      "candidate_round_medians": [
+        29522733.41,
+        29515385.36,
+        29521494.37
+      ],
+      "base_median_instr": 29591911.42,
+      "candidate_median_instr": 29521494.37,
+      "improvement_pct": 0.23796046494113376
+    },
+    "query_mixed": {
+      "base_round_medians": [
+        21186917.385,
+        21187013.71,
+        21172482.12
+      ],
+      "candidate_round_medians": [
+        21143637.32,
+        21108954.09,
+        21120407.305
+      ],
+      "base_median_instr": 21186917.385,
+      "candidate_median_instr": 21120407.305,
+      "improvement_pct": 0.31392051420887634
+    },
+    "query_limit": {
+      "base_round_medians": [
+        22873365.645,
+        22858768.175,
+        22875007.58
+      ],
+      "candidate_round_medians": [
+        23210436.59,
+        23212251.205,
+        23216741.27
+      ],
+      "base_median_instr": 22873365.645,
+      "candidate_median_instr": 23212251.205,
+      "improvement_pct": -1.4815727832081294
+    }
+  },
+  "correctness": {
+    "diff_lines": 1734,
+    "extra_lines": 345,
+    "diff_output_sha256": "539253c0017d7375c482d2173b716d54d6cec5674d282597cd85de88613d0815",
+    "extra_output_sha256": "72a2e26fa2f12c7a8dc4a7bf9702d853f4be5f8b3721985a87de5c8f3212d87e",
+    "identical": true
+  },
+  "conclusion": "reject: query_limit -1.48% > 1% regression gate; other queries within noise"
+}
