@@ -27,6 +27,7 @@
 #include <raft/core/device_mdspan.hpp>
 #include <raft/matrix/select_k_types.hpp>
 #include <dlfcn.h>
+#include <string.h>
 #include <optional>
 #include <cstdint>
 #include <cstdio>
@@ -60,6 +61,49 @@ typedef void (*sk_select_k_fn)(
   raft::device_matrix_view<int, int64_t, raft::row_major> out_idx,
   bool select_min, bool sorted, raft::matrix::SelectAlgo algo,
   std::optional<raft::device_vector_view<const int, int64_t>> len_i);
+
+/* rocBLAS is bound at run time for the same reason as select_k: the eval
+ * build image may ship HIP headers without the librocblas.so dev symlink, and
+ * a link-time -lrocblas would fail the whole bridge build. The GPU container
+ * always has the library because the driver stack needs it. */
+typedef rocblas_status (*sk_rb_create_fn)(rocblas_handle*);
+typedef rocblas_status (*sk_rb_destroy_fn)(rocblas_handle);
+typedef rocblas_status (*sk_rb_gemm_ex_fn)(
+    rocblas_handle, rocblas_operation, rocblas_operation,
+    int, int, int, const void*,
+    const void*, rocblas_datatype, int,
+    const void*, rocblas_datatype, int,
+    const void*, const void*, rocblas_datatype, int,
+    void*, rocblas_datatype, int,
+    rocblas_datatype, rocblas_gemm_algo, int, unsigned int);
+
+static void* g_rb_lib = NULL;
+static sk_rb_create_fn  g_rb_create  = NULL;
+static sk_rb_destroy_fn g_rb_destroy = NULL;
+static sk_rb_gemm_ex_fn g_rb_gemm_ex = NULL;
+
+static int sk_load_rocblas(void)
+{
+  if (g_rb_gemm_ex != NULL) { return 0; }
+  const char* names[] = {"librocblas.so", "librocblas.so.5",
+                         "/opt/rocm/lib/librocblas.so",
+                         "/opt/rocm/lib/librocblas.so.5"};
+  for (size_t i = 0; i < sizeof(names) / sizeof(names[0]) && g_rb_lib == NULL; i++) {
+    g_rb_lib = dlopen(names[i], RTLD_LAZY | RTLD_GLOBAL);
+  }
+  if (g_rb_lib == NULL) {
+    fprintf(stderr, "[seekdb_bf_gemm] rocBLAS unavailable; GEMM path disabled\n");
+    return 1;
+  }
+  g_rb_create  = (sk_rb_create_fn)dlsym(g_rb_lib, "rocblas_create_handle");
+  g_rb_destroy = (sk_rb_destroy_fn)dlsym(g_rb_lib, "rocblas_destroy_handle");
+  g_rb_gemm_ex = (sk_rb_gemm_ex_fn)dlsym(g_rb_lib, "rocblas_gemm_ex");
+  if (g_rb_create == NULL || g_rb_destroy == NULL || g_rb_gemm_ex == NULL) {
+    fprintf(stderr, "[seekdb_bf_gemm] rocBLAS symbols missing; GEMM path disabled\n");
+    return 1;
+  }
+  return 0;
+}
 
 static sk_select_k_fn g_select_k = NULL;
 
@@ -290,7 +334,8 @@ extern "C" int sk_bf_gemm_topk128(void* res_p, const void* d_base, long n,
   const float alpha = -2.0f;
   const float beta = 0.0f;
 
-  if (rocblas_create_handle(&blas) != rocblas_status_success) { goto done; }
+  if (sk_load_rocblas() != 0) { goto done; }
+  if (g_rb_create(&blas) != rocblas_status_success) { goto done; }
 
   SK_HIP_CHECK(hipMalloc(&d_normb, sizeof(float) * (size_t)n));
   sk_row_norm2_kernel<<<dim3((unsigned)n), 256, 0, 0>>>(
@@ -333,7 +378,7 @@ extern "C" int sk_bf_gemm_topk128(void* res_p, const void* d_base, long n,
 #endif
       {
         ++blas_tiles;
-        const rocblas_status gs = rocblas_gemm_ex(
+        const rocblas_status gs = g_rb_gemm_ex(
             blas, rocblas_operation_transpose, rocblas_operation_none,
             (rocblas_int)tb, (rocblas_int)m, (rocblas_int)dim, &alpha,
             (const unsigned short*)d_base + (size_t)bo * dim,
@@ -380,7 +425,7 @@ done:
   /* release the rocblas handle (and its device workspace pool) right away so
    * the resident VRAM footprint of a built index does not carry the GEMM
    * scratch into the 256-D build that follows in the same process. */
-  if (blas != NULL) { rocblas_destroy_handle(blas); }
+  if (blas != NULL) { g_rb_destroy(blas); }
   if (d_normb != NULL) { hipFree(d_normb); }
   if (d_scratch != NULL) { hipFree(d_scratch); }
   if (d_best_d != NULL) { hipFree(d_best_d); }

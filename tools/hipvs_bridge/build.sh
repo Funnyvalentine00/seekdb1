@@ -62,7 +62,7 @@ ARCH_FLAGS="--offload-arch=$GPU_ARCH"
   -L"$HIPVS_ROOT/lib" \
   -Wl,-soname,libseekdb_cuvs_bridge.so \
   -Wl,-rpath,"$HIPVS_ROOT/lib:$ROCM_ROOT/lib" \
-  -lcuvs_c -lrocblas -ldl \
+  -lcuvs_c \
   -o "$OUTPUT"
 
 rm -f "$SCRIPT_DIR/.bridge_c.o" "$SCRIPT_DIR/.bridge_cpp.o"
