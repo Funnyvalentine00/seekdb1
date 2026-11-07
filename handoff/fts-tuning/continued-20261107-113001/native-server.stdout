@@ -1,0 +1,4 @@
+<jemalloc>: option background_thread currently supports pthread only
+Starting seekdb (OceanBase seekdb 1.4.0.0) source revision 1-a5c1c382225caf59eeaa3aa0d8ce45040444cf25.
+Change working directory to base dir. path='/Users/xiazihan/seekdb-work/data/fts-native-counters-113001/'
+The log file is in the directory: '/Users/xiazihan/seekdb-work/data/fts-native-counters-113001/log/'

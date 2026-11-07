@@ -1,0 +1,28 @@
+{
+  "pid": 12223,
+  "command": [
+    "/Users/xiazihan/seekdb-work/saved-binaries/seekdb-fts-opt-v4-fixed-20261106",
+    "--nodaemon",
+    "--base-dir",
+    "/Users/xiazihan/seekdb-work/data/fts-native-counters-113001",
+    "--parameter",
+    "mysql_port_mode=disabled",
+    "--parameter",
+    "memory_budget=2G",
+    "--parameter",
+    "vector_memory_limit=512M",
+    "--parameter",
+    "datafile_size=2G",
+    "--parameter",
+    "datafile_maxsize=2G",
+    "--parameter",
+    "log_disk_size=2G",
+    "--parameter",
+    "cpu_count=4"
+  ],
+  "binary_sha256": "6e3f898d7f45744e1dacfd7cd4a91da3a91d593ff4cad7823b76265cb1f5f600",
+  "fixture_sha256": "06ada93a039eecaab03bd23cc01a63886c5492138de4f4d974b4e247684838da",
+  "instruction_reader_sha256": "7e80730eb8ddd70a87cb31931c43bc11b15d58e45ec4295f46f97038b61709df",
+  "socket": "/Users/xiazihan/seekdb-work/data/fts-native-counters-113001/run/sql.sock",
+  "dataset": "edge-cases.json tokens_1024"
+}

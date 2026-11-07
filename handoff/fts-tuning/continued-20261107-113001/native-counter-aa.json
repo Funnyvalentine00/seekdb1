@@ -1,0 +1,75 @@
+{
+  "metric": "process instruction counter",
+  "scope": "macOS UDS targeted A/A, not official Linux workload",
+  "counter_threshold_pct": 0.6,
+  "pairs": {
+    "select1": {
+      "instructions_per_stmt": [
+        447843.47866666666,
+        480206.72033333336,
+        513613.3886666667,
+        479266.04
+      ],
+      "median": 479736.3801666667,
+      "counter_pair_delta_pct": [
+        7.226462638915621,
+        -6.687393557989596
+      ],
+      "wall_pair_delta_pct": [
+        -0.7770398694330383,
+        1.9575990974369573
+      ]
+    },
+    "short_match": {
+      "instructions_per_stmt": [
+        10043969.766666668,
+        9909981.093333334,
+        9849004.436666667,
+        10082540.3
+      ],
+      "median": 9976975.43,
+      "counter_pair_delta_pct": [
+        -1.3340210737989966,
+        2.3711621294829177
+      ],
+      "wall_pair_delta_pct": [
+        3.5360940709556754,
+        -5.124820785702234
+      ]
+    },
+    "literal_1024": {
+      "instructions_per_stmt": [
+        177810574.5,
+        174731530.75,
+        194146810.625,
+        176648390.5
+      ],
+      "median": 177229482.5,
+      "counter_pair_delta_pct": [
+        -1.7316426532326346,
+        -9.012983560568856
+      ],
+      "wall_pair_delta_pct": [
+        -3.9400445739516066,
+        -13.864154444718668
+      ]
+    },
+    "prepared_short_first_1024": {
+      "instructions_per_stmt": [
+        169844293.68,
+        164193853.8,
+        171110331.16,
+        160269976.2
+      ],
+      "median": 167019073.74,
+      "counter_pair_delta_pct": [
+        -3.326835278108231,
+        -6.335301256511228
+      ],
+      "wall_pair_delta_pct": [
+        0.4616077242723282,
+        -3.324059764409937
+      ]
+    }
+  }
+}

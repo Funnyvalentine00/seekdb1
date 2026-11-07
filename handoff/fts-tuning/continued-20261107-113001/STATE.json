@@ -1,0 +1,23 @@
+{
+  "started_at": "2026-11-07T11:30:01+08:00",
+  "base": "6abc2d815845980373dd84d65776b6645e5a156e",
+  "product_reference": "194150497aca9a69e395317bd6d5a64f26340a61",
+  "execution_plan": "../NEXT_OPTIMIZATION_EXECUTION_PLAN_2026-11-07.md",
+  "previous_delivery": "../next-cycle-20261107-104032/DELIVERY.md",
+  "experiment_budget_total": 8,
+  "experiment_budget_used": 1,
+  "new_experiments": 0,
+  "formal_ab_pairs": 0,
+  "mode": "measure actual allocation and qualify an independent diagnostic protocol",
+  "alloc_probe_node": "/home/xiazihan/benchmark/fts-v4-integration-20261106/continued-20261107-113001",
+  "phase": "P5 closed",
+  "closed_at": "2026-11-07T11:59:13+08:00",
+  "old_product_preserved": true,
+  "diagnostic_sql_successful_cases": 14,
+  "harness_failures": 1,
+  "allocation_score_bytes": 2097152,
+  "allocation_docid_bytes": 13631488,
+  "linux_test_instance_normal_exit": true,
+  "mac_test_instance_normal_exit": true,
+  "product_candidate_enabled": false
+}

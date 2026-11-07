@@ -1,0 +1,31 @@
+{
+  "reference": "9544ca38c4d6cc336adb079f362eff1fa220739d58ce70bc2d0f1d948d5ade32",
+  "sources": {
+    "src/storage/retrieval/ob_text_retrieval_token_iter.cpp": "6c3dfb9bfffd3239186509ac8a07aae4d6369f904d7de646737e21ce20218cf8",
+    "src/observer/composition/retrieval/ob_das_legacy_tr_merge_iter.cpp": "bab6058eece1b7b088c5dd305185014aeb5dd13bda219a419714e14f098053a3"
+  },
+  "fixture": "06ada93a039eecaab03bd23cc01a63886c5492138de4f4d974b4e247684838da",
+  "test_listeners": {
+    "rc": 0,
+    "out": "",
+    "err": ""
+  },
+  "tmux": {
+    "rc": 1,
+    "out": "",
+    "err": "no server running on /tmp/tmux-1001/default"
+  },
+  "active_owned": [],
+  "resource": {
+    "rc": 0,
+    "out": "RESOURCE_GUARD {\"host_D_free_GiB\": 140.44, \"linux_free_GiB\": 472.38, \"memory_available_GiB\": 14.24}",
+    "err": ""
+  },
+  "data_path": "/home/xiazihan/benchmark/fts-v4-integration-20261106/data/p2-dbg-113001",
+  "owner_marker": "continued-20261107-113001",
+  "data_allocated": {
+    "rc": 0,
+    "out": "2.2G\t/home/xiazihan/benchmark/fts-v4-integration-20261106/data/p2-dbg-113001",
+    "err": ""
+  }
+}

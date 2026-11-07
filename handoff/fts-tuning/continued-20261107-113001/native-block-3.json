@@ -1,0 +1,82 @@
+{
+  "select1": {
+    "n": 3000,
+    "before": {
+      "instructions": 63862635374,
+      "cycles": 13912448901,
+      "user_s": 2.8793882916666664,
+      "sys_s": 0.273099,
+      "rss": 280870912
+    },
+    "after": {
+      "instructions": 65403475540,
+      "cycles": 14302663152,
+      "user_s": 2.9547710416666666,
+      "sys_s": 0.288948375,
+      "rss": 275562496
+    },
+    "instructions_per_stmt": 513613.3886666667,
+    "wall_ms_per_stmt": 0.017667611333333333,
+    "stdout_sha256": "d3c94bb5749f49ba091e67cb63da782211b60c08f930f0d121e89eca9b63a523"
+  },
+  "short_match": {
+    "n": 300,
+    "before": {
+      "instructions": 65403475540,
+      "cycles": 14302663152,
+      "user_s": 2.9547710416666666,
+      "sys_s": 0.288948375,
+      "rss": 275562496
+    },
+    "after": {
+      "instructions": 68358176871,
+      "cycles": 14833533208,
+      "user_s": 3.073547541666666,
+      "sys_s": 0.2919285,
+      "rss": 275578880
+    },
+    "instructions_per_stmt": 9849004.436666667,
+    "wall_ms_per_stmt": 0.22441708333333335,
+    "stdout_sha256": "0b73ca7029e078e57395bb1a51954cb1a92b4d6885151508d27501e4152fae53"
+  },
+  "literal_1024": {
+    "n": 24,
+    "before": {
+      "instructions": 68358176871,
+      "cycles": 14833533208,
+      "user_s": 3.073547541666666,
+      "sys_s": 0.2919285,
+      "rss": 275578880
+    },
+    "after": {
+      "instructions": 73017700326,
+      "cycles": 15906166143,
+      "user_s": 3.300934083333333,
+      "sys_s": 0.30416304166666663,
+      "rss": 291504128
+    },
+    "instructions_per_stmt": 194146810.625,
+    "wall_ms_per_stmt": 5.155644083333333,
+    "stdout_sha256": "113b54579e1b1947ed8d38190ee201618f0d55cb608dac7d89e6f5fa0fba14ac"
+  },
+  "prepared_short_first_1024": {
+    "n": 25,
+    "before": {
+      "instructions": 73017700326,
+      "cycles": 15906166143,
+      "user_s": 3.300934083333333,
+      "sys_s": 0.30416304166666663,
+      "rss": 291504128
+    },
+    "after": {
+      "instructions": 77295458605,
+      "cycles": 16855930104,
+      "user_s": 3.5095681666666665,
+      "sys_s": 0.30847458333333333,
+      "rss": 292126720
+    },
+    "instructions_per_stmt": 171110331.16,
+    "wall_ms_per_stmt": 4.412325,
+    "stdout_sha256": "831762e3adb034fe8205e6ee9a47111c0ef7f8c77ffefad7ed4cad7c174b4079"
+  }
+}

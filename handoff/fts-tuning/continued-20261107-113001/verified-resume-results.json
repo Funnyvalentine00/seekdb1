@@ -1,0 +1,489 @@
+{
+  "first": {
+    "empty": {
+      "rc": 0,
+      "groups": [],
+      "probe_errors": [],
+      "stdout_sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "single": {
+      "rc": 0,
+      "groups": [
+        {
+          "batch": 16,
+          "doc_allocated": true,
+          "doc_capacity": 16,
+          "doc_count": 16,
+          "doc_item_bytes": 52,
+          "score_allocated": true,
+          "score_capacity": 16,
+          "score_count": 16,
+          "score_item_bytes": 8,
+          "scoreless": true,
+          "token_inits": 1,
+          "score_payload_bytes": 128,
+          "docid_payload_bytes": 832
+        }
+      ],
+      "probe_errors": [],
+      "stdout_sha256": "83c02ac2d48c863dab2ccf6870455aadfc2cec073b8db269b517c879d76aa6d9",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "tokens_255": {
+      "rc": 0,
+      "groups": [
+        {
+          "batch": 16,
+          "doc_allocated": true,
+          "doc_capacity": 16,
+          "doc_count": 16,
+          "doc_item_bytes": 52,
+          "score_allocated": true,
+          "score_capacity": 16,
+          "score_count": 16,
+          "score_item_bytes": 8,
+          "scoreless": true,
+          "token_inits": 255,
+          "score_payload_bytes": 32640,
+          "docid_payload_bytes": 212160
+        }
+      ],
+      "probe_errors": [],
+      "stdout_sha256": "83c02ac2d48c863dab2ccf6870455aadfc2cec073b8db269b517c879d76aa6d9",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "tokens_256": {
+      "rc": 0,
+      "groups": [
+        {
+          "batch": 16,
+          "doc_allocated": true,
+          "doc_capacity": 16,
+          "doc_count": 16,
+          "doc_item_bytes": 52,
+          "score_allocated": true,
+          "score_capacity": 16,
+          "score_count": 16,
+          "score_item_bytes": 8,
+          "scoreless": true,
+          "token_inits": 256,
+          "score_payload_bytes": 32768,
+          "docid_payload_bytes": 212992
+        }
+      ],
+      "probe_errors": [],
+      "stdout_sha256": "83c02ac2d48c863dab2ccf6870455aadfc2cec073b8db269b517c879d76aa6d9",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "tokens_257": {
+      "rc": 0,
+      "groups": [
+        {
+          "batch": 16,
+          "doc_allocated": true,
+          "doc_capacity": 16,
+          "doc_count": 16,
+          "doc_item_bytes": 52,
+          "score_allocated": true,
+          "score_capacity": 16,
+          "score_count": 16,
+          "score_item_bytes": 8,
+          "scoreless": true,
+          "token_inits": 257,
+          "score_payload_bytes": 32896,
+          "docid_payload_bytes": 213824
+        }
+      ],
+      "probe_errors": [],
+      "stdout_sha256": "83c02ac2d48c863dab2ccf6870455aadfc2cec073b8db269b517c879d76aa6d9",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "tokens_1024": {
+      "rc": 0,
+      "groups": [
+        {
+          "batch": 16,
+          "doc_allocated": true,
+          "doc_capacity": 16,
+          "doc_count": 16,
+          "doc_item_bytes": 52,
+          "score_allocated": true,
+          "score_capacity": 16,
+          "score_count": 16,
+          "score_item_bytes": 8,
+          "scoreless": true,
+          "token_inits": 1024,
+          "score_payload_bytes": 131072,
+          "docid_payload_bytes": 851968
+        }
+      ],
+      "probe_errors": [],
+      "stdout_sha256": "83c02ac2d48c863dab2ccf6870455aadfc2cec073b8db269b517c879d76aa6d9",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "prepared_crossing": {
+      "rc": 0,
+      "groups": [
+        {
+          "batch": 256,
+          "doc_allocated": true,
+          "doc_capacity": 256,
+          "doc_count": 256,
+          "doc_item_bytes": 52,
+          "score_allocated": true,
+          "score_capacity": 256,
+          "score_count": 256,
+          "score_item_bytes": 8,
+          "scoreless": true,
+          "token_inits": 260,
+          "score_payload_bytes": 532480,
+          "docid_payload_bytes": 3461120
+        }
+      ],
+      "probe_errors": [],
+      "stdout_sha256": "c7bfa5a812f83af470dd0556774608d90d330b40b5f8f6f759e4baf9412bd5a5",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "lookup_projection": {
+      "rc": 0,
+      "groups": [
+        {
+          "batch": 256,
+          "doc_allocated": true,
+          "doc_capacity": 256,
+          "doc_count": 256,
+          "doc_item_bytes": 52,
+          "score_allocated": true,
+          "score_capacity": 256,
+          "score_count": 256,
+          "score_item_bytes": 8,
+          "scoreless": false,
+          "token_inits": 1,
+          "score_payload_bytes": 2048,
+          "docid_payload_bytes": 13312
+        }
+      ],
+      "probe_errors": [],
+      "stdout_sha256": "713f4bf5d64e61d386b36ce9a3b3d138e39870a7ef7c26d51b3de0b2c60d5145",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "forced_primary_lookup": {
+      "rc": 0,
+      "groups": [
+        {
+          "batch": 256,
+          "doc_allocated": true,
+          "doc_capacity": 256,
+          "doc_count": 256,
+          "doc_item_bytes": 52,
+          "score_allocated": true,
+          "score_capacity": 256,
+          "score_count": 256,
+          "score_item_bytes": 8,
+          "scoreless": false,
+          "token_inits": 1,
+          "score_payload_bytes": 2048,
+          "docid_payload_bytes": 13312
+        }
+      ],
+      "probe_errors": [],
+      "stdout_sha256": "67d4ff71d43921d5739f387da09746f405e425b07d727e4c69d029461d1f051f",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "followup": {
+    "literal_1024": {
+      "rc": 0,
+      "groups": [
+        {
+          "batch": 16,
+          "doc_allocated": true,
+          "doc_capacity": 16,
+          "doc_count": 16,
+          "doc_item_bytes": 52,
+          "score_allocated": true,
+          "score_capacity": 16,
+          "score_count": 16,
+          "score_item_bytes": 8,
+          "scoreless": true,
+          "token_inits": 1024,
+          "score_payload_bytes": 131072,
+          "docid_payload_bytes": 851968
+        }
+      ],
+      "probe_errors": [],
+      "doc_load_errors": [],
+      "observed_doc_buffers_written": 1,
+      "observed_doc_load_calls": 63,
+      "doc_load_ids_in_case": true,
+      "stdout_sha256": "83c02ac2d48c863dab2ccf6870455aadfc2cec073b8db269b517c879d76aa6d9",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "prepared_1024": {
+      "rc": 0,
+      "groups": [
+        {
+          "batch": 16,
+          "doc_allocated": true,
+          "doc_capacity": 16,
+          "doc_count": 16,
+          "doc_item_bytes": 52,
+          "score_allocated": true,
+          "score_capacity": 16,
+          "score_count": 16,
+          "score_item_bytes": 8,
+          "scoreless": true,
+          "token_inits": 1024,
+          "score_payload_bytes": 131072,
+          "docid_payload_bytes": 851968
+        }
+      ],
+      "probe_errors": [],
+      "doc_load_errors": [],
+      "observed_doc_buffers_written": 1,
+      "observed_doc_load_calls": 63,
+      "doc_load_ids_in_case": true,
+      "stdout_sha256": "83c02ac2d48c863dab2ccf6870455aadfc2cec073b8db269b517c879d76aa6d9",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "prepared_1024_no_hits": {
+      "rc": 0,
+      "groups": [
+        {
+          "batch": 16,
+          "doc_allocated": true,
+          "doc_capacity": 16,
+          "doc_count": 16,
+          "doc_item_bytes": 52,
+          "score_allocated": true,
+          "score_capacity": 16,
+          "score_count": 16,
+          "score_item_bytes": 8,
+          "scoreless": true,
+          "token_inits": 1024,
+          "score_payload_bytes": 131072,
+          "docid_payload_bytes": 851968
+        }
+      ],
+      "probe_errors": [],
+      "doc_load_errors": [],
+      "observed_doc_buffers_written": 0,
+      "observed_doc_load_calls": 0,
+      "doc_load_ids_in_case": true,
+      "stdout_sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "tiny_partition": {
+      "rc": 0,
+      "groups": [
+        {
+          "batch": 16,
+          "doc_allocated": true,
+          "doc_capacity": 16,
+          "doc_count": 16,
+          "doc_item_bytes": 52,
+          "score_allocated": true,
+          "score_capacity": 16,
+          "score_count": 16,
+          "score_item_bytes": 8,
+          "scoreless": true,
+          "token_inits": 1,
+          "score_payload_bytes": 128,
+          "docid_payload_bytes": 832
+        }
+      ],
+      "probe_errors": [],
+      "doc_load_errors": [],
+      "observed_doc_buffers_written": 1,
+      "observed_doc_load_calls": 1,
+      "doc_load_ids_in_case": true,
+      "stdout_sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "short_first": {
+    "batch": 256,
+    "terms": 1024,
+    "score_payload": 2097152,
+    "docid_payload": 13631488,
+    "filled": 1,
+    "unfilled_docid_payload": 13618176,
+    "three_statement_groups": [
+      {
+        "batch": 256,
+        "doc_allocated": true,
+        "doc_capacity": 256,
+        "doc_count": 256,
+        "doc_item_bytes": 52,
+        "score_allocated": true,
+        "score_capacity": 256,
+        "score_count": 256,
+        "score_item_bytes": 8,
+        "scoreless": true,
+        "token_inits": 1026,
+        "score_payload_bytes": 2101248,
+        "docid_payload_bytes": 13658112
+      }
+    ]
+  },
+  "native": {
+    "metric": "process instruction counter",
+    "scope": "macOS UDS targeted A/A, not official Linux workload",
+    "counter_threshold_pct": 0.6,
+    "pairs": {
+      "select1": {
+        "instructions_per_stmt": [
+          447843.47866666666,
+          480206.72033333336,
+          513613.3886666667,
+          479266.04
+        ],
+        "median": 479736.3801666667,
+        "counter_pair_delta_pct": [
+          7.226462638915621,
+          -6.687393557989596
+        ],
+        "wall_pair_delta_pct": [
+          -0.7770398694330383,
+          1.9575990974369573
+        ]
+      },
+      "short_match": {
+        "instructions_per_stmt": [
+          10043969.766666668,
+          9909981.093333334,
+          9849004.436666667,
+          10082540.3
+        ],
+        "median": 9976975.43,
+        "counter_pair_delta_pct": [
+          -1.3340210737989966,
+          2.3711621294829177
+        ],
+        "wall_pair_delta_pct": [
+          3.5360940709556754,
+          -5.124820785702234
+        ]
+      },
+      "literal_1024": {
+        "instructions_per_stmt": [
+          177810574.5,
+          174731530.75,
+          194146810.625,
+          176648390.5
+        ],
+        "median": 177229482.5,
+        "counter_pair_delta_pct": [
+          -1.7316426532326346,
+          -9.012983560568856
+        ],
+        "wall_pair_delta_pct": [
+          -3.9400445739516066,
+          -13.864154444718668
+        ]
+      },
+      "prepared_short_first_1024": {
+        "instructions_per_stmt": [
+          169844293.68,
+          164193853.8,
+          171110331.16,
+          160269976.2
+        ],
+        "median": 167019073.74,
+        "counter_pair_delta_pct": [
+          -3.326835278108231,
+          -6.335301256511228
+        ],
+        "wall_pair_delta_pct": [
+          0.4616077242723282,
+          -3.324059764409937
+        ]
+      }
+    }
+  },
+  "transport": {
+    "pairs": {
+      "tcp": {
+        "select1": {
+          "ms": [
+            0.17549954866666667,
+            0.19390315966666669,
+            0.15128100133333333,
+            0.16181303766666666
+          ],
+          "pair_delta_pct": [
+            10.486415002100502,
+            6.961902843389423
+          ],
+          "same_order_change_pct": [
+            -13.799777559162042,
+            -16.549561159893024
+          ]
+        },
+        "tokenize_beng": {
+          "ms": [
+            0.22073335266666666,
+            0.20314084266666665,
+            0.22407783633333334,
+            0.18908301366666666
+          ],
+          "pair_delta_pct": [
+            -7.970027994168493,
+            -15.617261947589112
+          ],
+          "same_order_change_pct": [
+            1.5151691514952992,
+            -6.920237612220337
+          ]
+        }
+      },
+      "uds": {
+        "select1": {
+          "ms": [
+            0.08942699766666666,
+            0.05537570533333333,
+            0.08823020200000001,
+            0.053933068333333334
+          ],
+          "pair_delta_pct": [
+            -38.07719505496239,
+            -38.872328170195814
+          ],
+          "same_order_change_pct": [
+            -1.3382934660600254,
+            -2.605180360802739
+          ]
+        },
+        "tokenize_beng": {
+          "ms": [
+            0.07729542833333333,
+            0.07632277533333334,
+            0.08172943233333332,
+            0.07534419633333334
+          ],
+          "pair_delta_pct": [
+            -1.25835773340367,
+            -7.812651841209195
+          ],
+          "same_order_change_pct": [
+            5.7364375818949265,
+            -1.2821585637133204
+          ]
+        }
+      }
+    },
+    "qualifies_to_try_official_uds_aa": false,
+    "host_before": {
+      "LoadPercentage": 6,
+      "CurrentClockSpeed": 2700
+    },
+    "host_after": {
+      "LoadPercentage": 21,
+      "CurrentClockSpeed": 2700
+    },
+    "official_benchmark": false
+  },
+  "new_experiments": 0,
+  "formal_ab_pairs": 0
+}

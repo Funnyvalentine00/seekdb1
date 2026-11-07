@@ -1,0 +1,17 @@
+{
+  "total_experiment_budget": 8,
+  "historical_used": 1,
+  "implemented_here": 0,
+  "success_here": 0,
+  "failed_here": 0,
+  "partial_here": 0,
+  "formal_candidate_pairs": 0,
+  "reference_builds_here": 0,
+  "p4_recheck_started_at": "2026-11-07T11:48:05+08:00",
+  "closed_at": "2026-11-07T11:59:13+08:00",
+  "actual_elapsed_minutes": 29.205957716666667,
+  "final_fraction": 0.38140475166281756,
+  "stop_reason": "native instruction and WSL transport pilot exceed predeclared noise thresholds",
+  "product_reference": "194150497aca9a69e395317bd6d5a64f26340a61",
+  "best_validated_global": null
+}

@@ -1,0 +1,22 @@
+{
+  "allocation-attempt1.tar.gz": {
+    "sha256": "ab8f80e6d18ad828d3090c804485a1c4663bc2e87d823604eed8161cdd1c7567",
+    "bytes": 9695,
+    "files": 32
+  },
+  "allocation-followup.tar.gz": {
+    "sha256": "a22df318e06ba147568f94d7f33f1deae85308f9bd460f4a1d26c5dd4f2c26fa",
+    "bytes": 12476,
+    "files": 19
+  },
+  "allocation-short-first.tar.gz": {
+    "sha256": "6a2cc05a5abaa99c5d057a77b66a29e9d382e818292f45ff2e1b675ef7c74c0f",
+    "bytes": 5562,
+    "files": 9
+  },
+  "transport-pilot.tar.gz": {
+    "sha256": "0bf91f5fe9da7e9afe722a1c6170f2cade37a251fe8373196e7d0a80679f36e7",
+    "bytes": 1687,
+    "files": 9
+  }
+}
