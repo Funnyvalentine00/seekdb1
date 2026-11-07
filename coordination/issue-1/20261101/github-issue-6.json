@@ -1,0 +1,24 @@
+{
+  "url": "https://github.com/Funnyvalentine00/seekdb1/issues/6",
+  "title": "[fts-tuning] 全文索引调优（50 分）· @XIAZIHAN001 · feat/fts-tuning",
+  "issue_number": 6,
+  "body": "## 负责人 / 仓库 / 分支\n\n- 负责人：@XIAZIHAN001\n- 仓库：`Funnyvalentine00/seekdb1`\n- 分支：`feat/fts-tuning`（基于 `2026-competition` @ `5bce9e0`）\n- 总分：50（9 指标等权三类：构建 3 / 分词 2 / 查询 4；`score=clamp(三类均值,0,0.5)/0.5*100`）\n\n## 第一步：先跑基线（不改代码）\n\n```bash\nexport MYSQL='mysql -h127.0.0.1 -P2881 -uroot -N -s -A --default-character-set=utf8mb4'\nREPORT=$(mktemp /tmp/fts.XXXX)\nLABEL=before ROWS=20000 BATCH=500 ROUNDS=3000 QUERY_ROUNDS=200 SAMPLES=3 WARMUP=30 SKIP_LOAD=0 OUTPUT=$REPORT bash tools/benchmark/fts_large_bench.sh\npython3 tools/benchmark/fts_large_bench_score.py $REPORT\n./tools/deploy/obd.sh mysqltest -n <cluster> --suite fts_index\n```\n\n基线值见 `tools/benchmark/fts_large_bench_baseline.json`（build_ik_all 35.28s / build_ik_content 28.38s / build_beng_en 14.76s；tokenize 0.7648 / 0.4226 ms；query 16.66 / 24.30 / 17.56 / 16.23 ms）。参数与基线不一致时评分脚本会拒算。\n\n## 可改范围（只在这里优化）\n\n- `src/storage/fts/**`（分词、停用词、IK/Beng parser、字典缓存）\n- `src/share/text_analysis/**`\n- `src/sql/engine/expr/ob_expr_tokenize.cpp`\n- `src/sql/das/iter/**`、`src/sql/das/ob_das_domain_utils.cpp`\n\n## 主要入口（行号已定位）\n\n- 分词：`src/storage/fts/ob_fts_parser_helper.cpp:258,361 ObFTParseHelper::segment`\n- 停用词/聚合：`src/storage/fts/ob_fts_stop_word.cpp:131 ObAddWord::process_word`\n- IK：`src/storage/fts/ob_ik_ft_parser.cpp:70/113/147/231/275`\n- Beng：`src/storage/fts/ob_beng_ft_parser.cpp:29/65/93`\n- 字典：`src/storage/fts/dict/ob_ft_cache.cpp:27 ObDictCache::get_dict`\n- TOKENIZE：`src/sql/engine/expr/ob_expr_tokenize.cpp:53 eval_tokenize、78 tokenize_fulltext`\n- 建索引：`src/sql/engine/table/ob_table_scan_op.cpp:3646 fetch_next_fts_index_rows`、`src/sql/das/ob_das_domain_utils.cpp:83/342`\n- 查询：`src/sql/das/iter/ob_das_text_retrieval_merge_iter.cpp:160/245`、`ob_das_text_retrieval_eval_node.cpp:41`\n\n## 优化候选（需自行 profile 确认，不要盲改）\n\nBeng 每 token `alloc+MEMCPY`；`tokenize_fulltext` 每次新建 ArenaAllocator+hashmap；`casedown_word` 每词分配；`init_dict` 每文档绑字典与 KV cache；索引每行新建 ArenaAllocator；`ObAddWord` 每词 hash 查找。\n\n## 契约（不可变）\n\n`tokenize(text,'ik'|'beng')`、`MATCH(...) AGAINST(...)` 语义不变；parser 名/属性不变；`*_hits` 必须与基线一致（cn 8001、beng 11000、mixed 7332、limit 20）。\n\n## 验收\n\n```bash\n# 正确性\n./tools/deploy/obd.sh mysqltest -n <cluster> --suite fts_index\n# 性能（改动前后各跑一次，LABEL=after）\nLABEL=after ROWS=20000 BATCH=500 ROUNDS=3000 QUERY_ROUNDS=200 SAMPLES=3 WARMUP=30 SKIP_LOAD=0 OUTPUT=$REPORT2 bash tools/benchmark/fts_large_bench.sh\npython3 tools/benchmark/fts_large_bench_score.py $REPORT2\n```\n\n## 交付\n\n`handoff/fts-tuning/` 下：`README.md`（8 节）、`changes.patch`、`logs/{build,verify,test,notes}.log`、`benchmark-before.json`、`benchmark-after.json`，并在本 issue 评论贴摘要。\n\n## 禁止\n\n改 `tools/benchmark/**`、基线 json、计时逻辑、SQL、数据量、金样；只报耗时而不核对 hits；在未跑回归的情况下声称正确性。\n",
+  "state": "open",
+  "user": {
+    "login": "Funnyvalentine00",
+    "name": "Funnyvalentine00",
+    "email": null,
+    "avatar_url": "https://avatars.githubusercontent.com/u/248676501?v=4",
+    "id": 248676501
+  },
+  "assignees": null,
+  "labels": null,
+  "milestone": null,
+  "state_reason": null,
+  "comments": 0,
+  "created_at": "2026-10-30T09:27:44Z",
+  "updated_at": "2026-10-30T09:27:44Z",
+  "closed_at": null,
+  "display_url": "https://github.com/Funnyvalentine00/seekdb1/issues/6",
+  "display_title": "[fts-tuning] 全文索引调优（50 分）· @XIAZIHAN001 · feat/fts-tuning"
+}

@@ -1,0 +1,625 @@
+{
+  "captured_at": "2026-11-01T18:00:10.520607+08:00",
+  "mode": "read-only; no SQL, builds, restarts, native writes, fetches or pushes",
+  "native": "/opt/codex-seekdb-20261030",
+  "baseline": "5bce9e06d1281347ad61344e4b01fab9158c58a2",
+  "head": "dade8da47eacc6522f4ab165a251f49335e21775",
+  "branch": "feat/file-sql",
+  "status_before": " M src/query/api/query/parser/ob_item_type.h\n M src/sql/code_generator/ob_static_engine_cg.cpp\n M src/sql/engine/file_sql/file_sql_scan.cpp\n M src/sql/engine/file_sql/file_sql_scan.h\n M src/sql/resolver/dml/ob_dml_stmt.h\n",
+  "status_after": " M src/query/api/query/parser/ob_item_type.h\n M src/sql/code_generator/ob_static_engine_cg.cpp\n M src/sql/engine/file_sql/file_sql_scan.cpp\n M src/sql/engine/file_sql/file_sql_scan.h\n M src/sql/resolver/dml/ob_dml_stmt.h\n",
+  "head_after": "dade8da47eacc6522f4ab165a251f49335e21775",
+  "working_patch_stable": true,
+  "committed_source_files": [
+    {
+      "path": "src/query/api/query/parser/ob_item_type.h",
+      "sha256": "e9f67f99c6cec2a16584043711118ac891a5a63a938a72dfabea2c9e4d3f1d15",
+      "bytes": 72464
+    },
+    {
+      "path": "src/share/system_variable/ob_sys_var_class_type.h",
+      "sha256": "e262794e30716353e6bcb4d294e78ea7521b9475ac04206ab28699d1ff94eb4a",
+      "bytes": 31337
+    },
+    {
+      "path": "src/share/system_variable/ob_sys_var_meta.cpp",
+      "sha256": "9fc6a4e70d8efa6d7f6ec50889707e76bf490b890e853d2dd102b4fb67e907cb",
+      "bytes": 71512
+    },
+    {
+      "path": "src/share/system_variable/ob_sys_var_meta.h",
+      "sha256": "f1e923853d78da52f271055417b8bb968ea1ed36b4ed1256130a8ab9ce3f18d3",
+      "bytes": 2551
+    },
+    {
+      "path": "src/share/system_variable/ob_system_variable_alias.h",
+      "sha256": "fbba63c101786c1ed418dadc83357d879a7881863c1cd48fcf0ac7bc2c7d9c74",
+      "bytes": 62232
+    },
+    {
+      "path": "src/share/system_variable/ob_system_variable_init.cpp",
+      "sha256": "a68a6a729f0628965dba28aa3a26d2723e3948a80c165bef7fd846b9b9125395",
+      "bytes": 550266
+    },
+    {
+      "path": "src/share/system_variable/ob_system_variable_init.json",
+      "sha256": "aed9cdd04c16cad6d7ed5d5954e164980c7c547857192e4f7cd8e76c25eb4c57",
+      "bytes": 366844
+    },
+    {
+      "path": "src/sql/code_generator/ob_static_engine_cg.cpp",
+      "sha256": "4883a56b488904656301f01770fe3f4ced13f270362385a9265e88087379ebce",
+      "bytes": 278104
+    },
+    {
+      "path": "src/sql/engine/basic/ob_json_table_op.cpp",
+      "sha256": "a2aeae811ebbbd6535ab421d92d1ddd06c2b2033b2c3cb8143288cf0b0e98d4f",
+      "bytes": 73373
+    },
+    {
+      "path": "src/sql/engine/basic/ob_json_table_op.h",
+      "sha256": "ba99e54586645d8a71ec93baa1d7ca414e005518c8741930ec8d96f1b2932e00",
+      "bytes": 18537
+    },
+    {
+      "path": "src/sql/engine/basic/ob_select_into_op.cpp",
+      "sha256": "dca28077719561fd8049eb2ac6a1f64fe2c5340bf34b4cba85970c0891358546",
+      "bytes": 50935
+    },
+    {
+      "path": "src/sql/engine/basic/ob_select_into_op.h",
+      "sha256": "cd6b7f5d6eba3dec5a2eb718f1b754e122ff68a30985793b5a8c7da9507c0a9d",
+      "bytes": 10903
+    },
+    {
+      "path": "src/sql/engine/file_sql/csv_reader.cpp",
+      "sha256": "11411e0411a86598ea9de2dac9a10cea1291225a06aae98b8879ee62c772d78a",
+      "bytes": 6928
+    },
+    {
+      "path": "src/sql/engine/file_sql/csv_reader.h",
+      "sha256": "2b1a33fdbbcf969f63fc6038c8f14d794288f22445b7b9d442d78d6d9cfb76d6",
+      "bytes": 1405
+    },
+    {
+      "path": "src/sql/engine/file_sql/file_sql_scan.cpp",
+      "sha256": "6e80ee2b46146985a4e92b39cb40c520096cecaa5569e4d2587ec35b0327207a",
+      "bytes": 10790
+    },
+    {
+      "path": "src/sql/engine/file_sql/file_sql_scan.h",
+      "sha256": "8c166ecb0800e8fb4a28b65fa6be2b85ad8ed11215121b09da427920c64364a7",
+      "bytes": 1780
+    },
+    {
+      "path": "src/sql/engine/file_sql/jsonl_reader.cpp",
+      "sha256": "be936b9ca30c026ebef3b3ea7bd5673abf3f28132eca01ff4cbcf804543549af",
+      "bytes": 4989
+    },
+    {
+      "path": "src/sql/engine/file_sql/jsonl_reader.h",
+      "sha256": "4769c51746f53a524aff2ae86e3867628d0372d5bd4742b201445aa0344a3806",
+      "bytes": 1263
+    },
+    {
+      "path": "src/sql/engine/file_sql/parquet_reader.cpp",
+      "sha256": "71567305daeb3a83f3f2e6f5af5acf3c08b60b7c528967b6e85b5f4144e0e708",
+      "bytes": 40968
+    },
+    {
+      "path": "src/sql/engine/file_sql/parquet_reader.h",
+      "sha256": "a013a67eeac8dfd5ce88d92aa622ab943ca630dc5949f0cc34150cdbb448c2ad",
+      "bytes": 689
+    },
+    {
+      "path": "src/sql/ob_sql.cpp",
+      "sha256": "32a8baf0816a271362216948c64a5cbe40c3c6d737be94fc14821f30b5e599fd",
+      "bytes": 183266
+    },
+    {
+      "path": "src/sql/ob_sql_context.h",
+      "sha256": "2811ef4ebbb2c3b99e7918ca5eae0efcaacbc080a5539fa7be8bc42a2a542304",
+      "bytes": 28852
+    },
+    {
+      "path": "src/sql/optimizer/ob_log_plan.cpp",
+      "sha256": "8500b76eac70dedbe14bb2797e3716fde172e8ef9620c073c823730c3286c099",
+      "bytes": 591822
+    },
+    {
+      "path": "src/sql/optimizer/ob_log_select_into.h",
+      "sha256": "04d2d941c2616d14172b2f77a0f77bd19f30bdedcb2115d545f7d2a094c9cfef",
+      "bytes": 5643
+    },
+    {
+      "path": "src/sql/parser/sql_parser_mysql_mode.y",
+      "sha256": "66b858b9256ce94dea88a76aed593ff783b640e18728b39d31575ba9ffbd4706",
+      "bytes": 529220
+    },
+    {
+      "path": "src/sql/printer/ob_dml_stmt_printer.cpp",
+      "sha256": "1c47a04939dfc862ca819ca76d04f8a74b0ebff376197cbb47000c4b1d54665f",
+      "bytes": 56349
+    },
+    {
+      "path": "src/sql/resolver/ddl/ob_explain_resolver.cpp",
+      "sha256": "ff554f6ac5a9d259de26f2e808c3e9273e8b08e908107c2523940fd17cbafe49",
+      "bytes": 8795
+    },
+    {
+      "path": "src/sql/resolver/dml/ob_dml_resolver.cpp",
+      "sha256": "bce19237b525194a74cfdeeab4ff0791676e36ab189dde73a54bcb65fd77b3a2",
+      "bytes": 557389
+    },
+    {
+      "path": "src/sql/resolver/dml/ob_dml_resolver.h",
+      "sha256": "bf7f22fca332d67af88654af8d19f71d770ba278014d5e671bfcebeae96e2b43",
+      "bytes": 49176
+    },
+    {
+      "path": "src/sql/resolver/dml/ob_dml_stmt.h",
+      "sha256": "479173121f0a5fe973326348cd3e96abb1cbdd801ebc5c8dd08ea75422daa362",
+      "bytes": 56288
+    },
+    {
+      "path": "src/sql/resolver/dml/ob_select_resolver.cpp",
+      "sha256": "ce38168054fe9de691d4079dfe3889b141970e877008e6dc18d35ee2e8902ccd",
+      "bytes": 200614
+    },
+    {
+      "path": "src/sql/resolver/dml/ob_select_resolver.h",
+      "sha256": "0b6fa770926b95b6a30b8562d85e165a5800b9263beffdd7727639f26be2061e",
+      "bytes": 20470
+    },
+    {
+      "path": "src/sql/resolver/dml/ob_select_stmt.h",
+      "sha256": "4506bca2aead6a19932838bca999a9bc5df882aac6ea72f2988ffc9548bfa0af",
+      "bytes": 25858
+    },
+    {
+      "path": "src/sql/rewrite/ob_transform_utils.cpp",
+      "sha256": "8fad75eb2825a7d0f79cceb0d62ff8a6a3f15976fc742acc870d370ec6fd21a5",
+      "bytes": 615420
+    },
+    {
+      "path": "src/sql/session/ob_system_variable_factory.cpp",
+      "sha256": "11e1a42dcebe3da00e0998aa5ac907cd0ab3aee10c2066223411cb57ed864f5d",
+      "bytes": 513567
+    },
+    {
+      "path": "src/sql/session/ob_system_variable_factory.h",
+      "sha256": "906154ba2ad128df290f02cf85896b1f018441bd33dafb8aee460a7c515bd89b",
+      "bytes": 292838
+    },
+    {
+      "path": "src/sql/sql_header_inventory.bzl",
+      "sha256": "4366d250d0ae0e46d0957cd2a81d52bba4bef51d856bb6b51b5f49d130243306",
+      "bytes": 52367
+    },
+    {
+      "path": "src/sql/sql_source_inventory.bzl",
+      "sha256": "0a7561af1fa493f787f5f82a26c71365040f03b7a1efbb78495ce44dc8671bf4",
+      "bytes": 81657
+    }
+  ],
+  "working_source_files": [
+    "src/query/api/query/parser/ob_item_type.h",
+    "src/sql/code_generator/ob_static_engine_cg.cpp",
+    "src/sql/engine/file_sql/file_sql_scan.cpp",
+    "src/sql/engine/file_sql/file_sql_scan.h",
+    "src/sql/resolver/dml/ob_dml_stmt.h"
+  ],
+  "handoff": [
+    {
+      "path": "handoff/file-sql/README.md",
+      "exists": false
+    },
+    {
+      "path": "handoff/file-sql/changes.patch",
+      "exists": true,
+      "bytes": 133522,
+      "sha256": "959b4d49bfe16a8dfe082a34a597941e1f12650e029efca0a90980bbb305a2ca",
+      "stable_during_copy": true
+    },
+    {
+      "path": "handoff/file-sql/logs/build.log",
+      "exists": true,
+      "bytes": 1033,
+      "sha256": "d990ce51b59607cdf4677034cf2f66e162bef45ce6a3be918226ccfd58cb3e57",
+      "stable_during_copy": true
+    },
+    {
+      "path": "handoff/file-sql/logs/verify.log",
+      "exists": true,
+      "bytes": 1175,
+      "sha256": "4838d26cbbf70acd9bad786800a32ab770c91e276f925aa49028b03fc9f163bd",
+      "stable_during_copy": true
+    },
+    {
+      "path": "handoff/file-sql/logs/test.log",
+      "exists": true,
+      "bytes": 2629,
+      "sha256": "2bfb98012683ad8504db564f2b402c5665f27cee33a9d71841b21cf886f60c70",
+      "stable_during_copy": true
+    },
+    {
+      "path": "handoff/file-sql/logs/notes.log",
+      "exists": true,
+      "bytes": 4174,
+      "sha256": "be68c3024a49f44657399341da2c6133b1111fbf99d96d480646c3dbcbf4d1e4",
+      "stable_during_copy": true
+    }
+  ],
+  "protected": [
+    {
+      "manifest": "optimization/protected-inputs.sha256",
+      "path": "tools/benchmark/fts_large_bench.sh",
+      "expected": "596ea5d1c0038e666b78aa94bef22d2dfb87ffc9e84dbc7e2a1da1f746424462",
+      "actual": "596ea5d1c0038e666b78aa94bef22d2dfb87ffc9e84dbc7e2a1da1f746424462",
+      "unchanged": true
+    },
+    {
+      "manifest": "optimization/protected-inputs.sha256",
+      "path": "tools/benchmark/fts_large_bench_baseline.json",
+      "expected": "f4e97eddb2e49c982b967fc8047f7cf37177eebe53d648f6746d85aacda91f0c",
+      "actual": "f4e97eddb2e49c982b967fc8047f7cf37177eebe53d648f6746d85aacda91f0c",
+      "unchanged": true
+    },
+    {
+      "manifest": "optimization/protected-inputs.sha256",
+      "path": "tools/benchmark/fts_large_bench_gen.py",
+      "expected": "b0c816dd8211ac0471f60b72a37a3fb5c62580357a5b6d7ac95f5a8c2e3f143d",
+      "actual": "b0c816dd8211ac0471f60b72a37a3fb5c62580357a5b6d7ac95f5a8c2e3f143d",
+      "unchanged": true
+    },
+    {
+      "manifest": "optimization/protected-inputs.sha256",
+      "path": "tools/benchmark/fts_large_bench_score.py",
+      "expected": "bea52eb1c68d05693bb3ac5b910ab0e2fa0e70e01582f40466898ee1e2e3ef55",
+      "actual": "bea52eb1c68d05693bb3ac5b910ab0e2fa0e70e01582f40466898ee1e2e3ef55",
+      "unchanged": true
+    },
+    {
+      "manifest": "optimization/protected-inputs.sha256",
+      "path": "tools/benchmark/fts_large_bench_setup.sql",
+      "expected": "311826751df7f51ac45156fb4284aeca9bd9197370aceb88f4fb92832b458108",
+      "actual": "311826751df7f51ac45156fb4284aeca9bd9197370aceb88f4fb92832b458108",
+      "unchanged": true
+    },
+    {
+      "manifest": "optimization/protected-inputs.sha256",
+      "path": "tools/deploy/init.sql",
+      "expected": "0f9ff4f9bbf67674e11c2e205d65ee8eac5d6d1604132bcaf9437554c2d93ea4",
+      "actual": "0f9ff4f9bbf67674e11c2e205d65ee8eac5d6d1604132bcaf9437554c2d93ea4",
+      "unchanged": true
+    },
+    {
+      "manifest": "optimization/protected-inputs.sha256",
+      "path": "tools/deploy/init_user.sql",
+      "expected": "91707862a7182184121afd0c6ca6bdfc99f198c316a1234114afc54467845696",
+      "actual": "91707862a7182184121afd0c6ca6bdfc99f198c316a1234114afc54467845696",
+      "unchanged": true
+    },
+    {
+      "manifest": "optimization/protected-inputs.sha256",
+      "path": "tools/deploy/mysql_test/test_suite/file_sql/data/basic.csv",
+      "expected": "a7ec34e2f8af792f4eab88e021af5832cfcd5bfcc4daa42c976289853c5b9789",
+      "actual": "a7ec34e2f8af792f4eab88e021af5832cfcd5bfcc4daa42c976289853c5b9789",
+      "unchanged": true
+    },
+    {
+      "manifest": "optimization/protected-inputs.sha256",
+      "path": "tools/deploy/mysql_test/test_suite/file_sql/data/basic.jsonl",
+      "expected": "caacf710d399ad1f397507d437ecfefb99ab97d21d70d4cb4f3615b402777ff8",
+      "actual": "caacf710d399ad1f397507d437ecfefb99ab97d21d70d4cb4f3615b402777ff8",
+      "unchanged": true
+    },
+    {
+      "manifest": "optimization/protected-inputs.sha256",
+      "path": "tools/deploy/mysql_test/test_suite/file_sql/data/invalid.txt",
+      "expected": "8e23bc8948f0b1e94dd78fe8112ce56110bed0123095e79c93e9c9dd403e0146",
+      "actual": "8e23bc8948f0b1e94dd78fe8112ce56110bed0123095e79c93e9c9dd403e0146",
+      "unchanged": true
+    },
+    {
+      "manifest": "optimization/protected-inputs.sha256",
+      "path": "tools/deploy/mysql_test/test_suite/file_sql/data/simple.parquet.b64",
+      "expected": "47f6dc957a4d4bed8ccb93b34048c7f1216b000388b01db2a788a3533a30c36f",
+      "actual": "47f6dc957a4d4bed8ccb93b34048c7f1216b000388b01db2a788a3533a30c36f",
+      "unchanged": true
+    },
+    {
+      "manifest": "optimization/protected-inputs.sha256",
+      "path": "tools/deploy/mysql_test/test_suite/file_sql/include/copy_file_sql_data.inc",
+      "expected": "2afa1c16228e95e7ef66e1e8f708e7b3f293abbfe0c2e036aaa894a628ae5397",
+      "actual": "2afa1c16228e95e7ef66e1e8f708e7b3f293abbfe0c2e036aaa894a628ae5397",
+      "unchanged": true
+    },
+    {
+      "manifest": "optimization/protected-inputs.sha256",
+      "path": "tools/deploy/mysql_test/test_suite/file_sql/include/remove_file_sql_data.inc",
+      "expected": "2ef6c6552603488a5af2cba50d473fbcff28771f04cc4ca0c90cec5b1494f286",
+      "actual": "2ef6c6552603488a5af2cba50d473fbcff28771f04cc4ca0c90cec5b1494f286",
+      "unchanged": true
+    },
+    {
+      "manifest": "optimization/protected-inputs.sha256",
+      "path": "tools/deploy/mysql_test/test_suite/file_sql/r/mysql/file_sql_basic.result",
+      "expected": "9470b723a812113c47239aac604bfdf17738885c34bb47a8e40da25429d8c71f",
+      "actual": "9470b723a812113c47239aac604bfdf17738885c34bb47a8e40da25429d8c71f",
+      "unchanged": true
+    },
+    {
+      "manifest": "optimization/protected-inputs.sha256",
+      "path": "tools/deploy/mysql_test/test_suite/file_sql/t/file_sql_basic.test",
+      "expected": "64d864215ada8c94a12a85ea71573ad8b1fb13ebaf70f4dc4765b544162da0d2",
+      "actual": "64d864215ada8c94a12a85ea71573ad8b1fb13ebaf70f4dc4765b544162da0d2",
+      "unchanged": true
+    },
+    {
+      "manifest": "optimization/protected-inputs.sha256",
+      "path": "tools/deploy/mysql_test/test_suite/fts_index/r/mysql/basic_dml.result",
+      "expected": "6686ab5340271fd3772d145ecb98ba5d69bda1d7d3266277d79c4c6ca84629d0",
+      "actual": "6686ab5340271fd3772d145ecb98ba5d69bda1d7d3266277d79c4c6ca84629d0",
+      "unchanged": true
+    },
+    {
+      "manifest": "optimization/protected-inputs.sha256",
+      "path": "tools/deploy/mysql_test/test_suite/fts_index/r/mysql/basic_dml_sequel.result",
+      "expected": "c5412ac0af4560de5c76d6d4199c13dab637c26d852b9834decc272d4ff1854a",
+      "actual": "c5412ac0af4560de5c76d6d4199c13dab637c26d852b9834decc272d4ff1854a",
+      "unchanged": true
+    },
+    {
+      "manifest": "optimization/protected-inputs.sha256",
+      "path": "tools/deploy/mysql_test/test_suite/fts_index/r/mysql/cn_word.result",
+      "expected": "37568de31d9632eacda4f13332fb6b190922b27f1ed53fb1093cfc03cbef1b03",
+      "actual": "37568de31d9632eacda4f13332fb6b190922b27f1ed53fb1093cfc03cbef1b03",
+      "unchanged": true
+    },
+    {
+      "manifest": "optimization/protected-inputs.sha256",
+      "path": "tools/deploy/mysql_test/test_suite/fts_index/r/mysql/create_fts_index_afterward.result",
+      "expected": "e408f4e770ff2a6eb2a68a69e54f4449c035453e75a6a21e784f1caa32cc27fb",
+      "actual": "e408f4e770ff2a6eb2a68a69e54f4449c035453e75a6a21e784f1caa32cc27fb",
+      "unchanged": true
+    },
+    {
+      "manifest": "optimization/protected-inputs.sha256",
+      "path": "tools/deploy/mysql_test/test_suite/fts_index/r/mysql/create_table_with_fts_index.result",
+      "expected": "cda510cf00cf4bc429df07b86240175f84ae5918f6da6b4aa8d7712c61fc9c3b",
+      "actual": "cda510cf00cf4bc429df07b86240175f84ae5918f6da6b4aa8d7712c61fc9c3b",
+      "unchanged": true
+    },
+    {
+      "manifest": "optimization/protected-inputs.sha256",
+      "path": "tools/deploy/mysql_test/test_suite/fts_index/r/mysql/domain_id_merge_with_compare_null.result",
+      "expected": "706ae5c99c982b1ad0bca9bb439bab1d04b78084c91b9c10c0cafb8317c7b310",
+      "actual": "706ae5c99c982b1ad0bca9bb439bab1d04b78084c91b9c10c0cafb8317c7b310",
+      "unchanged": true
+    },
+    {
+      "manifest": "optimization/protected-inputs.sha256",
+      "path": "tools/deploy/mysql_test/test_suite/fts_index/r/mysql/drop_index.result",
+      "expected": "be81757fcdc80ae29ca501da5134dd831a85b6bbaf6757c90deeb16328c8aedc",
+      "actual": "be81757fcdc80ae29ca501da5134dd831a85b6bbaf6757c90deeb16328c8aedc",
+      "unchanged": true
+    },
+    {
+      "manifest": "optimization/protected-inputs.sha256",
+      "path": "tools/deploy/mysql_test/test_suite/fts_index/r/mysql/index_view.result",
+      "expected": "27dc75f0e80823c5d7b3c09d45681d8732f3d558943ca268243247083b54342d",
+      "actual": "27dc75f0e80823c5d7b3c09d45681d8732f3d558943ca268243247083b54342d",
+      "unchanged": true
+    },
+    {
+      "manifest": "optimization/protected-inputs.sha256",
+      "path": "tools/deploy/mysql_test/test_suite/fts_index/r/mysql/load_data.result",
+      "expected": "9906491b6ec0076d867208876b0e6b870baa4143e36757fa7aa72b107406adef",
+      "actual": "9906491b6ec0076d867208876b0e6b870baa4143e36757fa7aa72b107406adef",
+      "unchanged": true
+    },
+    {
+      "manifest": "optimization/protected-inputs.sha256",
+      "path": "tools/deploy/mysql_test/test_suite/fts_index/r/mysql/offline_ddl_with_fts_index.result",
+      "expected": "917457b0ddc48ea2e502ad93070faf0ffcfc7a5c591406e90f5aef9fa7fe8bb2",
+      "actual": "917457b0ddc48ea2e502ad93070faf0ffcfc7a5c591406e90f5aef9fa7fe8bb2",
+      "unchanged": true
+    },
+    {
+      "manifest": "optimization/protected-inputs.sha256",
+      "path": "tools/deploy/mysql_test/test_suite/fts_index/r/mysql/online_ddl_on_table_with_fts_index.result",
+      "expected": "2f3f8a177a59f34591938151141657db6d80fc1d7d5076ce28943eeeb3bfe4c6",
+      "actual": "2f3f8a177a59f34591938151141657db6d80fc1d7d5076ce28943eeeb3bfe4c6",
+      "unchanged": true
+    },
+    {
+      "manifest": "optimization/protected-inputs.sha256",
+      "path": "tools/deploy/mysql_test/test_suite/fts_index/r/mysql/parser_properties.result",
+      "expected": "e6dbc1e407e909d83d571c840c3292c766e70c2da173594fa1c98b090f03d60a",
+      "actual": "e6dbc1e407e909d83d571c840c3292c766e70c2da173594fa1c98b090f03d60a",
+      "unchanged": true
+    },
+    {
+      "manifest": "optimization/protected-inputs.sha256",
+      "path": "tools/deploy/mysql_test/test_suite/fts_index/r/mysql/partitioned_simple_query.result",
+      "expected": "956fb792a5fedb22bd3fdce9228ff326adf5b7803889254fd525d6fbc37672f9",
+      "actual": "956fb792a5fedb22bd3fdce9228ff326adf5b7803889254fd525d6fbc37672f9",
+      "unchanged": true
+    },
+    {
+      "manifest": "optimization/protected-inputs.sha256",
+      "path": "tools/deploy/mysql_test/test_suite/fts_index/r/mysql/simple_query.result",
+      "expected": "6172886af795b7e6e12f990bfc355985dbf51560da25a10775e20190ed7675e8",
+      "actual": "6172886af795b7e6e12f990bfc355985dbf51560da25a10775e20190ed7675e8",
+      "unchanged": true
+    },
+    {
+      "manifest": "optimization/protected-inputs.sha256",
+      "path": "tools/deploy/mysql_test/test_suite/fts_index/r/mysql/tokenize_function.result",
+      "expected": "46485235f362d7a77717fc00263a44122e919ccf3b0df70ff521e0fc38d5dc2d",
+      "actual": "46485235f362d7a77717fc00263a44122e919ccf3b0df70ff521e0fc38d5dc2d",
+      "unchanged": true
+    },
+    {
+      "manifest": "optimization/protected-inputs.sha256",
+      "path": "tools/deploy/mysql_test/test_suite/fts_index/t/basic_dml.test",
+      "expected": "1ce4330eb1c7d32553cebd5b0f92ed9ba11f0f35ddb6a10bc0f693bf111d0d96",
+      "actual": "1ce4330eb1c7d32553cebd5b0f92ed9ba11f0f35ddb6a10bc0f693bf111d0d96",
+      "unchanged": true
+    },
+    {
+      "manifest": "optimization/protected-inputs.sha256",
+      "path": "tools/deploy/mysql_test/test_suite/fts_index/t/basic_dml_sequel.test",
+      "expected": "0d48b28803115cc969b0c60fb7d3340653fe94304d7df6a4318d8cb13c865d79",
+      "actual": "0d48b28803115cc969b0c60fb7d3340653fe94304d7df6a4318d8cb13c865d79",
+      "unchanged": true
+    },
+    {
+      "manifest": "optimization/protected-inputs.sha256",
+      "path": "tools/deploy/mysql_test/test_suite/fts_index/t/cn_word.test",
+      "expected": "f5d690270366efe5197f073d6928d20b3ec9ca106e4b65ac92339082f32834f2",
+      "actual": "f5d690270366efe5197f073d6928d20b3ec9ca106e4b65ac92339082f32834f2",
+      "unchanged": true
+    },
+    {
+      "manifest": "optimization/protected-inputs.sha256",
+      "path": "tools/deploy/mysql_test/test_suite/fts_index/t/create_fts_index_afterward.test",
+      "expected": "0d0f7a814f06f7a5e6c29156f19b72bfa53dff326d5e43aa1532268ae0c0789c",
+      "actual": "0d0f7a814f06f7a5e6c29156f19b72bfa53dff326d5e43aa1532268ae0c0789c",
+      "unchanged": true
+    },
+    {
+      "manifest": "optimization/protected-inputs.sha256",
+      "path": "tools/deploy/mysql_test/test_suite/fts_index/t/create_table_with_fts_index.test",
+      "expected": "8093a58bdd27aec80ef5c2c917276d1fda6e42d5aba0fcb3eb28320fb9757631",
+      "actual": "8093a58bdd27aec80ef5c2c917276d1fda6e42d5aba0fcb3eb28320fb9757631",
+      "unchanged": true
+    },
+    {
+      "manifest": "optimization/protected-inputs.sha256",
+      "path": "tools/deploy/mysql_test/test_suite/fts_index/t/domain_id_merge_with_compare_null.test",
+      "expected": "b56cbbd56b397bcbf5933f1161b0e0222f916907f47c0cc0b3ef64e58fcf43f8",
+      "actual": "b56cbbd56b397bcbf5933f1161b0e0222f916907f47c0cc0b3ef64e58fcf43f8",
+      "unchanged": true
+    },
+    {
+      "manifest": "optimization/protected-inputs.sha256",
+      "path": "tools/deploy/mysql_test/test_suite/fts_index/t/drop_index.test",
+      "expected": "608f78bf27e8ca123deecdfb81fcec2274f275e2d3feb401516bf7429130087b",
+      "actual": "608f78bf27e8ca123deecdfb81fcec2274f275e2d3feb401516bf7429130087b",
+      "unchanged": true
+    },
+    {
+      "manifest": "optimization/protected-inputs.sha256",
+      "path": "tools/deploy/mysql_test/test_suite/fts_index/t/index_view.test",
+      "expected": "a1af056afd985fdcdd68ed07e509470276c0ebe12cb3b7fae126608d17d5b7c7",
+      "actual": "a1af056afd985fdcdd68ed07e509470276c0ebe12cb3b7fae126608d17d5b7c7",
+      "unchanged": true
+    },
+    {
+      "manifest": "optimization/protected-inputs.sha256",
+      "path": "tools/deploy/mysql_test/test_suite/fts_index/t/load_data.test",
+      "expected": "64ddd29b7c7294e685797775ad129928ce7b57fd78144e077e9c25b7a2691842",
+      "actual": "64ddd29b7c7294e685797775ad129928ce7b57fd78144e077e9c25b7a2691842",
+      "unchanged": true
+    },
+    {
+      "manifest": "optimization/protected-inputs.sha256",
+      "path": "tools/deploy/mysql_test/test_suite/fts_index/t/offline_ddl_with_fts_index.test",
+      "expected": "2fd4896d23ae6e63e5ff6ef01a9247383344e16a9f0fa13591f085d5a95f3acd",
+      "actual": "2fd4896d23ae6e63e5ff6ef01a9247383344e16a9f0fa13591f085d5a95f3acd",
+      "unchanged": true
+    },
+    {
+      "manifest": "optimization/protected-inputs.sha256",
+      "path": "tools/deploy/mysql_test/test_suite/fts_index/t/online_ddl_on_table_with_fts_index.test",
+      "expected": "9107859e21db32cca8be52e11ac5dc069f0f74cc935d44e3f7ad516fd2103b57",
+      "actual": "9107859e21db32cca8be52e11ac5dc069f0f74cc935d44e3f7ad516fd2103b57",
+      "unchanged": true
+    },
+    {
+      "manifest": "optimization/protected-inputs.sha256",
+      "path": "tools/deploy/mysql_test/test_suite/fts_index/t/parser_properties.test",
+      "expected": "ee487212fa2fcaf75f0892b50839b6c4309309d9853f16fc0b782685ebd732f6",
+      "actual": "ee487212fa2fcaf75f0892b50839b6c4309309d9853f16fc0b782685ebd732f6",
+      "unchanged": true
+    },
+    {
+      "manifest": "optimization/protected-inputs.sha256",
+      "path": "tools/deploy/mysql_test/test_suite/fts_index/t/partitioned_simple_query.test",
+      "expected": "8a7f49ddeb9dc53a0341b35f9bce98cf6b48ce8576701787a34394b8469bfaf9",
+      "actual": "8a7f49ddeb9dc53a0341b35f9bce98cf6b48ce8576701787a34394b8469bfaf9",
+      "unchanged": true
+    },
+    {
+      "manifest": "optimization/protected-inputs.sha256",
+      "path": "tools/deploy/mysql_test/test_suite/fts_index/t/simple_query.test",
+      "expected": "4786c566b8862bbbfab6a4b6de2f8940f41fed6aae943be020f83969617dcd07",
+      "actual": "4786c566b8862bbbfab6a4b6de2f8940f41fed6aae943be020f83969617dcd07",
+      "unchanged": true
+    },
+    {
+      "manifest": "optimization/protected-inputs.sha256",
+      "path": "tools/deploy/mysql_test/test_suite/fts_index/t/tokenize_function.test",
+      "expected": "5bae535df71416c3f82bf875b5fc08fe015a81bfcc814357c4400585992fc987",
+      "actual": "5bae535df71416c3f82bf875b5fc08fe015a81bfcc814357c4400585992fc987",
+      "unchanged": true
+    },
+    {
+      "manifest": "optimization/file-sql-baseline-20261101/protected-inputs.sha256",
+      "path": "tools/deploy/mysql_test/test_suite/file_sql/data/basic.csv",
+      "expected": "a7ec34e2f8af792f4eab88e021af5832cfcd5bfcc4daa42c976289853c5b9789",
+      "actual": "a7ec34e2f8af792f4eab88e021af5832cfcd5bfcc4daa42c976289853c5b9789",
+      "unchanged": true
+    },
+    {
+      "manifest": "optimization/file-sql-baseline-20261101/protected-inputs.sha256",
+      "path": "tools/deploy/mysql_test/test_suite/file_sql/data/basic.jsonl",
+      "expected": "caacf710d399ad1f397507d437ecfefb99ab97d21d70d4cb4f3615b402777ff8",
+      "actual": "caacf710d399ad1f397507d437ecfefb99ab97d21d70d4cb4f3615b402777ff8",
+      "unchanged": true
+    },
+    {
+      "manifest": "optimization/file-sql-baseline-20261101/protected-inputs.sha256",
+      "path": "tools/deploy/mysql_test/test_suite/file_sql/data/invalid.txt",
+      "expected": "8e23bc8948f0b1e94dd78fe8112ce56110bed0123095e79c93e9c9dd403e0146",
+      "actual": "8e23bc8948f0b1e94dd78fe8112ce56110bed0123095e79c93e9c9dd403e0146",
+      "unchanged": true
+    },
+    {
+      "manifest": "optimization/file-sql-baseline-20261101/protected-inputs.sha256",
+      "path": "tools/deploy/mysql_test/test_suite/file_sql/data/simple.parquet.b64",
+      "expected": "47f6dc957a4d4bed8ccb93b34048c7f1216b000388b01db2a788a3533a30c36f",
+      "actual": "47f6dc957a4d4bed8ccb93b34048c7f1216b000388b01db2a788a3533a30c36f",
+      "unchanged": true
+    },
+    {
+      "manifest": "optimization/file-sql-baseline-20261101/protected-inputs.sha256",
+      "path": "tools/deploy/mysql_test/test_suite/file_sql/include/copy_file_sql_data.inc",
+      "expected": "2afa1c16228e95e7ef66e1e8f708e7b3f293abbfe0c2e036aaa894a628ae5397",
+      "actual": "2afa1c16228e95e7ef66e1e8f708e7b3f293abbfe0c2e036aaa894a628ae5397",
+      "unchanged": true
+    },
+    {
+      "manifest": "optimization/file-sql-baseline-20261101/protected-inputs.sha256",
+      "path": "tools/deploy/mysql_test/test_suite/file_sql/include/remove_file_sql_data.inc",
+      "expected": "2ef6c6552603488a5af2cba50d473fbcff28771f04cc4ca0c90cec5b1494f286",
+      "actual": "2ef6c6552603488a5af2cba50d473fbcff28771f04cc4ca0c90cec5b1494f286",
+      "unchanged": true
+    },
+    {
+      "manifest": "optimization/file-sql-baseline-20261101/protected-inputs.sha256",
+      "path": "tools/deploy/mysql_test/test_suite/file_sql/r/mysql/file_sql_basic.result",
+      "expected": "9470b723a812113c47239aac604bfdf17738885c34bb47a8e40da25429d8c71f",
+      "actual": "9470b723a812113c47239aac604bfdf17738885c34bb47a8e40da25429d8c71f",
+      "unchanged": true
+    },
+    {
+      "manifest": "optimization/file-sql-baseline-20261101/protected-inputs.sha256",
+      "path": "tools/deploy/mysql_test/test_suite/file_sql/t/file_sql_basic.test",
+      "expected": "64d864215ada8c94a12a85ea71573ad8b1fb13ebaf70f4dc4765b544162da0d2",
+      "actual": "64d864215ada8c94a12a85ea71573ad8b1fb13ebaf70f4dc4765b544162da0d2",
+      "unchanged": true
+    }
+  ]
+}

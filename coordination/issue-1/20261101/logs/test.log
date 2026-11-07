@@ -1,0 +1,17 @@
+COMMAND: D:/conda/python.exe coordination/issue-1/20261101/verify_packet.py
+{
+  "native_source_files": 38,
+  "pending_source_files": 5,
+  "protected_manifest_entries": "53/53",
+  "historical_archives_reverified": 2,
+  "parked_source_files_preserved": 3,
+  "README_sections": 8,
+  "scope": "coordination only; no new runtime results",
+  "old_fts_required_logs_present": {
+    "build.log": true,
+    "verify.log": true,
+    "test.log": true,
+    "notes.log": true
+  }
+}
+exit_code=0

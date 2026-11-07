@@ -1,0 +1,30 @@
+Scope decision: user assigned this chat issue1 coordination, another agent full
+issues2/6; user then requested completion and a stop pending further tasks.
+Previous feature-level split and proposed separate2883 implementation are revoked.
+No product implementation was resumed after that reassignment.
+
+Read-only snapshot is limited to18:00:10+08, HEADdade8da and the captured working
+patch. Current/future implementation-owner changes are outside this acceptance.
+Do not replay capture_evidence.py into the same packet (mkdir refuses overwrite).
+
+First verify_packet.py execution exited1: Windows defaultGBK could not decode
+UTF8 issue JSON. Added explicitUTF8 reads; no input was changed to force success.
+Second execution exited1: the historical CSV checkpoint uses protected_csv_branch,
+whereas JSONL uses protected_branch. Corrected the verifier to use each existing
+schema explicitly, preserving both checkpoint files. Third execution exited0.
+The subsequent logged verification rerun is an archive/doc consistency check,
+not a repeated performance experiment or fresh product test.
+
+Native raw build and runner evidence are incomplete in the captured handoff.
+Two static DESCRIBE defects and three delivery gaps are recorded in REVIEW.md.
+All historical failures, old handoff material and parked Windows product diff
+remain intact. No attempt was made to fix, reset or revert the implementation
+owner's shared tree after the user established separate responsibilities.
+
+Local coordination deliverable completion does not close GitHub issue1, accept
+issues2/6, establish a competition score or authorize formal submission.
+Stop after final local checkpoint; wait for the user's next task.
+
+Initial staged whitespace check exited2 because PowerShell serialized our STATE.json
+with CRLF while staging explicitly disabled autocrlf. Normalized only the owned
+coordination status/log text to LF; raw native source backups remain untouched.

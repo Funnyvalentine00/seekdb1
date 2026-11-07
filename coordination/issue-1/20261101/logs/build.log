@@ -1,0 +1,5 @@
+No product build was requested or run for this coordination-only deliverable.
+COMMAND: D:/conda/python.exe -c
+from pathlib import Path; import ast; paths=list(Path('coordination/issue-1/20261101').glob('*.py')); [ast.parse(p.read_text(encoding='utf-8'), filename=str(p)) for p in paths]; print('Python syntax verified:',len(paths),'scripts')
+Python syntax verified: 3 scripts
+exit_code=0

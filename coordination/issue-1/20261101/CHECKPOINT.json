@@ -1,0 +1,19 @@
+{
+  "created_at": "2026-11-01T18:08:27.304904+08:00",
+  "commit": "4aa7f376f9a3e7d584fe50e2a13bc161d51f2846",
+  "branch": "codex/issue-1-coordination-20261101",
+  "scope": "issue1 coordination only",
+  "status": "local coordination deliverable complete; waiting for user",
+  "issues2_and6_accepted": false,
+  "remote_issue_closed": false,
+  "remote_writes": false,
+  "product_build_or_sql_this_round": false,
+  "pending_describe_work_preserved": true,
+  "native_owner_workspace_untouched": true,
+  "next_action": "Do not resume automatically; wait for explicit next task.",
+  "archive": "C:\\Users\\xiaziihan\\Documents\\ChatGPT\\ocean base\u6570\u636e\u5e93\u5927\u8d5b\\artifacts\\coordination\\issue1-checkpoint-20261101T180827+0800.zip",
+  "sha256": "b5a70927d3e3668581b17ae8e6e6c539cb52987e476e1071ca6d271316103cdd",
+  "members": 91,
+  "bytes": 882624,
+  "crc_and_per_file_sha256_verified": true
+}
