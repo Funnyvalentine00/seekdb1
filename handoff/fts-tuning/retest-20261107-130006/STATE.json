@@ -1,0 +1,48 @@
+{
+  "started_at": "2026-11-07T13:00:06+08:00",
+  "working_head": "a00ff8c1d724cfe12f0d5b7e9f536c5490104d5c",
+  "branch": "feat/fts-opt-v5",
+  "product_reference": "194150497aca9a69e395317bd6d5a64f26340a61",
+  "reference_binary_sha256": "9544ca38c4d6cc336adb079f362eff1fa220739d58ce70bc2d0f1d948d5ade32",
+  "authorization": "user authorized pushing and testing; earlier no-push constraint superseded for this task",
+  "publication_plan": {
+    "evidence_branch": "feat/fts-opt-v5",
+    "verification_branch": "feat/fts-opt-v4-verify",
+    "verification_ref": "194150497aca9a69e395317bd6d5a64f26340a61",
+    "base": "feat/seekdb-all",
+    "no_merge": true,
+    "non_force_push_only": true
+  },
+  "environment": {
+    "legion_ssh_port": 2222,
+    "user": "xiazihan",
+    "host_power_online": true,
+    "host_active_plan": "381b4222-f694-41f0-9685-ff5bb260df2e",
+    "host_plan_name": "balanced",
+    "existing_plan_count": 1,
+    "host_cpu_load_pct_observed": 16,
+    "host_vendor_performance_state": "unconfirmed",
+    "windows_D_free_GiB": 140.44,
+    "linux_free_GiB": 472.38,
+    "memory_available_GiB": 14.25,
+    "test_ports_2920_2917_empty": true,
+    "tmux_empty": true
+  },
+  "measurements": {
+    "same_version_pairs_max": 2,
+    "new_product_experiments": 0,
+    "cumulative_experiments_used": 1,
+    "experiment_budget_total": 8,
+    "new_formal_candidate_pairs": 0
+  },
+  "known_ci_limits": {
+    "fork_actions_runs_observed": 0,
+    "previous_pr13_benchmark_comment_has_no_visible_checks": true,
+    "seekdb_workflow_owner_guard": "oceanbase",
+    "seekdb_workflow_pr_base_filters": [
+      "master",
+      "develop"
+    ]
+  },
+  "status": "P0, publication preparation; waiting for confirmed performance settings before new A/A"
+}

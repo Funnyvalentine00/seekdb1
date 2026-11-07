@@ -1,0 +1,34 @@
+{
+  "pr_number": 15,
+  "pr_url": "https://github.com/Funnyvalentine00/seekdb1/pull/15",
+  "head": "194150497aca9a69e395317bd6d5a64f26340a61",
+  "comment_url": "https://github.com/Funnyvalentine00/seekdb1/pull/15#issuecomment-6702650815",
+  "comment": "/benchmark",
+  "checks": {
+    "content": "{\"total_count\":0,\"check_runs\":[]}",
+    "title": "check-runs",
+    "modified_date": null,
+    "url": "https://api.github.com/repos/Funnyvalentine00/seekdb1/commits/194150497aca9a69e395317bd6d5a64f26340a61/check-runs",
+    "display_url": "https://api.github.com/repos/Funnyvalentine00/seekdb1/commits/194150497aca9a69e395317bd6d5a64f26340a61/check-runs",
+    "display_title": "check-runs",
+    "structuredContent": {
+      "title": "check-runs",
+      "content": "{\"total_count\":0,\"check_runs\":[]}",
+      "display_url": "https://api.github.com/repos/Funnyvalentine00/seekdb1/commits/194150497aca9a69e395317bd6d5a64f26340a61/check-runs"
+    }
+  },
+  "runs": {
+    "content": "{\"total_count\":0,\"workflow_runs\":[]}",
+    "title": "runs",
+    "modified_date": null,
+    "url": "https://api.github.com/repos/Funnyvalentine00/seekdb1/actions/runs?head_sha=194150497aca9a69e395317bd6d5a64f26340a61&per_page=20",
+    "display_url": "https://api.github.com/repos/Funnyvalentine00/seekdb1/actions/runs?head_sha=194150497aca9a69e395317bd6d5a64f26340a61&per_page=20",
+    "display_title": "runs",
+    "structuredContent": {
+      "title": "runs",
+      "content": "{\"total_count\":0,\"workflow_runs\":[]}",
+      "display_url": "https://api.github.com/repos/Funnyvalentine00/seekdb1/actions/runs?head_sha=194150497aca9a69e395317bd6d5a64f26340a61&per_page=20"
+    }
+  },
+  "interpretation": "test request accepted and read back; no check runs or Actions workflow runs observed so far"
+}

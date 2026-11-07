@@ -1,0 +1,18 @@
+{
+  "verification_branch": "feat/fts-opt-v4-verify",
+  "verification_sha": "194150497aca9a69e395317bd6d5a64f26340a61",
+  "evidence_branch": "feat/fts-opt-v5",
+  "evidence_sha": "a00ff8c1d724cfe12f0d5b7e9f536c5490104d5c",
+  "push_verified_with_ls_remote": true,
+  "pr_number": 15,
+  "pr_url": "https://github.com/Funnyvalentine00/seekdb1/pull/15",
+  "base": "feat/seekdb-all",
+  "draft": false,
+  "benchmark_comment_url": "https://github.com/Funnyvalentine00/seekdb1/pull/15#issuecomment-6702650815",
+  "benchmark_comment_readback": "/benchmark",
+  "ci_job_started": false,
+  "ci_job_started_note": "not yet observed; verify separately at closeout",
+  "user_confirmed_highest_performance_and_idle": true,
+  "source_changes": 0,
+  "new_product_experiments": 0
+}

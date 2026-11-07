@@ -1,0 +1,62 @@
+{
+  "node_root": "/home/xiazihan/benchmark/fts-v4-integration-20261106",
+  "session": "retest-20261107-130006",
+  "source_product_sha": "194150497aca9a69e395317bd6d5a64f26340a61",
+  "reference": {
+    "path": "/home/xiazihan/benchmark/fts-v4-integration-20261106/saved-binaries/seekdb-fixed",
+    "sha256": "9544ca38c4d6cc336adb079f362eff1fa220739d58ce70bc2d0f1d948d5ade32"
+  },
+  "files": {
+    "src/observer/composition/retrieval/ob_das_legacy_tr_merge_iter.cpp": "bab6058eece1b7b088c5dd305185014aeb5dd13bda219a419714e14f098053a3",
+    "src/sql/das/iter/ob_das_iter_utils.cpp": "a2efe05f0e29882990f39643ddb69bb0a7614601e0b1f077828bcdc7d6eb67db",
+    "src/sql/engine/expr/ob_expr_tokenize.cpp": "14a11888c07d96e088e5d0dd3ddc8f621080e8cad0691c16a0196225177a665c",
+    "src/sql/engine/table/ob_table_scan_op.cpp": "2980b941e9f112880d1f7653310457557d3f52650187b4b9be63bd894f54a732",
+    "src/sql/engine/table/ob_table_scan_op.h": "15543386319606d535eb58c3a85d225af8a81f1bce65eab5c16a74afbd8a09c7",
+    "src/sql/optimizer/ob_log_plan.cpp": "dead8409814701af276630f1f848b257c581182ca9f48fc8705aef30e348e2e0",
+    "src/sql/rewrite/ob_transform_utils.cpp": "c5d9b5e6124d58be4a8d12dfefc95e57d858fade7d7f57e5b2ea8c16572667a8",
+    "src/sql/rewrite/ob_transform_utils.h": "bc0f5c8a74c4759ba8643849af095e2b2bb682263415109dcf5976beaccdadef",
+    "src/storage/fts/dict/ob_ft_cache.h": "5644512b65e9c7e1f622308529931d26cf08c474c959d20621bc0f73e3f1b206",
+    "src/storage/fts/dict/ob_ft_dat_dict.cpp": "b4ea623a0669c3e0f4021aff5c1e8e583f829eb87087ea40f9fd6406b809ec3b",
+    "src/storage/fts/dict/ob_ft_dict_hub.cpp": "712ac1cce4f15d493c83882f5d24e857134212764140590e2db2b83bb8840c92",
+    "src/storage/fts/dict/ob_ft_range_dict.cpp": "9e438e3f0dc83e576542fce433e1776a901a9f9d8e328d61940aa49276086f99",
+    "src/storage/fts/ob_fts_parser_helper.cpp": "53db8c0dd8a1686b02d6d11d59ba6874c60f3f3ba8211a6c092364b1ff3b3721",
+    "src/storage/fts/ob_fts_stop_word.cpp": "467903a9f748d2e7e31aee0840a0cabddfba01932ef8f08ece82a80ac6967009",
+    "src/storage/retrieval/ob_sparse_bmw_iter.cpp": "98ec55dbf1933ec69d29bd9a1dfe8d64a41908cf25476363439b865a20a8bac7",
+    "src/storage/retrieval/ob_sparse_bmw_iter.h": "5a70730128415d4a3d054b03c375e047d8941ae90494985328e75de2a1ee02c3",
+    "src/storage/retrieval/ob_sparse_daat_iter.cpp": "88b659bbefa02569799b959ee9241fea866604b6e39f7ef11e765d7de1fce7b8",
+    "src/storage/retrieval/ob_sparse_daat_iter.h": "3aaac94c2a1bb45603e1749a13e5b1b61eb3f59bd21bad37629bc074fc7fb97d",
+    "src/storage/retrieval/ob_sparse_utils.h": "2a88ee1271b333e1e074e20b19878451a40069a6e940f4796423000f3e192d23",
+    "src/storage/retrieval/ob_text_daat_iter.cpp": "421f7888e8e35cb8ce47308394d62a0c322fd779426546f8533bee3ef68d2626",
+    "src/storage/retrieval/ob_text_retrieval_token_iter.cpp": "6c3dfb9bfffd3239186509ac8a07aae4d6369f904d7de646737e21ce20218cf8",
+    "src/storage/retrieval/ob_text_retrieval_token_iter.h": "d1af25c27ce857059c858f3ce625bd6ca6165d401c3332e009e0c876c8558f23",
+    "tools/benchmark/fts_large_bench.sh": "596ea5d1c0038e666b78aa94bef22d2dfb87ffc9e84dbc7e2a1da1f746424462",
+    "tools/benchmark/fts_large_bench_baseline.json": "f4e97eddb2e49c982b967fc8047f7cf37177eebe53d648f6746d85aacda91f0c",
+    "tools/benchmark/fts_large_bench_gen.py": "b0c816dd8211ac0471f60b72a37a3fb5c62580357a5b6d7ac95f5a8c2e3f143d",
+    "tools/benchmark/fts_large_bench_score.py": "bea52eb1c68d05693bb3ac5b910ab0e2fa0e70e01582f40466898ee1e2e3ef55",
+    "tools/benchmark/fts_large_bench_setup.sql": "311826751df7f51ac45156fb4284aeca9bd9197370aceb88f4fb92832b458108"
+  },
+  "port": 2920,
+  "server_cpus": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "client_cpu": 4,
+  "profile_perf": "/usr/lib/linux-tools/5.15.0-202-generic/perf",
+  "profile_cpu_event": "cpu-clock:u",
+  "host_cpu_max_percent": 15,
+  "aa_abs_pair_delta_limit_pct": 2,
+  "aa_rss_pair_delta_limit_pct": 2,
+  "aa_9_guardrail_pair_delta_limit_pct": 1,
+  "deadline": "2026-11-07T17:00:06+08:00",
+  "backend_sha256": "f822dddd5e2331d5ebc1ae34cf80425de73a5dd3e57c52ac702ee805b738b0c9",
+  "performance_setup_user_confirmed": true,
+  "performance_setup_description": "User reports highest performance setting and idle host; vendor setting not directly observable",
+  "tail_calibration_limits_pct": {
+    "p95": 5,
+    "p99": 10
+  },
+  "new_product_experiments": 0,
+  "data_policy": "one new owned data directory, reused after normal SIGUSR1 exit; no old data modified"
+}

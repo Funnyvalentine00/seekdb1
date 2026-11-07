@@ -1,0 +1,14 @@
+{
+  "v4": {
+    "head": "f5fe975382f4b151f7181a70d7f7e05ff9b234fd",
+    "status": "## feat/fts-opt-v4\n M src/sql/engine/file_sql/csv_reader.cpp\n M src/sql/engine/file_sql/file_sql_scan.cpp\n"
+  },
+  "v3": {
+    "head": "7accd1ace8ee5d035b3ef8aaf426c46b1d0a595e",
+    "status": "## feat/fts-opt-v3\n M src/sql/engine/file_sql/csv_reader.cpp\n M src/sql/engine/file_sql/file_sql_scan.cpp\n"
+  },
+  "v4_patch_sha256": {
+    "src/sql/engine/file_sql/csv_reader.cpp": "a0f9230f7b509c6fa986917e1981ab03f510a570f2e31407b21dc5be087738f1",
+    "src/sql/engine/file_sql/file_sql_scan.cpp": "35102c1ed61378205ba145fd4642b0c11adddbb123671f5a0e07f59165d1703f"
+  }
+}

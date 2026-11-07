@@ -1,0 +1,14 @@
+{
+  "node_session": "/home/xiazihan/benchmark/fts-v4-integration-20261106/retest-20261107-130006",
+  "tmux": "fts-power-130006",
+  "transferred_files": [
+    "run_calibration.py",
+    "reference_backend.py",
+    "reference-manifest.json",
+    "workloads.json",
+    "launch.sh",
+    "transfer-manifest.json"
+  ],
+  "binary_transfers": 0,
+  "builds": 0
+}
