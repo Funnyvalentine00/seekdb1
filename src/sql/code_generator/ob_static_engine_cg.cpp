@@ -5487,6 +5487,22 @@ int ObStaticEngineCG::generate_spec(ObLogSelectInto &op, ObSelectIntoSpec &spec,
       spec.parallel_ = op.get_parallel();
       spec.is_overwrite_ = op.get_is_overwrite();
       spec.plan_->need_drive_dml_query_ = true;
+      spec.with_header_ = op.get_with_header();
+      if (op.get_null_string().empty() || OB_FAIL(ob_write_string(alloc, op.get_null_string(), spec.null_string_))) {
+      } else if (spec.with_header_ && op.get_stmt() != nullptr && op.get_stmt()->is_select_stmt()) {
+        const ObSelectStmt *select_stmt = static_cast<const ObSelectStmt *>(op.get_stmt());
+        const int64_t count = select_stmt->get_select_item_size();
+        if (OB_FAIL(spec.header_names_.init(count))) {
+        }
+        for (int64_t i = 0; OB_SUCC(ret) && i < count; ++i) {
+          const SelectItem &item = select_stmt->get_select_item(i);
+          ObString name = item.alias_name_.empty() ? item.expr_name_ : item.alias_name_;
+          ObString copied;
+          if (OB_FAIL(ob_write_string(alloc, name, copied))) {
+          } else if (OB_FAIL(spec.header_names_.push_back(copied))) {
+          }
+        }
+      }
     }
   }
   return ret;
@@ -5571,6 +5587,8 @@ int ObStaticEngineCG::generate_spec(ObLogJsonTable &op, ObJsonTableSpec &spec,
     spec.table_type_ = op.get_table_type();  // table func type
 
     if (OB_FAIL(spec.dup_origin_column_defs(op.get_origin_cols_def()))) {
+    } else if (spec.table_type_ == OB_FILE_CSV_TABLE_TYPE || spec.table_type_ == OB_FILE_JSONL_TABLE_TYPE) {
+      for (int64_t i = 0; i < spec.cols_def_.count(); ++i) spec.cols_def_.at(i)->output_column_idx_ = -1;
     }
 
     for (int64_t i = 0; OB_SUCC(ret) && i < op.get_output_exprs().count(); ++i) {
