@@ -1,0 +1,94 @@
+{
+  "reference": "9544ca38c4d6cc336adb079f362eff1fa220739d58ce70bc2d0f1d948d5ade32",
+  "cache_binary": "c4e7ab457eed8e1c0a3fcdb818953c2836f59b137beaa2f44a3077f34e964faf",
+  "sealed_diagnostic": "c4e7ab457eed8e1c0a3fcdb818953c2836f59b137beaa2f44a3077f34e964faf",
+  "source_mismatches": [],
+  "ports": {
+    "rc": 0,
+    "out": "",
+    "err": ""
+  },
+  "tmux": {
+    "rc": 1,
+    "out": "",
+    "err": "no server running on /tmp/tmux-1001/default"
+  },
+  "guard": {
+    "rc": 0,
+    "out": "RESOURCE_GUARD {\"host_D_free_GiB\": 140.44, \"linux_free_GiB\": 474.57, \"memory_available_GiB\": 14.25}",
+    "err": ""
+  },
+  "node_zone": {
+    "rc": 0,
+    "out": "+0800",
+    "err": ""
+  },
+  "source_manifest_sha256": "85a27f88bd681b641dcb0d94e4af1ede26e6b565bae4bc9aa30e5958e9af0656",
+  "owned_data": [
+    {
+      "tag": "cold-instrumented",
+      "pid": 22875,
+      "server_rc": -9,
+      "path": "/home/xiazihan/benchmark/fts-v4-integration-20261106/data/n104032-cold-instrumented",
+      "exists": true,
+      "owner_marker": true,
+      "bytes_allocated": 2321252352
+    },
+    {
+      "tag": "cold1",
+      "pid": 20711,
+      "server_rc": 1,
+      "path": "/home/xiazihan/benchmark/fts-v4-integration-20261106/next-cycle-20261107-104032/cold1/data",
+      "exists": true,
+      "owner_marker": true,
+      "bytes_allocated": 2289852416
+    },
+    {
+      "tag": "cold2",
+      "pid": 21021,
+      "server_rc": -9,
+      "path": "/home/xiazihan/benchmark/fts-v4-integration-20261106/next-cycle-20261107-104032/cold2/data",
+      "exists": true,
+      "owner_marker": true,
+      "bytes_allocated": 2322468864
+    },
+    {
+      "tag": "final-reference",
+      "pid": 23111,
+      "server_rc": -9,
+      "path": "/home/xiazihan/benchmark/fts-v4-integration-20261106/next-cycle-20261107-104032/final-reference/data",
+      "exists": true,
+      "owner_marker": true,
+      "bytes_allocated": 2781925376
+    },
+    {
+      "tag": "w2-aa1a",
+      "pid": 21460,
+      "server_rc": -9,
+      "path": "/home/xiazihan/benchmark/fts-v4-integration-20261106/next-cycle-20261107-104032/w2-aa1a/data",
+      "exists": true,
+      "owner_marker": true,
+      "bytes_allocated": 2325065728
+    },
+    {
+      "tag": "w2-aa1b",
+      "pid": 21782,
+      "server_rc": -9,
+      "path": "/home/xiazihan/benchmark/fts-v4-integration-20261106/next-cycle-20261107-104032/w2-aa1b/data",
+      "exists": true,
+      "owner_marker": true,
+      "bytes_allocated": 2324774912
+    },
+    {
+      "tag": "w2-aa2b",
+      "pid": 22102,
+      "server_rc": -9,
+      "path": "/home/xiazihan/benchmark/fts-v4-integration-20261106/next-cycle-20261107-104032/w2-aa2b/data",
+      "exists": true,
+      "owner_marker": true,
+      "bytes_allocated": 2325041152
+    }
+  ],
+  "active_owned_processes": [],
+  "final_shutdown_markers": []
+}

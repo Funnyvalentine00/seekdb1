@@ -1,0 +1,15 @@
+{
+  "strace": "/usr/bin/strace",
+  "ss": "",
+  "unix_dir": "/home/xiazihan/benchmark/fts-v4-integration-20261106/next-cycle-20261107-104032/cold1/data/run",
+  "unix_dir_exists": true,
+  "unix_sql_sock_exists": false,
+  "max_len": 103,
+  "0.0.0.0": "bind ok",
+  "::": "bind ok",
+  "failure_markers": [
+    "[2026-11-07 10:50:28.884661] INFO  [STORAGE] check_if_schema_ready (ob_server.cpp:1482) [20711][seekdb-fixed][Y0-0000000000000000-0-0] [lt=2] [server_start 13/14] wait schema ready success.",
+    "[2026-11-07 10:50:28.897422] EDIAG [RPC.OBMYSQL] start (ob_sql_nio_server.cpp:146) [20711][seekdb-fixed][Y0-0000000000000000-0-0] [lt=1][errcode=-4016] nio_start failed(ret=-4016, port=2920, start_err=5, disable_tcp=false, use_tls=false)",
+    "[2026-11-07 10:50:28.897474] EDIAG [STORAGE] start (ob_server.cpp:1329) [20711][seekdb-fixed][Y0-0000000000000000-0-0] [lt=14][errcode=-4016] fail to start net frame(ret=-4016, ret=\"OB_ERR_UNEXPECTED\")"
+  ]
+}

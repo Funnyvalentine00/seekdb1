@@ -1,0 +1,41 @@
+{
+  "cold_runs": [
+    {
+      "tag": "cold2",
+      "binary": "9544ca38c4d6cc336adb079f362eff1fa220739d58ce70bc2d0f1d948d5ade32",
+      "cold_elapsed_seconds": 5.577047496,
+      "warm_elapsed_seconds": 4.073828367,
+      "pre_ddl_hwm_mib": 253.37109375,
+      "peak_rss_mib": 419.5546875,
+      "peak_hwm_offset_s": 4.40439586,
+      "dictionary_done_offset_s": 1.0778932571411133,
+      "sql_memory_labels": [
+        "KvstorCacheMb"
+      ]
+    },
+    {
+      "tag": "cold-instrumented",
+      "binary": "c4e7ab457eed8e1c0a3fcdb818953c2836f59b137beaa2f44a3077f34e964faf",
+      "cold_elapsed_seconds": 5.157078042,
+      "warm_elapsed_seconds": 3.727329459,
+      "pre_ddl_hwm_mib": 268.6640625,
+      "peak_rss_mib": 440.43359375,
+      "peak_hwm_offset_s": 0.786722337,
+      "dictionary_done_offset_s": 0.5179200172424316,
+      "sql_memory_labels": [
+        "KvstorCacheMb"
+      ],
+      "main_trie_used_bytes": 39695296,
+      "main_trie_total_bytes": 39918080,
+      "main_dat_sum_total_bytes": 26410518,
+      "main_cache_copy_payload_bytes": 26362620,
+      "expansions_observed": 0
+    }
+  ],
+  "p3_a": "SKIPPED_INSUFFICIENT_PEAK_ATTRIBUTION",
+  "cold_startup_attempts": 3,
+  "valid_cold_measurements": 2,
+  "view_limitation": "SQL allocator view returned KvstorCacheMb zero only.",
+  "allocation_interpretation": "Arena totals and cache copy payload have different lifetimes. Sum across six builders is not measured simultaneous memory.",
+  "retained_allocator_pages_and_later_index_stages": "UNRESOLVED"
+}

@@ -1,0 +1,141 @@
+{
+  "user": {
+    "rc": 0,
+    "out": "xiazihan",
+    "err": ""
+  },
+  "os": {
+    "rc": 0,
+    "out": "Linux 6.18.33.2-microsoft-standard-WSL2 x86_64 GNU/Linux",
+    "err": ""
+  },
+  "guard": {
+    "rc": 0,
+    "out": "RESOURCE_GUARD {\"host_D_free_GiB\": 140.44, \"linux_free_GiB\": 491.37, \"memory_available_GiB\": 14.26}",
+    "err": ""
+  },
+  "mount": {
+    "rc": 0,
+    "out": "rw,relatime,discard,errors=remount-ro,data=ordered",
+    "err": ""
+  },
+  "disk": {
+    "rc": 0,
+    "out": "Filesystem      Size  Used Avail Use% Mounted on\n/dev/sdd       1007G  465G  492G  49% /",
+    "err": ""
+  },
+  "cmake": {
+    "rc": 0,
+    "out": "cmake version 3.22.1\n\nCMake suite maintained and supported by Kitware (kitware.com/cmake).",
+    "err": ""
+  },
+  "cmake_cache": [
+    "CMAKE_BUILD_TYPE:STRING=RelWithDebInfo",
+    "CMAKE_CXX_FLAGS_RELWITHDEBINFO:STRING=-O2 -g -DNDEBUG",
+    "CMAKE_PROJECT_INCLUDE:UNINITIALIZED=/home/xiazihan/benchmark/fts-v4-integration-20261106/conservative_link.cmake"
+  ],
+  "compilers": {
+    "/home/xiazihan/benchmark/fts-v4-integration-20261106/src/deps/3rd/usr/local/oceanbase/devtools/bin/clang++-17": {
+      "rc": 0,
+      "out": "clang version 17.0.6 (git@gitlab.oceanbase-dev.com:oceanbase-ce-publish/ob-deps.git e363299bcdda429f8e7c00590d1dfeac7656ad3c)\nTarget: x86_64-unknown-linux-gnu\nThread model: posix\nInstalledDir: /home/xiazihan/benchmark/fts-v4-integration-20261106/src/deps/3rd/usr/local/oceanbase/devtools/bin",
+      "err": ""
+    }
+  },
+  "rust": {
+    "rc": 0,
+    "out": "rustc 1.98.1 (48a229cea 2026-09-01)",
+    "err": ""
+  },
+  "cargo": {
+    "rc": 0,
+    "out": "cargo 1.98.1 (797e8a9bc 2026-08-05)",
+    "err": ""
+  },
+  "reference": "/home/xiazihan/benchmark/fts-v4-integration-20261106/saved-binaries/seekdb-fixed",
+  "ref_sha256": "9544ca38c4d6cc336adb079f362eff1fa220739d58ce70bc2d0f1d948d5ade32",
+  "source_manifest_sha256": "85a27f88bd681b641dcb0d94e4af1ede26e6b565bae4bc9aa30e5958e9af0656",
+  "sources": {
+    "src/observer/composition/retrieval/ob_das_legacy_tr_merge_iter.cpp": "bab6058eece1b7b088c5dd305185014aeb5dd13bda219a419714e14f098053a3",
+    "src/sql/das/iter/ob_das_iter_utils.cpp": "a2efe05f0e29882990f39643ddb69bb0a7614601e0b1f077828bcdc7d6eb67db",
+    "src/sql/engine/expr/ob_expr_tokenize.cpp": "14a11888c07d96e088e5d0dd3ddc8f621080e8cad0691c16a0196225177a665c",
+    "src/sql/engine/table/ob_table_scan_op.cpp": "2980b941e9f112880d1f7653310457557d3f52650187b4b9be63bd894f54a732",
+    "src/sql/engine/table/ob_table_scan_op.h": "15543386319606d535eb58c3a85d225af8a81f1bce65eab5c16a74afbd8a09c7",
+    "src/sql/optimizer/ob_log_plan.cpp": "dead8409814701af276630f1f848b257c581182ca9f48fc8705aef30e348e2e0",
+    "src/sql/rewrite/ob_transform_utils.cpp": "c5d9b5e6124d58be4a8d12dfefc95e57d858fade7d7f57e5b2ea8c16572667a8",
+    "src/sql/rewrite/ob_transform_utils.h": "bc0f5c8a74c4759ba8643849af095e2b2bb682263415109dcf5976beaccdadef",
+    "src/storage/fts/dict/ob_ft_cache.h": "5644512b65e9c7e1f622308529931d26cf08c474c959d20621bc0f73e3f1b206",
+    "src/storage/fts/dict/ob_ft_dat_dict.cpp": "b4ea623a0669c3e0f4021aff5c1e8e583f829eb87087ea40f9fd6406b809ec3b",
+    "src/storage/fts/dict/ob_ft_dict_hub.cpp": "712ac1cce4f15d493c83882f5d24e857134212764140590e2db2b83bb8840c92",
+    "src/storage/fts/dict/ob_ft_range_dict.cpp": "9e438e3f0dc83e576542fce433e1776a901a9f9d8e328d61940aa49276086f99",
+    "src/storage/fts/ob_fts_parser_helper.cpp": "53db8c0dd8a1686b02d6d11d59ba6874c60f3f3ba8211a6c092364b1ff3b3721",
+    "src/storage/fts/ob_fts_stop_word.cpp": "467903a9f748d2e7e31aee0840a0cabddfba01932ef8f08ece82a80ac6967009",
+    "src/storage/retrieval/ob_sparse_bmw_iter.cpp": "98ec55dbf1933ec69d29bd9a1dfe8d64a41908cf25476363439b865a20a8bac7",
+    "src/storage/retrieval/ob_sparse_bmw_iter.h": "5a70730128415d4a3d054b03c375e047d8941ae90494985328e75de2a1ee02c3",
+    "src/storage/retrieval/ob_sparse_daat_iter.cpp": "88b659bbefa02569799b959ee9241fea866604b6e39f7ef11e765d7de1fce7b8",
+    "src/storage/retrieval/ob_sparse_daat_iter.h": "3aaac94c2a1bb45603e1749a13e5b1b61eb3f59bd21bad37629bc074fc7fb97d",
+    "src/storage/retrieval/ob_sparse_utils.h": "2a88ee1271b333e1e074e20b19878451a40069a6e940f4796423000f3e192d23",
+    "src/storage/retrieval/ob_text_daat_iter.cpp": "421f7888e8e35cb8ce47308394d62a0c322fd779426546f8533bee3ef68d2626",
+    "src/storage/retrieval/ob_text_retrieval_token_iter.cpp": "6c3dfb9bfffd3239186509ac8a07aae4d6369f904d7de646737e21ce20218cf8",
+    "src/storage/retrieval/ob_text_retrieval_token_iter.h": "d1af25c27ce857059c858f3ce625bd6ca6165d401c3332e009e0c876c8558f23",
+    "tools/benchmark/fts_large_bench.sh": "596ea5d1c0038e666b78aa94bef22d2dfb87ffc9e84dbc7e2a1da1f746424462",
+    "tools/benchmark/fts_large_bench_baseline.json": "f4e97eddb2e49c982b967fc8047f7cf37177eebe53d648f6746d85aacda91f0c",
+    "tools/benchmark/fts_large_bench_gen.py": "b0c816dd8211ac0471f60b72a37a3fb5c62580357a5b6d7ac95f5a8c2e3f143d",
+    "tools/benchmark/fts_large_bench_score.py": "bea52eb1c68d05693bb3ac5b910ab0e2fa0e70e01582f40466898ee1e2e3ef55",
+    "tools/benchmark/fts_large_bench_setup.sql": "311826751df7f51ac45156fb4284aeca9bd9197370aceb88f4fb92832b458108"
+  },
+  "ports": {
+    "rc": 0,
+    "out": "",
+    "err": ""
+  },
+  "tmux": {
+    "rc": 1,
+    "out": "",
+    "err": "no server running on /tmp/tmux-1001/default"
+  },
+  "top_cpu": {
+    "rc": 0,
+    "out": "PID COMMAND         STAT %CPU %MEM\n  20538 python3         Ss   39.0  0.0\n      1 systemd         Ss    0.0  0.0\n      2 init-systemd(Ub Sl+   0.0  0.0\n      7 init            Sl+   0.0  0.0\n     61 systemd-journal S<s   0.0  0.1\n     86 systemd-udevd   Ss    0.0  0.0\n     90 systemd-resolve Ss    0.0  0.0\n     91 systemd-timesyn Ssl   0.0  0.0\n    178 cron            Ss    0.0  0.0\n    180 dbus-daemon     Ss    0.0  0.0\n    186 networkd-dispat Ss    0.0  0.1\n    189 rsyslogd        Ssl   0.0  0.0\n    193 systemd-logind  Ss    0.0  0.0\n    217 agetty          Ss+   0.0  0.0\n    225 sshd            Ss    0.0  0.0\n    276 unattended-upgr Ssl   0.0  0.1\n    302 containerd      Ssl   0.0  0.2",
+    "err": ""
+  },
+  "cpu_topology": {
+    "rc": 0,
+    "out": "CPU CORE SOCKET NODE ONLINE\n  0    0      0    0    yes\n  1    1      0    0    yes\n  2    2      0    0    yes\n  3    3      0    0    yes\n  4    4      0    0    yes\n  5    5      0    0    yes\n  6    6      0    0    yes\n  7    7      0    0    yes\n  8    8      0    0    yes\n  9    9      0    0    yes\n 10   10      0    0    yes\n 11   11      0    0    yes\n 12   12      0    0    yes\n 13   13      0    0    yes\n 14   14      0    0    yes\n 15   15      0    0    yes\n 16   16      0    0    yes\n 17   17      0    0    yes\n 18   18      0    0    yes\n 19   19      0    0    yes\n 20   20      0    0    yes\n 21   21      0    0    yes\n 22   22      0    0    yes\n 23   23      0    0    yes",
+    "err": ""
+  },
+  "cpus": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23
+  ],
+  "perf": {
+    "rc": 2,
+    "out": "",
+    "err": "WARNING: perf not found for kernel 6.18.33.2-microsoft\n\n  You may need to install the following packages for this specific kernel:\n    linux-tools-6.18.33.2-microsoft-standard-WSL2\n    linux-cloud-tools-6.18.33.2-microsoft-standard-WSL2\n\n  You may also want to install one of the following packages to keep up to date:\n    linux-tools-standard-WSL2\n    linux-cloud-tools-standard-WSL2"
+  },
+  "perf_event_paranoid": "2",
+  "loadavg": "0.05 0.04 0.00 1/366 20567",
+  "client": "/home/xiazihan/benchmark/fts-v4-integration-20261106/src/deps/3rd/u01/obclient/bin/obclient",
+  "source_mismatches_vs_sealed_manifest": []
+}

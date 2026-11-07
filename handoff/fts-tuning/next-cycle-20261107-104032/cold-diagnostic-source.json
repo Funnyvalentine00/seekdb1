@@ -1,0 +1,12 @@
+{
+  "role": "P1 diagnostic only",
+  "patch_sha256": "6991ad4efb47889d106a1288fee814282197e34a70d3e424b0d342473254bf7a",
+  "source_before": {
+    "src/storage/fts/dict/ob_ft_range_dict.cpp": "9e438e3f0dc83e576542fce433e1776a901a9f9d8e328d61940aa49276086f99",
+    "src/storage/fts/dict/ob_ft_dat_dict.cpp": "b4ea623a0669c3e0f4021aff5c1e8e583f829eb87087ea40f9fd6406b809ec3b"
+  },
+  "source_after": {
+    "src/storage/fts/dict/ob_ft_range_dict.cpp": "5cbaa2fefa612ec122abf574d5bcfe636d380e4a45275a7d516f9c388fb95ea2",
+    "src/storage/fts/dict/ob_ft_dat_dict.cpp": "05d41f0b90b0bcdeb26de2f94ca03dac5e1935e1c08e1f32499f0ec8b4f77c84"
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "plan": "../NEXT_OPTIMIZATION_EXECUTION_PLAN_2026-11-07.md",
+  "session": "next-cycle-20261107-104032",
+  "started_at": "2026-11-07T10:40:32+08:00",
+  "phase": "P5 closed",
+  "worktree": "/Users/xiazihan/.codex/worktrees/fts-v5/seekdb-clean",
+  "branch": "feat/fts-opt-v5",
+  "head": "65cb0c3547e5465e2863e5ee652154fcd4eb3ff6",
+  "product": "194150497aca9a69e395317bd6d5a64f26340a61",
+  "best_validated_global": null,
+  "protected_v4": "f5fe975382f4b151f7181a70d7f7e05ff9b234fd",
+  "protected_v3": "7accd1ace8ee5d035b3ef8aaf426c46b1d0a595e",
+  "protected_macos": {
+    "csv_reader_cpp": "a0f9230f7b509c6fa986917e1981ab03f510a570f2e31407b21dc5be087738f1",
+    "file_sql_scan_cpp": "35102c1ed61378205ba145fd4642b0c11adddbb123671f5a0e07f59165d1703f"
+  },
+  "preexisting_untracked": {
+    "handoff/fts-tuning/NEXT_OPTIMIZATION_EXECUTION_PLAN_2026-11-07.md": "4e6c3310d351b94978022956fc23c674657fc8a16373d42a9140aa915dc28030",
+    "handoff/fts-tuning/NEXT_OPTIMIZATION_IDEAS_2026-11-07.md": "6a3758ab0e74bca23b593971c6e14a43d89344cfd2e10d0c992ee137866d7067"
+  },
+  "node": {
+    "host": "legion",
+    "user": "xiazihan",
+    "port": 2222,
+    "run": "/home/xiazihan/benchmark/fts-v4-integration-20261106",
+    "test_port": 2920,
+    "source_manifest_mismatches": []
+  },
+  "binary": {
+    "path": "/home/xiazihan/benchmark/fts-v4-integration-20261106/saved-binaries/seekdb-fixed",
+    "sha256": "9544ca38c4d6cc336adb079f362eff1fa220739d58ce70bc2d0f1d948d5ade32"
+  },
+  "source_preimage_sha256": "6c3dfb9bfffd3239186509ac8a07aae4d6369f904d7de646737e21ce20218cf8",
+  "recorded_at": "2026-11-07T11:19:26+08:00",
+  "valid_cold_diagnostics": 2,
+  "start_attempts_before_diagnostics": 1,
+  "aa_complete_pairs": 1,
+  "formal_ab_pairs": 0,
+  "session_product_changes": [],
+  "diagnostic_cache_sha256": "c4e7ab457eed8e1c0a3fcdb818953c2836f59b137beaa2f44a3077f34e964faf",
+  "historical_experiments_used": 1,
+  "new_experiments_used": 0,
+  "node_source_verified_paths": 27,
+  "stopped_reason": "measurement stability gate"
+}
