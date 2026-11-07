@@ -102,6 +102,7 @@ protected:
   ObSRMergeCmp merge_cmp_;
   ObSRMergeHeap *merge_heap_;
   ObSRDaaTRelevanceCollector *relevance_collector_;
+  bool no_score_;
   ObFixedArray<const ObDatum *, ObIAllocator> iter_domain_ids_; // record every dim iter's output domain id, one (ObDatum *) for one dim iter
   ObFixedArray<ObDocIdExt, ObIAllocator> buffered_domain_ids_; // cache for output
   ObFixedArray<double, ObIAllocator> buffered_relevances_;
