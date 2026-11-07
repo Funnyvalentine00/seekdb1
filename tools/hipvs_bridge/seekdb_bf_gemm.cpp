@@ -26,6 +26,7 @@
 #include <rocblas/rocblas.h>
 #include <raft/core/device_mdspan.hpp>
 #include <raft/matrix/select_k_types.hpp>
+#include <dlfcn.h>
 #include <optional>
 #include <cstdint>
 #include <cstdio>
@@ -41,15 +42,44 @@ using namespace rocwmma;
 
 namespace raft { class resources; }
 
-namespace cuvs { namespace selection {
-void select_k(const raft::resources& handle,
+/* select_k is bound at RUN time, never at link time.
+ *
+ * The eval build container ships a stripped hipVS: libcuvs_c.so (1.1MB) is
+ * present but the C++ library libcuvs.so is 456MB and can be omitted from the
+ * build image. Linking -lcuvs there kills the whole bridge build - the eval
+ * reports failMsg=3 within ~14s, before seekdb itself is even compiled - while
+ * v12, which links only -lcuvs_c, always builds. At run time the GPU container
+ * must have libcuvs.so because libcuvs_c.so NEEDs it, so dlopen finds it and
+ * dlsym binds the exact mangled symbol. Any failure returns 1 and the caller
+ * falls back to the proven cuVS brute-force path. */
+typedef void (*sk_select_k_fn)(
+  const raft::resources& handle,
   raft::device_matrix_view<const float, int64_t, raft::row_major> in_val,
   std::optional<raft::device_matrix_view<const int, int64_t, raft::row_major>> in_idx,
   raft::device_matrix_view<float, int64_t, raft::row_major> out_val,
   raft::device_matrix_view<int, int64_t, raft::row_major> out_idx,
   bool select_min, bool sorted, raft::matrix::SelectAlgo algo,
   std::optional<raft::device_vector_view<const int, int64_t>> len_i);
-}}
+
+static sk_select_k_fn g_select_k = NULL;
+
+static int sk_load_select_k(void)
+{
+  if (g_select_k != NULL) { return 0; }
+  void* h = dlopen("libcuvs.so", RTLD_LAZY | RTLD_GLOBAL);
+  if (h == NULL) { h = dlopen("/opt/hipvs/lib/libcuvs.so", RTLD_LAZY | RTLD_GLOBAL); }
+  if (h == NULL) {
+    fprintf(stderr, "[seekdb_bf_gemm] libcuvs.so unavailable; GEMM path disabled\n");
+    return 1;
+  }
+  g_select_k = (sk_select_k_fn)dlsym(h,
+      "_ZN4cuvs9selection8select_kERKN4raft9resourcesENSt12experimental6mdspanIKfNS5_7extentsIlJLm18446744073709551615ELm18446744073709551615EEEENS5_12layout_rightENS1_20host_device_accessorINS5_16default_accessorIS7_EELNS1_11memory_typeE2EEEEESt8optionalINS6_IKiS9_SA_NSB_INSC_ISI_EELSE_2EEEEEENS6_IfS9_SA_NSB_INSC_IfEELSE_2EEEEENS6_IiS9_SA_NSB_INSC_IiEELSE_2EEEEEbbNS1_6matrix10SelectAlgoESH_INS6_ISI_NS8_IlJLm18446744073709551615EEEESA_SK_EEE");
+  if (g_select_k == NULL) {
+    fprintf(stderr, "[seekdb_bf_gemm] select_k not found in libcuvs.so; GEMM path disabled\n");
+    return 1;
+  }
+  return 0;
+}
 
 #define SK_GEMM_MAX_GD 128   /* merge kernel keeps candidates in registers */
 
@@ -195,8 +225,9 @@ static int sk_select_topk(raft::resources& res, const float* in, long m,
         out_v, (int64_t)m, (int64_t)k);
     auto oi = raft::make_device_matrix_view<int, int64_t>(
         out_i, (int64_t)m, (int64_t)k);
-    cuvs::selection::select_k(res, in_val, std::nullopt, ov, oi, true, true,
-                              algo, std::nullopt);
+    if (sk_load_select_k() != 0) { return 1; }
+    g_select_k(res, in_val, std::nullopt, ov, oi, true, true,
+               algo, std::nullopt);
   } catch (...) {
     return 1;
   }

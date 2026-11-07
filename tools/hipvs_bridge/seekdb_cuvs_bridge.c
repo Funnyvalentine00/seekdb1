@@ -544,15 +544,8 @@ static int build_bruteforce_graph(sk_cuvs_index *h, const float *base, long n, l
    * GEMM path only handles the fp16 dataset and degree <= 128; anything else
    * falls back to the shard loop below. */
   {
-    /* DIAGNOSTIC BUILD: the GEMM engine is compiled and linked exactly as in
-     * the candidate build, but stays opt-in at runtime so the eval machine
-     * takes the proven cuVS brute-force path (the v12 engine that scores
-     * 15.5-17.9). An eval failure of THIS build can only be a build/link or
-     * artifact problem, never the GPU-path qualification of the new engine;
-     * a pass proves the build path is clean and points the failure at the
-     * GPU-path qualification. Set SEEKDB_CUVS_BF_GEMM=1 to re-enable. */
     const char *gv = getenv("SEEKDB_CUVS_BF_GEMM");
-    const int use_gemm = (gv != NULL && (gv[0] == '1' || gv[0] == 'y' || gv[0] == 't'));
+    const int use_gemm = (gv == NULL || gv[0] != '0');
     int gemm_done = 0;
     if (use_gemm && half) {
       const long tq = env_long("SEEKDB_CUVS_GEMM_TILE_Q", 2048);
