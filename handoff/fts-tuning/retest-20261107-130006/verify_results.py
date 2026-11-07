@@ -30,6 +30,17 @@ def mean_stats(values):
 
 
 def verify():
+    historical = json.loads((HERE / "historical-gains.json").read_text())
+    historical_path = REPO / historical["source_file"]
+    assert hashlib.sha256(historical_path.read_bytes()).hexdigest() == historical["source_file_sha256"]
+    old_evidence = json.loads(historical_path.read_text())
+    for key, values in historical["metrics"].items():
+        old = old_evidence["wall"][key]
+        changes = [100*(1-b/a) for a,b in zip(old["statistics"]["v3"]["samples"],
+                                             old["statistics"]["fixed"]["samples"])]
+        assert len(changes) == values["pairs"] == 6
+        assert changes == values["paired_time_reduction_pct"]
+        assert statistics.median(changes) == values["median_time_reduction_pct"]
     archive = HERE / "linux-evidence.tar.gz"
     identity = json.loads((HERE / "archive-manifest.json").read_text())
     assert hashlib.sha256(archive.read_bytes()).hexdigest() == identity["sha256"]
@@ -122,7 +133,8 @@ def verify():
                "t intervals assume IID and stationarity; descriptive only if drift or order bias exists",
                "sample unit is full run or complete pair, never individual SQL latency"],
         new_product_experiments=0, cumulative_product_experiments=1, formal_candidate_pairs=0,
-        best_validated_global=None, full_product_acceptance=False)
+        best_validated_global=None, full_product_acceptance=False,
+        historical_gain_evidence=historical)
 
 
 if __name__ == "__main__":

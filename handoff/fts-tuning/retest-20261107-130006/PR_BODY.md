@@ -2,6 +2,8 @@ This PR submits the existing integrated v4 FTS candidate for verification. Produ
 
 It preserves the v3 sparse retrieval and default TOKENIZE fast paths, integrates H2 batch projection, H3 scoreless MATCH handling, H7 raw array access, and the subsequent MATCH boundary fixes. Scored lookup/index-merge paths remain intact, and long scoreless queries beyond 256 terms are covered. No new V5 experimental product change is included.
 
+Historical local Linux evidence against v3 (`7accd1ace`), six paired runs, observed median query time reductions of **30.41% CN, 30.57% Beng, 28.91% mixed, and 5.20% limit**. These provide the basis for submitting the existing candidate for platform testing. The same historical measurements also show IK content build 1.50% slower, Beng tokenize 2.14% slower, and peak RSS 2.67% higher; those gates remain unresolved. These are historical observations, not new V5 gains or platform scores.
+
 Fresh Linux verification on the sealed reference:
 - FTS 13/15: `basic_dml` and `partitioned_simple_query` still fail. File SQL 1/1; AI column 5/5. Total 19 passed, 2 failed.
 - Nine MATCH boundary groups and projection/score-controls/TOKENIZE output/error differentials match the recorded reference.

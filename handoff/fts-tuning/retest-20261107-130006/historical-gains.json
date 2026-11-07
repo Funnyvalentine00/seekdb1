@@ -1,0 +1,82 @@
+{
+  "source_file": "handoff/fts-tuning/linux-v4-20261106/linux-acceptance-evidence.json",
+  "source_file_sha256": "99ad895e7e2d94b7a31144b40cb86bebc94eea0eb63b39580613137cf3cc5834",
+  "baseline": "7accd1ace8ee5d035b3ef8aaf426c46b1d0a595e",
+  "candidate": "194150497aca9a69e395317bd6d5a64f26340a61",
+  "measurements": "historical Linux WSL2 A/B, not current same-version calibration or platform score",
+  "metrics": {
+    "query_cn_avg_ms": {
+      "pairs": 6,
+      "median_time_reduction_pct": 30.40660956981131,
+      "paired_time_reduction_pct": [
+        29.786258141454923,
+        33.62298890131636,
+        33.96602530767897,
+        31.026960998167695,
+        26.5352887259395,
+        27.26123849070229
+      ]
+    },
+    "query_beng_avg_ms": {
+      "pairs": 6,
+      "median_time_reduction_pct": 30.57250010681134,
+      "paired_time_reduction_pct": [
+        30.810016609173374,
+        29.69778288927224,
+        31.73162939297124,
+        31.047643279689584,
+        29.12796525225526,
+        30.334983604449306
+      ]
+    },
+    "query_mixed_avg_ms": {
+      "pairs": 6,
+      "median_time_reduction_pct": 28.911820876329287,
+      "paired_time_reduction_pct": [
+        28.61610633307271,
+        28.485383874076465,
+        30.032951514200523,
+        29.207535419585863,
+        28.23823743039303,
+        31.091510474090413
+      ]
+    },
+    "query_limit_avg_ms": {
+      "pairs": 6,
+      "median_time_reduction_pct": 5.19703578990332,
+      "paired_time_reduction_pct": [
+        12.516324145989422,
+        9.250180245133388,
+        3.6816217021910957,
+        4.703196347031968,
+        5.6908752327746726,
+        0.4829459704195571
+      ]
+    },
+    "build_ik_content_sec": {
+      "pairs": 6,
+      "median_time_reduction_pct": -1.501444910706684,
+      "paired_time_reduction_pct": [
+        0.0,
+        -3.3155080213903565,
+        -16.584022038567504,
+        -2.92252550317067,
+        -0.0803643182426983,
+        0.18731602890018628
+      ]
+    },
+    "tokenize_beng_avg_ms": {
+      "pairs": 6,
+      "median_time_reduction_pct": -2.135981950147847,
+      "paired_time_reduction_pct": [
+        -5.465903175429476,
+        -0.4764173415912287,
+        -12.829324169530354,
+        13.745210727969347,
+        -3.7955465587044657,
+        2.4008350730688854
+      ]
+    }
+  },
+  "remaining_gates": "FTS13/15; historical RSS +2.67%; build/tokenize medians below guardrails"
+}
