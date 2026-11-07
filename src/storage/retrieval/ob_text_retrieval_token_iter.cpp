@@ -445,11 +445,13 @@ int ObTextRetrievalDaaTTokenIter::init(const ObTextRetrievalScanIterParam &iter_
       if (OB_ISNULL(cmp_func_)) {
         ret = OB_ERR_UNEXPECTED;
       } else if (FALSE_IT(relevance_.set_allocator(allocator_))) {
-      } else if (OB_FAIL(relevance_.init(max_batch_size_))) {
-      } else if (OB_FAIL(relevance_.prepare_allocate(max_batch_size_))) {
+      } else if (OB_NOT_NULL(relevance_expr_) &&
+                 (OB_FAIL(relevance_.init(max_batch_size_)) ||
+                  OB_FAIL(relevance_.prepare_allocate(max_batch_size_)))) {
       } else if (FALSE_IT(doc_id_.set_allocator(allocator_))) {
-      } else if (OB_FAIL(doc_id_.init(max_batch_size_))) {
-      } else if (OB_FAIL(doc_id_.prepare_allocate(max_batch_size_))) {
+      } else if (OB_NOT_NULL(relevance_expr_) &&
+                 (OB_FAIL(doc_id_.init(max_batch_size_)) ||
+                  OB_FAIL(doc_id_.prepare_allocate(max_batch_size_)))) {
       } else {
         is_inited_ = true;
       }
@@ -530,6 +532,11 @@ int ObTextRetrievalDaaTTokenIter::save_docids()
   int ret = OB_SUCCESS;
   if (OB_ISNULL(inv_scan_domain_id_col_)) {
     ret = OB_INVALID_ARGUMENT;
+  } else if (OB_ISNULL(doc_id_.get_data()) &&
+             OB_FAIL(doc_id_.prepare_allocate(max_batch_size_))) {
+    // The fetched batch has no doc-id storage after allocation fails.
+    cur_idx_ = -1;
+    count_ = 0;
   } else {
     cur_idx_ = 0;
     const ObDatumVector &doc_id_datum = inv_scan_domain_id_col_->locate_expr_datumvector(*eval_ctx_);
