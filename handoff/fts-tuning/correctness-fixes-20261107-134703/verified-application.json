@@ -1,0 +1,63 @@
+{
+  "archive_sha256": "5a07181834e193a0164fa00fdd99902d006390152927f583aab1d1571ce2dd53",
+  "archive_files": 18,
+  "targeted_passed": 2,
+  "targeted_failed": 0,
+  "cases": [
+    {
+      "case": "basic_dml",
+      "rc": 0,
+      "test": "/home/xiazihan/benchmark/fts-v4-integration-20261106/correctness-fixes-20261107-134703/applied-fixtures/basic_dml.test",
+      "test_sha256": "cdfe6cfcd9f30ff3032f2f0829786831f8efff3ae1b1c4aee1cb3a92a6e8e536",
+      "expected": "/home/xiazihan/benchmark/fts-v4-integration-20261106/correctness-fixes-20261107-134703/applied-fixtures/basic_dml.result",
+      "expected_sha256": "0b39c56173dcd06875d0b9bd25d53bb21414acd512990b8a25c8e0d1c1734847",
+      "command": [
+        "/home/xiazihan/benchmark/fts-v4-integration-20261106/src/deps/3rd/u01/obclient/bin/mysqltest",
+        "--host=127.0.0.1",
+        "--port=2920",
+        "--user=root",
+        "--database=test",
+        "--silent",
+        "--tmpdir=/home/xiazihan/benchmark/fts-v4-integration-20261106/correctness-fixes-20261107-134703/applied-targeted/basic_dml",
+        "--logdir=/home/xiazihan/benchmark/fts-v4-integration-20261106/correctness-fixes-20261107-134703/applied-targeted/basic_dml",
+        "--tail-lines=25",
+        "--test-file=/home/xiazihan/benchmark/fts-v4-integration-20261106/correctness-fixes-20261107-134703/applied-fixtures/basic_dml.test",
+        "--result-file=/home/xiazihan/benchmark/fts-v4-integration-20261106/correctness-fixes-20261107-134703/applied-fixtures/basic_dml.result"
+      ]
+    },
+    {
+      "case": "partitioned_simple_query",
+      "rc": 0,
+      "test": "/home/xiazihan/benchmark/fts-v4-integration-20261106/src/tools/deploy/mysql_test/test_suite/fts_index/t/partitioned_simple_query.test",
+      "test_sha256": "8a7f49ddeb9dc53a0341b35f9bce98cf6b48ce8576701787a34394b8469bfaf9",
+      "expected": "/home/xiazihan/benchmark/fts-v4-integration-20261106/correctness-fixes-20261107-134703/applied-fixtures/partitioned_simple_query.result",
+      "expected_sha256": "131f3344e137c48f746939bab378cfd2e671aeb86cc836d9be4ba5cf7ffb85b4",
+      "command": [
+        "/home/xiazihan/benchmark/fts-v4-integration-20261106/src/deps/3rd/u01/obclient/bin/mysqltest",
+        "--host=127.0.0.1",
+        "--port=2920",
+        "--user=root",
+        "--database=test",
+        "--silent",
+        "--tmpdir=/home/xiazihan/benchmark/fts-v4-integration-20261106/correctness-fixes-20261107-134703/applied-targeted/partitioned_simple_query",
+        "--logdir=/home/xiazihan/benchmark/fts-v4-integration-20261106/correctness-fixes-20261107-134703/applied-targeted/partitioned_simple_query",
+        "--tail-lines=25",
+        "--test-file=/home/xiazihan/benchmark/fts-v4-integration-20261106/src/tools/deploy/mysql_test/test_suite/fts_index/t/partitioned_simple_query.test",
+        "--result-file=/home/xiazihan/benchmark/fts-v4-integration-20261106/correctness-fixes-20261107-134703/applied-fixtures/partitioned_simple_query.result"
+      ]
+    }
+  ],
+  "resources": {
+    "host_D_free_GiB": 140.44,
+    "linux_free_GiB": 465.16,
+    "memory_available_GiB": 14.25
+  },
+  "node_original_fixtures_preserved": true,
+  "product_and_benchmark_unchanged": true,
+  "node_data": {
+    "rc": 0,
+    "out": "2643608\t/home/xiazihan/benchmark/fts-v4-integration-20261106/correctness-fixes-20261107-134703/data",
+    "err": ""
+  },
+  "normal_stop": true
+}

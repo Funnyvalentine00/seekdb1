@@ -11,3 +11,10 @@ V5新实验尚未执行测试，不能记为通过。E01将覆盖等价词末次
 三次各9组边界全部成功；22条原Tokenize、12条新聚合语料、DML/6位MATCH分数、prepared及80并发请求的stdout/stderr/返回状态均一致。新增12条语料中的NULL及REPEAT生成LOB两条均为继承错误，不能称12条全部执行成功；完整差分相同。
 
 最终只运行参考版本复核，没有第4对候选AB。官方平台CI与Linux硬件instructions/cycles未执行；逐句CPU诊断采用/proc线程schedstat，出现worker集合变化的样本单独标不可比。内存安全/TSan专用构建未执行；不能把语义差分当成完全内存安全证明。
+
+
+## 2026-11-07：两个既有用例缺陷的本地修订
+
+用户授权后，仅应用 basic_dml.test/basic_dml.result/partitioned_simple_query.result 的精确修订。basic_dml 刷新删建后表 ID，验证隐藏主键真实布局与 DML；分区用例仅校正同一动态参数的两处编号。产品仍194150497。新本地提交 71ec3001b、8fc409d17。
+
+与应用后字节相同的完整三套回归：FTS15/15、FileSQL1/1、AI5/5，21通过0失败0跳过。应用后两个原名用例再次通过。前述13/15仍是原始测试和现有PR15的历史状态；未更新PR、未推送、未运行平台CI或性能测试。见 correctness-fixes-20261107-134703/APPLIED.md。

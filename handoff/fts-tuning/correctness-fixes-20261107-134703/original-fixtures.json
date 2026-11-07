@@ -1,0 +1,6 @@
+{
+  "tools/deploy/mysql_test/test_suite/fts_index/t/basic_dml.test": "1ce4330eb1c7d32553cebd5b0f92ed9ba11f0f35ddb6a10bc0f693bf111d0d96",
+  "tools/deploy/mysql_test/test_suite/fts_index/r/mysql/basic_dml.result": "6686ab5340271fd3772d145ecb98ba5d69bda1d7d3266277d79c4c6ca84629d0",
+  "tools/deploy/mysql_test/test_suite/fts_index/t/partitioned_simple_query.test": "8a7f49ddeb9dc53a0341b35f9bce98cf6b48ce8576701787a34394b8469bfaf9",
+  "tools/deploy/mysql_test/test_suite/fts_index/r/mysql/partitioned_simple_query.result": "956fb792a5fedb22bd3fdce9228ff326adf5b7803889254fd525d6fbc37672f9"
+}

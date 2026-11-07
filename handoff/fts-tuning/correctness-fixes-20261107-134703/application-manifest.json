@@ -1,0 +1,14 @@
+{
+  "tools/deploy/mysql_test/test_suite/fts_index/t/basic_dml.test": {
+    "file": "basic_dml.test",
+    "sha256": "cdfe6cfcd9f30ff3032f2f0829786831f8efff3ae1b1c4aee1cb3a92a6e8e536"
+  },
+  "tools/deploy/mysql_test/test_suite/fts_index/r/mysql/basic_dml.result": {
+    "file": "basic_dml.result",
+    "sha256": "0b39c56173dcd06875d0b9bd25d53bb21414acd512990b8a25c8e0d1c1734847"
+  },
+  "tools/deploy/mysql_test/test_suite/fts_index/r/mysql/partitioned_simple_query.result": {
+    "file": "partitioned_simple_query.result",
+    "sha256": "131f3344e137c48f746939bab378cfd2e671aeb86cc836d9be4ba5cf7ffb85b4"
+  }
+}

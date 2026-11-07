@@ -1,0 +1,20 @@
+{
+  "started_at": "2026-11-07T13:47:03+08:00",
+  "working_head": "493dc5bd9b0bb2b7669aadc23035dc54b5a2f12e",
+  "product_reference": "194150497aca9a69e395317bd6d5a64f26340a61",
+  "reference_binary": {
+    "path": "/home/xiazihan/benchmark/fts-v4-integration-20261106/saved-binaries/seekdb-fixed",
+    "sha256": "9544ca38c4d6cc336adb079f362eff1fa220739d58ce70bc2d0f1d948d5ade32"
+  },
+  "node_session": "/home/xiazihan/benchmark/fts-v4-integration-20261106/correctness-fixes-20261107-134703",
+  "original_fixtures": {
+    "tools/deploy/mysql_test/test_suite/fts_index/t/basic_dml.test": "1ce4330eb1c7d32553cebd5b0f92ed9ba11f0f35ddb6a10bc0f693bf111d0d96",
+    "tools/deploy/mysql_test/test_suite/fts_index/r/mysql/basic_dml.result": "6686ab5340271fd3772d145ecb98ba5d69bda1d7d3266277d79c4c6ca84629d0",
+    "tools/deploy/mysql_test/test_suite/fts_index/t/partitioned_simple_query.test": "8a7f49ddeb9dc53a0341b35f9bce98cf6b48ce8576701787a34394b8469bfaf9",
+    "tools/deploy/mysql_test/test_suite/fts_index/r/mysql/partitioned_simple_query.result": "956fb792a5fedb22bd3fdce9228ff326adf5b7803889254fd525d6fbc37672f9"
+  },
+  "scope": "red reproduction and root cause, no tracked test/golden change",
+  "performance_experiments_used": 1,
+  "new_performance_experiments": 0,
+  "remote_pr_unchanged": 15
+}

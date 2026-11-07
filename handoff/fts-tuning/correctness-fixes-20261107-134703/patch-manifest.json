@@ -1,0 +1,17 @@
+{
+  "tools/deploy/mysql_test/test_suite/fts_index/t/basic_dml.test": {
+    "original_sha256": "1ce4330eb1c7d32553cebd5b0f92ed9ba11f0f35ddb6a10bc0f693bf111d0d96",
+    "candidate_sha256": "cdfe6cfcd9f30ff3032f2f0829786831f8efff3ae1b1c4aee1cb3a92a6e8e536",
+    "shadow": "shadow/basic_dml.test"
+  },
+  "tools/deploy/mysql_test/test_suite/fts_index/r/mysql/basic_dml.result": {
+    "original_sha256": "6686ab5340271fd3772d145ecb98ba5d69bda1d7d3266277d79c4c6ca84629d0",
+    "candidate_sha256": "0b39c56173dcd06875d0b9bd25d53bb21414acd512990b8a25c8e0d1c1734847",
+    "shadow": "shadow/basic_dml.result"
+  },
+  "tools/deploy/mysql_test/test_suite/fts_index/r/mysql/partitioned_simple_query.result": {
+    "original_sha256": "956fb792a5fedb22bd3fdce9228ff326adf5b7803889254fd525d6fbc37672f9",
+    "candidate_sha256": "131f3344e137c48f746939bab378cfd2e671aeb86cc836d9be4ba5cf7ffb85b4",
+    "shadow": "shadow/partitioned_simple_query.result"
+  }
+}

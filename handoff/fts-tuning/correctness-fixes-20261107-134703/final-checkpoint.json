@@ -1,0 +1,24 @@
+{
+  "closed_at": "2026-11-07T14:17:35.147951+08:00",
+  "starting_head": "493dc5bd9b0bb2b7669aadc23035dc54b5a2f12e",
+  "product_reference": "194150497aca9a69e395317bd6d5a64f26340a61",
+  "local_test_commits": {
+    "basic_dml": "71ec3001bf8189d7dc2e8b0ec97f98fec3e7105c",
+    "partitioned_simple_query": "8fc409d17021c0c3dbd501d84b7a9c7fd2bacfc2"
+  },
+  "shadow_full_passed": 21,
+  "applied_targeted_passed": 2,
+  "scope_approved": true,
+  "pushed": false,
+  "pr15_unchanged": true,
+  "builds": 0,
+  "new_product_performance_experiments": 0,
+  "performance_experiments_used": 1,
+  "protected_v4_head": "f5fe975382f4b151f7181a70d7f7e05ff9b234fd",
+  "protected_v3_head": "7accd1ace8ee5d035b3ef8aaf426c46b1d0a595e",
+  "protected_v4_patch_sha256": {
+    "src/sql/engine/file_sql/csv_reader.cpp": "a0f9230f7b509c6fa986917e1981ab03f510a570f2e31407b21dc5be087738f1",
+    "src/sql/engine/file_sql/file_sql_scan.cpp": "35102c1ed61378205ba145fd4642b0c11adddbb123671f5a0e07f59165d1703f"
+  },
+  "plan_files_preserved": true
+}

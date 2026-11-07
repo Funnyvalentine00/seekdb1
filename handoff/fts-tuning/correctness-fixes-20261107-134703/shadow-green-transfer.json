@@ -1,0 +1,6 @@
+{
+  "run_shadow_suite.py": "2b31ba180042bd9cf0522ccc929964cc814c4ecbc011cd3b841f685e42367e91",
+  "legacy_suite_helper.py": "50afcc29785d1f294c61ea2cf992e48d077165039abfa263836e15a67738bcf7",
+  "patch-manifest.json": "94f2c243dfdbd352f8d1459db7138cfc8073dc7ea6a0e50984e3b3335cd1a9f8",
+  "shadow/basic_dml.result": "0b39c56173dcd06875d0b9bd25d53bb21414acd512990b8a25c8e0d1c1734847"
+}
