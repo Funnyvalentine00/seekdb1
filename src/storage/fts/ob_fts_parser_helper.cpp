@@ -324,6 +324,26 @@ ObFTParseHelper::~ObFTParseHelper()
   reset();
 }
 
+static void set_default_parser_property(
+    const ObFTParser &parser,
+    ObFTParserProperty &property)
+{
+  // Mirrors parse_for_parser_helper(parser, empty) without the JSON round trip.
+  if (parser.is_ik()) {
+    property.dict_table_ = ObString(ObFTSLiteral::CONFIG_NAME_DICT_TABLE);
+    property.stopword_table_ = ObString(ObFTSLiteral::CONFIG_NAME_STOPWORD_TABLE);
+    property.quantifier_table_ = ObString(ObFTSLiteral::CONFIG_NAME_QUANTIFIER_TABLE);
+  } else if (parser.is_space() || parser.is_beng()) {
+    property.min_token_size_ = ObFTSLiteral::FT_DEFAULT_MIN_TOKEN_SIZE;
+    property.max_token_size_ = ObFTSLiteral::FT_DEFAULT_MAX_TOKEN_SIZE;
+  } else if (parser.is_ngram()) {
+    property.ngram_token_size_ = ObFTSLiteral::FT_DEFAULT_NGRAM_TOKEN_SIZE;
+  } else if (parser.is_ngram2()) {
+    property.min_ngram_token_size_ = ObFTSLiteral::FT_DEFAULT_MIN_NGRAM_SIZE;
+    property.max_ngram_token_size_ = ObFTSLiteral::FT_DEFAULT_MAX_NGRAM_SIZE;
+  }
+}
+
 int ObFTParseHelper::init(
     common::ObIAllocator *allocator,
     const common::ObString &parser_name,
@@ -335,7 +355,10 @@ int ObFTParseHelper::init(
   } else if (OB_ISNULL(allocator) || OB_UNLIKELY(parser_name.empty())) {
     ret = OB_INVALID_ARGUMENT;
   } else if (OB_FAIL(parser_name_.parse_from_str(parser_name.ptr(), parser_name.length()))) {
-  } else if (OB_FAIL(parser_property_.parse_for_parser_helper(parser_name_, parser_properties))) {
+  } else if (!parser_properties.empty()
+             && OB_FAIL(parser_property_.parse_for_parser_helper(parser_name_, parser_properties))) {
+  } else if (parser_properties.empty()
+             && FALSE_IT(set_default_parser_property(parser_name_, parser_property_))) {
   } else if (OB_FAIL(parser_name_.get_desc(parser_desc_))) {
   } else if (OB_ISNULL(parser_desc_)) {
     ret = OB_ERR_UNEXPECTED;
