@@ -3867,41 +3867,66 @@ CREATE TABLE fts_parser_name_test (
     FULLTEXT INDEX ctx(title, content)
 );
 
-
-
-
-SELECT column_name, is_hidden FROM oceanbase.__all_column WHERE *;
-+---------------------------+-----------+
-| column_name               | is_hidden |
-+---------------------------+-----------+
-| id                        |         0 |
-| __doc_id_*                |         0 |
-+---------------------------+-----------+
-SELECT column_name, is_hidden FROM oceanbase.__all_column WHERE *;
-+---------------------------+-----------+
-| column_name               | is_hidden |
-+---------------------------+-----------+
-| id                        |         0 |
-| __doc_id_*                |         0 |
-+---------------------------+-----------+
-SELECT column_name, is_hidden FROM oceanbase.__all_column WHERE *;
+SELECT index_type, parser_name FROM oceanbase.__all_table WHERE * AND index_type BETWEEN 11 AND 14 ORDER BY index_type;
++------------+-------------+
+| index_type | parser_name |
++------------+-------------+
+|         13 | space.1     |
+|         14 | space.1     |
++------------+-------------+
+SELECT column_name, is_hidden FROM oceanbase.__all_column WHERE * AND column_name = '__pk_increment';
++----------------+-----------+
+| column_name    | is_hidden |
++----------------+-----------+
+| __pk_increment |         1 |
++----------------+-----------+
+SELECT column_name, is_hidden FROM oceanbase.__all_column WHERE * ORDER BY column_id;
 +------------------------------------+-----------+
 | column_name                        | is_hidden |
 +------------------------------------+-----------+
-| __doc_id_*                         |         0 |
+| __pk_increment                     |         0 |
 | __word_segment_*_*                 |         0 |
 | __word_count_*_*                   |         0 |
 | __doc_length_*_*                   |         0 |
 +------------------------------------+-----------+
-SELECT column_name, is_hidden FROM oceanbase.__all_column WHERE *;
+SELECT column_name, is_hidden FROM oceanbase.__all_column WHERE * ORDER BY column_id;
 +------------------------------------+-----------+
 | column_name                        | is_hidden |
 +------------------------------------+-----------+
-| __doc_id_*                         |         0 |
+| __pk_increment                     |         0 |
 | __word_segment_*_*                 |         0 |
 | __word_count_*_*                   |         0 |
 | __doc_length_*_*                   |         0 |
 +------------------------------------+-----------+
+
+INSERT INTO fts_parser_name_test(title, content) VALUES ('alpha', 'fixtureneedle'), ('beta', 'fixtureneedle');
+SELECT title FROM fts_parser_name_test WHERE MATCH(title, content) AGAINST ('fixtureneedle' IN BOOLEAN MODE) ORDER BY title;
++-------+
+| title |
++-------+
+| alpha |
+| beta  |
++-------+
+UPDATE fts_parser_name_test SET content = 'fixtureother' WHERE title = 'alpha';
+SELECT title FROM fts_parser_name_test WHERE MATCH(title, content) AGAINST ('fixtureneedle' IN BOOLEAN MODE) ORDER BY title;
++-------+
+| title |
++-------+
+| beta  |
++-------+
+SELECT title FROM fts_parser_name_test WHERE MATCH(title, content) AGAINST ('fixtureother' IN BOOLEAN MODE) ORDER BY title;
++-------+
+| title |
++-------+
+| alpha |
++-------+
+DELETE FROM fts_parser_name_test WHERE title = 'beta';
+SELECT COUNT(*) AS hits FROM fts_parser_name_test WHERE MATCH(title, content) AGAINST ('fixtureneedle' IN BOOLEAN MODE);
++------+
+| hits |
++------+
+|    0 |
++------+
 
 DROP TABLE fts_parser_name_test;
 create table fts_parser_name_test(seq_id int PRIMARY KEY, detail varchar(4096)) partition by hash(seq_id) partitions 2;
