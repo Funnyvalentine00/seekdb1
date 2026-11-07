@@ -1,0 +1,37 @@
+{
+  "date": "2026-11-07",
+  "working_head": "0548d153fe5a9e958e8843c6232702d15d921ff5",
+  "product_reference": "194150497aca9a69e395317bd6d5a64f26340a61",
+  "github_product_commit_lookup": {
+    "error": "GitHub API error 422: {\"message\":\"No commit found for SHA: 194150497aca9a69e395317bd6d5a64f26340a61\",\"documentation_url\":\"https://docs.github.com/rest/commits/commits#get-a-commit\",\"status\":\"422\"}",
+    "error_code": "INVALID_ARGUMENT",
+    "error_data": {
+      "message": "No commit found for SHA: 194150497aca9a69e395317bd6d5a64f26340a61",
+      "documentation_url": "https://docs.github.com/rest/commits/commits#get-a-commit",
+      "status": "422"
+    }
+  },
+  "github_v3_ref": {
+    "name": "feat/fts-opt-v3",
+    "commit": {
+      "sha": "7accd1ace8ee5d035b3ef8aaf426c46b1d0a595e",
+      "url": "https://api.github.com/repos/Funnyvalentine00/seekdb1/commits/7accd1ace8ee5d035b3ef8aaf426c46b1d0a595e"
+    },
+    "protected": false
+  },
+  "github_v4_v5_refs": [],
+  "cloud_report_origin": "user-relayed preflight, original outputs not received",
+  "cloud_socket_recheck_executed": false,
+  "seekdb_executed_in_dot": false,
+  "new_product_experiments": 0,
+  "cumulative_product_experiments": 1,
+  "total_experiment_budget": 8,
+  "new_formal_ab_pairs": 0,
+  "delivery_method": "user relays instructions to existing Dot conversation",
+  "source_file_hashes": {
+    "rust/sql-nio/src/reactor.rs": "57a6882d041e4eedb169d824d11e2f9b1b590b521ae9562a24f1bc4eed183c09",
+    "src/observer/ob_srv_network_frame.cpp": "3e27cd28795585abffd1e481c153cdfa58e2aca652f5f872a33e8ca1d8104c41"
+  },
+  "source_check": "both files identical at v3, product reference, and current workspace",
+  "checkpoint": "DQ-P0, documentation only; no product rollback required"
+}

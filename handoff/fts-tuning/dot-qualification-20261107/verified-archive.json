@@ -1,0 +1,48 @@
+{
+  "archive_sha256": "f0a8c1c15f9493b679d5657d02b0210883ebe7bc7f892b0ccc56a08ea4f73a97",
+  "crc_verified": true,
+  "file_hashes_verified": 10,
+  "source_and_git_blob_hashes_verified": {
+    "rust/sql-nio/src/reactor.rs": "57a6882d041e4eedb169d824d11e2f9b1b590b521ae9562a24f1bc4eed183c09",
+    "src/observer/ob_srv_network_frame.cpp": "3e27cd28795585abffd1e481c153cdfa58e2aca652f5f872a33e8ca1d8104c41"
+  },
+  "source_matches_refs": [
+    "7accd1ace8ee5d035b3ef8aaf426c46b1d0a595e",
+    "194150497aca9a69e395317bd6d5a64f26340a61"
+  ],
+  "raw_log_records": 76,
+  "raw_status_counts": {
+    "metadata": 4,
+    "passed": 42,
+    "failed": 4,
+    "not_attempted": 26
+  },
+  "cases": [
+    {
+      "location": "workspace",
+      "unix_stage": "socket",
+      "errno": 1,
+      "errno_name": "EPERM",
+      "unix_downstream_not_attempted": 13,
+      "tcp_bidirectional_roundtrip": true
+    },
+    {
+      "location": "tmp",
+      "unix_stage": "socket",
+      "errno": 1,
+      "errno_name": "EPERM",
+      "unix_downstream_not_attempted": 13,
+      "tcp_bidirectional_roundtrip": true
+    }
+  ],
+  "cloud_probe_start_utc": "2026-11-07T04:29:55.234722+00:00",
+  "cloud_probe_end_utc": "2026-11-07T04:29:55.238874+00:00",
+  "seekdb_executed": false,
+  "archive_probe_executed_locally": false,
+  "local_archive_extraction": false,
+  "decision": "current cloud environment did not pass unchanged reference startup prerequisite",
+  "mechanism_of_restriction": "unknown",
+  "new_product_experiments": 0,
+  "cumulative_product_experiments": 1,
+  "total_experiment_budget": 8
+}
