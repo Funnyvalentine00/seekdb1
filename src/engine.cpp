@@ -58,7 +58,7 @@ std::vector<float> parseVectorLiteral(const std::string &text, int dim) {
     i = j + 1;
   }
   if (static_cast<int>(out.size()) != dim) {
-    throwErr(ErrKind::InvalidVector,
+    throwErr(ErrKind::DimensionMismatch,
              "vector dimension mismatch: expected " + std::to_string(dim) + ", got " +
                  std::to_string(out.size()));
   }
@@ -672,7 +672,7 @@ void Engine::validateValue(const ColumnDef &col, const Value &v) const {
     case ColType::Vector:
       if (v.kind != Value::Kind::Vec) throwErr(ErrKind::TypeMismatch, "expected VECTOR for " + col.name);
       if (static_cast<int>(v.v.size()) != col.param) {
-        throwErr(ErrKind::InvalidVector, "vector dimension mismatch for " + col.name);
+        throwErr(ErrKind::DimensionMismatch, "vector dimension mismatch for " + col.name);
       }
       for (float f : v.v) {
         if (!std::isfinite(f)) throwErr(ErrKind::InvalidVector, "non-finite vector component");

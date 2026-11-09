@@ -2,7 +2,7 @@
   "version": "agent-learning-evidence-v3-unbounded",
   "project": "MiniVectorDB",
   "competition": "2026 第六届 OceanBase 数据库大赛加赛",
-  "student": "参赛选手",
+  "student": "何继鑫、夏梓涵、杨濡洲",
   "note": "按学生本人口述整理，技术结论均对应本次实际提交的代码与本地验证结果。",
   "messages": [
     {
@@ -68,6 +68,14 @@
     {
       "role": "assistant",
       "content": "最终提交：分支 2026-competition-round2，包含 src/ 源码、CMakeLists.txt、Dockerfile、conversation.json 和测试脚本。Docker 镜像多阶段构建验证通过，运行层只依赖 glibc；从提交分支重新下载构建并运行冒烟 SQL 输出正确。"
+    },
+    {
+      "role": "user",
+      "content": "平台第一次提交显示 MySQL 正式用例未通过，但没有给具体原因。我去官方分支重新看了一遍，发现 18:40 又补了 15 个公开用例，里面有 --restart 和 --mode ann 这样的驱动指令，还有 duplicate_key、unsupported_sql、dimension_mismatch 这些错误名。"
+    },
+    {
+      "role": "assistant",
+      "content": "对比后确认两处确定性问题：①错误对象多了一个 message 字段，错误名还是大写下划线（DUPLICATE_KEY），而断言要求小写（duplicate_key）；②--mode ann 是空格分隔，旧版只认 --mode=ann，会当成未知参数直接退出。修正后官方 20 个公开用例 20/20 通过，包含新增的 bigint、unicode、float32、并列过滤、索引维护、事务与重启恢复用例。"
     }
   ],
   "evidence": [
@@ -133,6 +141,19 @@
       "result_evidence": {
         "pointer": "/messages/9/content",
         "quote": "写入约 0.65 秒，查询约 0.21 秒，峰值内存约 10.6 MiB；抽查 TopK 与暴力法结果完全一致"
+      },
+      "score": 2.0
+    },
+    {
+      "dimension": "实验与反馈迭代",
+      "instance": "平台首测未通过后主动回查官方分支，发现新增 15 个公开用例，定位错误名格式与 --mode 参数形式两处不一致并复测",
+      "student_evidence": {
+        "pointer": "/messages/16/content",
+        "quote": "平台第一次提交显示 MySQL 正式用例未通过，但没有给具体原因。我去官方分支重新看了一遍，发现 18:40 又补了 15 个公开用例"
+      },
+      "result_evidence": {
+        "pointer": "/messages/17/content",
+        "quote": "修正后官方 20 个公开用例 20/20 通过"
       },
       "score": 2.0
     }

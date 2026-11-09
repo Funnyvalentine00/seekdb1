@@ -33,31 +33,35 @@ enum class ErrKind {
   Internal = 17,
   DuplicateColumn = 18,
   TooManyColumns = 19,
+  DimensionMismatch = 20,
 };
 
+// 错误名与官方公开用例的断言一致：小写 snake_case，如 duplicate_key / unsupported_sql /
+// dimension_mismatch。
 inline const char *errName(ErrKind k) {
   switch (k) {
-    case ErrKind::Syntax: return "SYNTAX_ERROR";
-    case ErrKind::Unsupported: return "NOT_SUPPORTED";
-    case ErrKind::TableNotFound: return "TABLE_NOT_FOUND";
-    case ErrKind::TableExists: return "TABLE_EXISTS";
-    case ErrKind::ColumnNotFound: return "COLUMN_NOT_FOUND";
-    case ErrKind::ColumnExists: return "COLUMN_EXISTS";
-    case ErrKind::TypeMismatch: return "TYPE_MISMATCH";
-    case ErrKind::ValueOutOfRange: return "VALUE_OUT_OF_RANGE";
-    case ErrKind::DuplicateKey: return "DUPLICATE_KEY";
-    case ErrKind::NotNullViolation: return "NOT_NULL_VIOLATION";
-    case ErrKind::IndexNotFound: return "INDEX_NOT_FOUND";
-    case ErrKind::IndexExists: return "INDEX_EXISTS";
-    case ErrKind::InvalidVector: return "INVALID_VECTOR";
-    case ErrKind::InvalidArgument: return "INVALID_ARGUMENT";
-    case ErrKind::Transaction: return "TRANSACTION_ERROR";
-    case ErrKind::Io: return "IO_ERROR";
-    case ErrKind::Internal: return "INTERNAL_ERROR";
-    case ErrKind::DuplicateColumn: return "DUPLICATE_COLUMN";
-    case ErrKind::TooManyColumns: return "TOO_MANY_COLUMNS";
+    case ErrKind::Syntax: return "syntax_error";
+    case ErrKind::Unsupported: return "unsupported_sql";
+    case ErrKind::TableNotFound: return "table_not_found";
+    case ErrKind::TableExists: return "table_exists";
+    case ErrKind::ColumnNotFound: return "column_not_found";
+    case ErrKind::ColumnExists: return "column_exists";
+    case ErrKind::TypeMismatch: return "type_mismatch";
+    case ErrKind::ValueOutOfRange: return "value_out_of_range";
+    case ErrKind::DuplicateKey: return "duplicate_key";
+    case ErrKind::NotNullViolation: return "not_null_violation";
+    case ErrKind::IndexNotFound: return "index_not_found";
+    case ErrKind::IndexExists: return "index_exists";
+    case ErrKind::InvalidVector: return "invalid_vector";
+    case ErrKind::InvalidArgument: return "invalid_argument";
+    case ErrKind::Transaction: return "transaction_error";
+    case ErrKind::Io: return "io_error";
+    case ErrKind::Internal: return "internal_error";
+    case ErrKind::DuplicateColumn: return "duplicate_column";
+    case ErrKind::TooManyColumns: return "too_many_columns";
+    case ErrKind::DimensionMismatch: return "dimension_mismatch";
   }
-  return "INTERNAL_ERROR";
+  return "internal_error";
 }
 
 // 所有 SQL 层错误都以异常抛出，由语句执行边界统一捕获。

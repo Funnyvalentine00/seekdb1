@@ -54,7 +54,7 @@ cmake --build build -j
 ## 本地验证
 
 ```bash
-python3 tests/run_cases.py mysqltest/cases --binary ./build/minivectordb   # 官方公开用例 5/5
+python3 tests/run_cases.py mysqltest/cases --binary ./build/minivectordb   # 官方公开用例 20/20
 python3 tests/run_cases.py tests/cases --binary ./build/minivectordb       # 自建语义用例 10/10
 python3 tests/fuzz.py --seed 1 --rounds 60                                  # 随机差分测试
 python3 tests/bench.py --binary ./build/minivectordb                        # 10k×128 性能基线

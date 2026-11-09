@@ -166,6 +166,9 @@ def check(expect, resp):
     if "error" in expect:
         if "error" not in resp:
             return False, f"expected error, got {resp}"
+        want = expect["error"]
+        if want is not True and resp.get("error") != want:
+            return False, f"error {resp.get('error')} != {want}"
         return True, ""
     if "error" in resp:
         return False, f"unexpected error: {resp}"
@@ -218,6 +221,18 @@ def run_case(binary, test_path, result_path, work_dir, verbose=False):
         for raw in lines:
             line = raw.strip()
             if not line:
+                continue
+            # 官方公开用例的驱动指令：--restart / --mode ann|exact
+            if line.startswith("--"):
+                body = line[2:].strip()
+                parts = body.split()
+                if parts and parts[0] == "restart":
+                    sess.stop()
+                    sess.start()
+                elif parts and parts[0] == "mode" and len(parts) >= 2:
+                    sess.stop()
+                    sess.extra_args = ["--vector-mode", parts[1]]
+                    sess.start()
                 continue
             if line.startswith("#"):
                 body = line[1:].strip()

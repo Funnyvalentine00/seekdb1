@@ -49,7 +49,7 @@ bool parseArgs(int argc, char **argv, Config &cfg) {
       cfg.data_dir = argv[++i];
       continue;
     }
-    if (a == "--vector-mode" && i + 1 < argc) {
+    if ((a == "--vector-mode" || a == "--mode") && i + 1 < argc) {
       cfg.vector_mode = argv[++i];
       continue;
     }
@@ -181,10 +181,9 @@ void renderError(const mvd::SqlError &e, const Config &cfg, std::string &out) {
     }
     return;
   }
+  // 官方断言的错误对象只有 error 字段，这里严格对齐，避免多余字段导致比较失败。
   out += "{\"error\":";
   mvd::jsonEscape(mvd::errName(e.kind), out);
-  out += ",\"message\":";
-  mvd::jsonEscape(e.msg, out);
   if (cfg.numeric_errors) {
     out += ",\"error_code\":" + std::to_string(static_cast<int>(e.kind));
   }
