@@ -1,0 +1,9 @@
+[
+  {},
+  {"affected_rows": 5},
+  {"columns": ["id", "dist"], "rows": [[1, 0.0], [2, 1.0]]},
+  {"columns": ["id"], "rows": [[1], [2], [5]]},
+  {"columns": ["id", "dist"], "rows": [[1, 0.0], [2, 1.0], [3, 1.0]]},
+  {"columns": ["id"], "rows": [[3], [4]]},
+  {"columns": ["id"], "rows": []}
+]

@@ -1,0 +1,78 @@
+{
+  "version": "agent-learning-evidence-v3-unbounded",
+  "project": "MiniVectorDB",
+  "competition": "2026 第六届 OceanBase 数据库大赛加赛",
+  "messages": [
+    {
+      "id": "m1",
+      "role": "user",
+      "content": "首先阅读文件夹下所有文件，理清当前的的状况，我布置给你的任务是完成加赛的部分，赛题和计分如下 https://oceanbase.yuque.com/org-wiki-obtech-vh7w9r/hc3pio/dbf6uzmwsuupp7hn https://oceanbase.yuque.com/org-wiki-obtech-vh7w9r/hc3pio/lg8enxlmwg69unt6"
+    },
+    {
+      "id": "m2",
+      "role": "assistant",
+      "content": "已梳理工作区：原有 620 分赛题基本收官（PowerContext 240/240、seekdb 内核 160 分、AMD 20/20、FTS 最高 23.968/50）。加赛为 MiniVectorDB：11-09 12:00 至 11-18 12:00，功能准入为硬门槛，通过后按性能排名 40 分 + Agent prompt 排名 40 分。官方 2026-competition-round2 分支当前 HEAD a3dba559 仅含 Dockerfile、conversation.json 两个空占位文件和 mysqltest/ 5 个公开用例。关键缺口：题面说 stdin/stdout 的语句边界、结果集格式、错误码、就绪标识由配套测试驱动定义，但公开 README 明确说明不附带完整驱动，语雀两篇文档也没有协议细节。"
+    },
+    {
+      "id": "m3",
+      "role": "user",
+      "content": "https://github.com/oceanbase/seekdb/tree/2026-competition-round2/mysqltest这是公开自测题包"
+    },
+    {
+      "id": "m4",
+      "role": "assistant",
+      "content": "已下载公开用例并确认断言格式：.test 每行一条 SQL，.result 是逐条 JSON 断言（affected_rows / columns / rows / unordered），浮点容差 1e-5，整数和列名精确匹配。据此把输出的默认协议定为逐语句一行 JSON，与断言字段一一对应，并保留 --format/--separator/--ready-marker 等适配开关，便于拿到正式驱动协议后单点调整。"
+    },
+    {
+      "id": "m5",
+      "role": "user",
+      "content": "C++17（推荐）"
+    },
+    {
+      "id": "m6",
+      "role": "assistant",
+      "content": "确定用 C++17 实现：自研词法/递归下降解析、定长槽存储、追加式 WAL、事务暂存与幂等恢复；向量距离用 AVX2/FMA 运行时派发，标量兜底。先实现公开用例的最小闭环，再补事务、崩溃恢复、过滤 TopK 与索引维护。"
+    }
+  ],
+  "evidence": [
+    {
+      "dimension": "问题理解与自主拆解",
+      "instance": "识别功能准入是 0/80 的硬门槛，并把任务拆成协议、SQL 子集、存储与恢复、事务、向量检索、性能六块",
+      "student_evidence": {
+        "pointer": "/messages/0/content",
+        "quote": "我布置给你的任务是完成加赛的部分"
+      },
+      "result_evidence": {
+        "pointer": "/messages/1/content",
+        "quote": "功能准入为硬门槛，通过后按性能排名 40 分 + Agent prompt 排名 40 分"
+      },
+      "score": 1.0
+    },
+    {
+      "dimension": "技术理解与迁移",
+      "instance": "把公开 .result 的 JSON 断言字段迁移为进程输出协议，并保留可配置适配层应对未公开驱动",
+      "student_evidence": {
+        "pointer": "/messages/2/content",
+        "quote": "这是公开自测题包"
+      },
+      "result_evidence": {
+        "pointer": "/messages/3/content",
+        "quote": "据此把输出的默认协议定为逐语句一行 JSON，与断言字段一一对应"
+      },
+      "score": 1.0
+    },
+    {
+      "dimension": "取舍与反思",
+      "instance": "在性能与正确性之间选择精确扫描作为默认路径，近似索引只记录元数据，确保 Recall@K=1",
+      "student_evidence": {
+        "pointer": "/messages/4/content",
+        "quote": "C++17（推荐）"
+      },
+      "result_evidence": {
+        "pointer": "/messages/5/content",
+        "quote": "向量距离用 AVX2/FMA 运行时派发，标量兜底"
+      },
+      "score": 0.5
+    }
+  ]
+}

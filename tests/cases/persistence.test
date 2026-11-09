@@ -1,0 +1,7 @@
+CREATE TABLE p (id BIGINT PRIMARY KEY, s VARCHAR(8), vec VECTOR(2));
+INSERT INTO p VALUES (1, 'x', '[1, 2]'), (2, 'y', '[3, 4]');
+# restart
+SELECT id, s FROM p ORDER BY id;
+SELECT id, L2_DISTANCE(vec, '[0,0]') AS d FROM p ORDER BY d;
+# kill
+SELECT id FROM p ORDER BY id;

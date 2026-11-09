@@ -1,0 +1,11 @@
+[
+  {},
+  {"affected_rows": 1},
+  {"columns": ["id", "s"], "rows": [[1, "a"]]},
+  {},
+  {"affected_rows": 1},
+  {"affected_rows": 1},
+  {"columns": ["id", "s"], "rows": [[1, "a"]]},
+  {"affected_rows": 1},
+  {"columns": ["id", "s"], "rows": [[1, "a"], [3, "c"]]}
+]

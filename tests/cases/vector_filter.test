@@ -1,0 +1,7 @@
+CREATE TABLE d (id BIGINT PRIMARY KEY, cat VARCHAR(8), v VECTOR(3));
+INSERT INTO d VALUES (1, 'a', '[0,0,0]'), (2, 'a', '[1,0,0]'), (3, 'b', '[0,1,0]'), (4, 'b', '[0,0,2]'), (5, 'a', '[3,0,0]');
+SELECT id, L2_DISTANCE(v, '[0,0,0]') AS dist FROM d WHERE cat = 'a' ORDER BY dist LIMIT 2;
+SELECT id FROM d WHERE cat = 'a' ORDER BY id;
+SELECT id, L2_DISTANCE(v, '[0,0,0]') AS dist FROM d ORDER BY dist LIMIT 3;
+SELECT id FROM d WHERE cat = 'b' AND id >= 3 ORDER BY id;
+SELECT id FROM d WHERE id > 100;

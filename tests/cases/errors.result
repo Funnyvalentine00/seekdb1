@@ -1,0 +1,19 @@
+[
+  {},
+  {"error": true},
+  {"error": true},
+  {"error": true},
+  {"affected_rows": 1},
+  {"error": true},
+  {"error": true},
+  {"error": true},
+  {"error": true},
+  {"error": true},
+  {"affected_rows": 1},
+  {"columns": ["id"], "rows": [[1], [6]]},
+  {"error": true},
+  {"error": true},
+  {"error": true},
+  {"error": true},
+  {"error": true}
+]

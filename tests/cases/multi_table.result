@@ -1,0 +1,16 @@
+[
+  {},
+  {},
+  {},
+  {"affected_rows": 1},
+  {"affected_rows": 1},
+  {},
+  {"columns": ["id"], "rows": []},
+  {"columns": ["id"], "rows": []},
+  {},
+  {"affected_rows": 1},
+  {"affected_rows": 1},
+  {},
+  {"columns": ["id", "x"], "rows": [[2, "b"]]},
+  {"columns": ["id", "y"], "rows": [[2, 20]]}
+]
