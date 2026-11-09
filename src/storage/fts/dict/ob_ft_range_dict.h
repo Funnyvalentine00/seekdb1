@@ -90,6 +90,7 @@ private:
 private:
   void destroy()
   {
+    use_ordered_scan_ = false;
     for (int64_t i = 0; i < range_dicts_.size(); i++) {
       range_dicts_[i].dict_->~ObIFTDict(); // destroy dict
     }
@@ -102,6 +103,7 @@ private:
 private:
   static constexpr int DEFAULT_KEY_PER_RANGE = 50000; // by estimated
   bool is_inited_;
+  bool use_ordered_scan_ = false;
   ObFTDictDesc desc_;
   ObArenaAllocator range_alloc_;
   ObVector<ObFTRange, ObArenaAllocator> range_dicts_;
