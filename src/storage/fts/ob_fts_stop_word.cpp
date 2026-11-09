@@ -28,6 +28,71 @@ namespace storage
 {
 
 ////////////////////////////////////////////////////////////////////////////////
+
+namespace
+{
+constexpr unsigned ascii_letter_index(unsigned ch)
+{
+  return (ch | 0x20U) - 'a';
+}
+
+struct StopwordAsciiPrefixes
+{
+  bool ready = false;
+  uint32_t first[FTS_STOP_WORD_MAX_LENGTH]{};
+  uint32_t second[FTS_STOP_WORD_MAX_LENGTH][26]{};
+};
+
+StopwordAsciiPrefixes build_stopword_ascii_prefixes()
+{
+  StopwordAsciiPrefixes result;
+  for (const auto &word : ob_stop_word_list) {
+    size_t len = 0;
+    while (len < sizeof(word) && word[len] != '\0') {
+      if (ascii_letter_index(static_cast<unsigned char>(word[len])) >= 26) {
+        return {};
+      }
+      ++len;
+    }
+    if (len == 0 || len == sizeof(word)) {
+      return {};
+    }
+    const unsigned first = ascii_letter_index(word[0]);
+    result.first[len] |= 1U << first;
+    const unsigned second = len > 1 ? ascii_letter_index(word[1]) : 26;
+    result.second[len][first] |= 1U << second;
+  }
+  result.ready = true;
+  return result;
+}
+
+const StopwordAsciiPrefixes stopword_ascii_prefixes = build_stopword_ascii_prefixes();
+
+bool is_definitely_not_stopword(const common::ObString &word)
+{
+  if (!stopword_ascii_prefixes.ready || word.length() <= 0 || word.ptr() == nullptr) {
+    return false;
+  }
+  const auto *bytes = reinterpret_cast<const unsigned char *>(word.ptr());
+  const unsigned first = ascii_letter_index(bytes[0]);
+  const auto len = word.length();
+  if (len < FTS_STOP_WORD_MAX_LENGTH && first < 26
+      && (stopword_ascii_prefixes.first[len] & (1U << first)) != 0) {
+    const unsigned second = len > 1 ? ascii_letter_index(bytes[1]) : 26;
+    if (second <= 26 && (stopword_ascii_prefixes.second[len][first] & (1U << second)) != 0) {
+      return false;
+    }
+  }
+  for (int64_t i = 0; i < len; ++i) {
+    const unsigned ch = bytes[i];
+    if (ascii_letter_index(ch) >= 26 && ch - '0' >= 10) {
+      return false;
+    }
+  }
+  return true;
+}
+} // namespace
+
 // class ObStopWordChecker
 ObStopWordChecker::~ObStopWordChecker()
 {
@@ -90,6 +155,10 @@ int ObStopWordChecker::check_stopword(const ObFTWord &word, bool &is_stopword)
                                        word.get_collation_type(),
                                        stopword_type_.get_collation_type(),
                                        cmp_str))) {
+    } else if (word.get_collation_type() == common::CS_TYPE_UTF8MB4_GENERAL_CI
+               && stopword_type_.get_collation_type() == common::CS_TYPE_UTF8MB4_GENERAL_CI
+               && is_definitely_not_stopword(cmp_str)) {
+      is_stopword = false;
     } else {
       ObFTWord converted(cmp_str.length(), cmp_str.ptr(), stopword_type_);
       ret = stopword_set_.exist_refactored(converted);
