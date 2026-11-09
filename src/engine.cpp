@@ -783,7 +783,11 @@ void Engine::execUpdate(Statement &st, QueryResult &out) {
   }
   std::unordered_set<int64_t> used;
   if (pk_changed) {
-    for (auto &r : rows) used.insert(rowId(def, r));
+    // 主键变更需要与全表可见行比较，而不仅是命中行
+    std::vector<RowRef> all;
+    collectVisible(*t, all);
+    used.reserve(all.size() * 2 + 1);
+    for (auto &r : all) used.insert(rowId(def, r));
   }
 
   struct Change {
@@ -1052,6 +1056,9 @@ void Engine::execSelect(Statement &st, QueryResult &out) {
       }
     }
     auto cellLess = [](const Cell &a, const Cell &b) -> bool {
+      if (a.kind == Cell::Kind::Vec || b.kind == Cell::Kind::Vec) {
+        throwErr(ErrKind::TypeMismatch, "VECTOR cannot be used in ORDER BY");
+      }
       if (a.kind == Cell::Kind::Int && b.kind == Cell::Kind::Int) return a.i < b.i;
       if (a.kind == Cell::Kind::Str && b.kind == Cell::Kind::Str) return a.s < b.s;
       if (a.kind != Cell::Kind::Str && b.kind != Cell::Kind::Str) {
@@ -1062,6 +1069,9 @@ void Engine::execSelect(Statement &st, QueryResult &out) {
       throwErr(ErrKind::TypeMismatch, "ORDER BY compares incompatible types");
     };
     auto cellEqual = [](const Cell &a, const Cell &b) -> bool {
+      if (a.kind == Cell::Kind::Vec || b.kind == Cell::Kind::Vec) {
+        throwErr(ErrKind::TypeMismatch, "VECTOR cannot be used in ORDER BY");
+      }
       if (a.kind == Cell::Kind::Int && b.kind == Cell::Kind::Int) return a.i == b.i;
       if (a.kind == Cell::Kind::Str && b.kind == Cell::Kind::Str) return a.s == b.s;
       if (a.kind != Cell::Kind::Str && b.kind != Cell::Kind::Str) {
