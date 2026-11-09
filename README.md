@@ -55,9 +55,10 @@ cmake --build build -j
 
 ```bash
 python3 tests/run_cases.py mysqltest/cases --binary ./build/minivectordb   # 官方公开用例 5/5
-python3 tests/run_cases.py tests/cases --binary ./build/minivectordb       # 自建语义用例 7/7
+python3 tests/run_cases.py tests/cases --binary ./build/minivectordb       # 自建语义用例 10/10
 python3 tests/fuzz.py --seed 1 --rounds 60                                  # 随机差分测试
 python3 tests/bench.py --binary ./build/minivectordb                        # 10k×128 性能基线
+python3 tests/bigdata.py --n 200000 --dim 32                                # 大数据量/重启恢复
 ```
 
 ## Docker

@@ -1,0 +1,19 @@
+[
+  {},
+  {"error": true},
+  {},
+  {"error": true},
+  {"error": true},
+  {"error": true},
+  {"affected_rows": 1},
+  {"columns": ["id", "a", "b", "d"], "rows": [[1, 10, "x", 2.2360679775]]},
+  {"columns": ["id", "a"], "rows": [[1, 10]]},
+  {"affected_rows": 1},
+  {"columns": ["id", "a", "b"], "rows": [[1, 11, "y"]]},
+  {"columns": ["id"], "rows": [[1]]},
+  {"error": true},
+  {"error": true},
+  {},
+  {},
+  {"error": true}
+]

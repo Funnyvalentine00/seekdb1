@@ -1,0 +1,13 @@
+CREATE TABLE m (id BIGINT PRIMARY KEY, s VARCHAR(4));
+INSERT INTO m VALUES (1, 'a');
+BEGIN;
+INSERT INTO m VALUES (2, 'b'), (1, 'dup'), (3, 'c');
+SELECT id FROM m ORDER BY id;
+INSERT INTO m VALUES (2, 'b'), (3, 'c');
+SELECT id FROM m ORDER BY id;
+COMMIT;
+SELECT id, s FROM m ORDER BY id;
+UPDATE m SET id = 2 WHERE id = 1;
+SELECT id, s FROM m ORDER BY id;
+UPDATE m SET s = 'z' WHERE id >= 2;
+SELECT id, s FROM m ORDER BY id;

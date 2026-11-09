@@ -1,0 +1,15 @@
+[
+  {},
+  {"affected_rows": 1},
+  {},
+  {"error": true},
+  {"columns": ["id"], "rows": [[1]]},
+  {"affected_rows": 2},
+  {"columns": ["id"], "rows": [[1], [2], [3]]},
+  {},
+  {"columns": ["id", "s"], "rows": [[1, "a"], [2, "b"], [3, "c"]]},
+  {"error": true},
+  {"columns": ["id", "s"], "rows": [[1, "a"], [2, "b"], [3, "c"]]},
+  {"affected_rows": 2},
+  {"columns": ["id", "s"], "rows": [[1, "a"], [2, "z"], [3, "z"]]}
+]

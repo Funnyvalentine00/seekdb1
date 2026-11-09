@@ -919,6 +919,19 @@ void Engine::execSelect(Statement &st, QueryResult &out) {
     }
     bindExpr(*t, oi.expr.get());
   }
+  // ORDER BY 的向量列必须在绑定阶段就拒绝（否则只有 0/1 行时不会触发比较）
+  for (const OrderItem &oi : st.order_by) {
+    const Expr *e = nullptr;
+    if (oi.alias_index >= 0) {
+      const SelectItem &si = st.select_items[oi.alias_index];
+      if (!si.star) e = si.expr.get();
+    } else {
+      e = oi.expr.get();
+    }
+    if (e && e->kind == ExprKind::Column && def.cols[e->col_index].type == ColType::Vector) {
+      throwErr(ErrKind::TypeMismatch, "VECTOR cannot be used in ORDER BY");
+    }
+  }
 
   auto materialize = [&](const RowRef &row) {
     std::vector<Cell> cells;
