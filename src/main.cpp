@@ -211,8 +211,15 @@ const char *envOr(const char *name, const char *fallback) {
   return (v && *v) ? v : fallback;
 }
 
+void onTerminate(int) {
+  // 已确认提交的数据在 WAL 中已 fsync；未提交数据只在内存，直接退出等价于回滚。
+  _exit(0);
+}
+
 int main(int argc, char **argv) {
   ::signal(SIGPIPE, SIG_IGN);
+  ::signal(SIGTERM, onTerminate);
+  ::signal(SIGINT, onTerminate);
   Config cfg;
   // 环境变量兜底：驱动可能通过环境而不是命令行传参
   cfg.data_dir = envOr("MVD_DATA_DIR", cfg.data_dir.c_str());
@@ -237,46 +244,64 @@ int main(int argc, char **argv) {
 
   if (!cfg.ready_marker.empty()) emit(cfg.ready_marker);
 
+  bool stop = false;
+  auto runSql = [&](const std::string &sql) {
+    if (blankSql(sql)) return;
+    // 兼容驱动可能发送的退出指令
+    std::string trimmed;
+    for (char c : sql) {
+      if (!std::isspace(static_cast<unsigned char>(c))) {
+        trimmed.push_back(static_cast<char>(std::tolower(static_cast<unsigned char>(c))));
+      }
+    }
+    if (trimmed == "exit" || trimmed == "quit" || trimmed == "\\q") {
+      stop = true;
+      return;
+    }
+    std::string out;
+    try {
+      mvd::Parser parser(sql);
+      mvd::Statement st = parser.parse();
+      mvd::QueryResult res;
+      engine.execute(st, res);
+      if (cfg.format == "tsv") renderTsv(res, cfg, out);
+      else renderJson(res, out);
+    } catch (const mvd::SqlError &e) {
+      if (std::strcmp(e.msg.c_str(), "empty statement") == 0) return;
+      renderError(e, cfg, out);
+    } catch (const std::exception &e) {
+      mvd::SqlError err(mvd::ErrKind::Internal, e.what());
+      renderError(err, cfg, out);
+    }
+    emit(out);
+  };
+
   std::string buffer;
   std::string line;
-  while (std::getline(std::cin, line)) {
+  bool first = true;
+  while (!stop && std::getline(std::cin, line)) {
     buffer += line;
     buffer.push_back('\n');
+    if (first) {
+      first = false;
+      // 剥离 UTF-8 BOM
+      if (buffer.size() >= 3 && static_cast<unsigned char>(buffer[0]) == 0xEF &&
+          static_cast<unsigned char>(buffer[1]) == 0xBB &&
+          static_cast<unsigned char>(buffer[2]) == 0xBF) {
+        buffer.erase(0, 3);
+      }
+    }
     std::vector<std::string> stmts;
     size_t consumed = 0;
     mvd::splitStatements(buffer, consumed, stmts);
     if (consumed > 0) buffer.erase(0, consumed);
     for (const std::string &sql : stmts) {
-      if (blankSql(sql)) continue;
-      // 兼容驱动可能发送的退出指令
-      std::string trimmed;
-      for (char c : sql) {
-        if (!std::isspace(static_cast<unsigned char>(c))) {
-          trimmed.push_back(static_cast<char>(std::tolower(static_cast<unsigned char>(c))));
-        }
-      }
-      if (trimmed == "exit" || trimmed == "quit" || trimmed == "\\q") {
-        engine.shutdown();
-        return 0;
-      }
-      std::string out;
-      try {
-        mvd::Parser parser(sql);
-        mvd::Statement st = parser.parse();
-        mvd::QueryResult res;
-        engine.execute(st, res);
-        if (cfg.format == "tsv") renderTsv(res, cfg, out);
-        else renderJson(res, out);
-      } catch (const mvd::SqlError &e) {
-        if (std::strcmp(e.msg.c_str(), "empty statement") == 0) continue;
-        renderError(e, cfg, out);
-      } catch (const std::exception &e) {
-        mvd::SqlError err(mvd::ErrKind::Internal, e.what());
-        renderError(err, cfg, out);
-      }
-      emit(out);
+      runSql(sql);
+      if (stop) break;
     }
   }
+  // 输入结束时若还有未以分号结尾的语句，也执行掉
+  if (!stop && !blankSql(buffer)) runSql(buffer);
 
   // EOF：回滚未提交事务并正常落盘
   try {
