@@ -36,6 +36,12 @@ std::vector<float> parseVectorLiteral(const std::string &text, int dim) {
   const char *base = text.data();
   size_t i = b + 1;
   size_t end = e - 1;
+  // 拒绝尾逗号，如 [1,2,]
+  size_t tail = end;
+  while (tail > b + 1 && std::isspace(static_cast<unsigned char>(text[tail - 1]))) --tail;
+  if (tail > b + 1 && text[tail - 1] == ',') {
+    throwErr(ErrKind::InvalidVector, "trailing comma in vector literal");
+  }
   while (i < end) {
     size_t j = i;
     while (j < end && text[j] != ',') ++j;
