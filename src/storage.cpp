@@ -166,24 +166,20 @@ void Table::ensureCapacity(uint32_t slots) {
 }
 
 void Table::applyOp(const Op &op) {
-  if (op.type == 3) {
-    if (op.slot >= slot_count_) return;
-    uint8_t *p = rows_map_ + kHeaderSize + static_cast<size_t>(op.slot) * def_.slot_size;
-    if (p[0] != 0) {
-      int64_t id;
-      std::memcpy(&id, p + 8, sizeof(id));
-      id_to_slot_.erase(id);
-      p[0] = 0;
-    }
-    return;
-  }
-  ensureCapacity(op.slot + 1);
+  const bool deleting = op.type == 3;
+  if (deleting && op.slot >= slot_count_) return;
+  if (!deleting) ensureCapacity(op.slot + 1);
   uint8_t *p = rows_map_ + kHeaderSize + static_cast<size_t>(op.slot) * def_.slot_size;
-  if (op.type == 2 && p[0] != 0) {
-    // 更新可能改主键：先摘掉旧映射
+  if (op.slot < slot_count_ && p[0] != 0) {
     int64_t old_id;
     std::memcpy(&old_id, p + 8, sizeof(old_id));
-    id_to_slot_.erase(old_id);
+    const auto it = id_to_slot_.find(old_id);
+    // Another slot may already own this key during a multi-row change.
+    if (it != id_to_slot_.end() && it->second == op.slot) id_to_slot_.erase(it);
+  }
+  if (deleting) {
+    p[0] = 0;
+    return;
   }
   std::memcpy(p, op.data.data(), def_.slot_size);
   p[0] = 1;

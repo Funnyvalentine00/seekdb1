@@ -1,0 +1,15 @@
+CREATE TABLE t (id BIGINT PRIMARY KEY, payload VARCHAR(12));
+INSERT INTO t VALUES (1, 'first'), (2, 'second');
+BEGIN;
+UPDATE t SET id = 3 WHERE payload = 'first';
+UPDATE t SET id = 1 WHERE payload = 'second';
+UPDATE t SET id = 2 WHERE payload = 'first';
+COMMIT;
+SELECT id, payload FROM t ORDER BY id;
+SELECT id, payload FROM t WHERE id = 1;
+SELECT id, payload FROM t WHERE id = 2;
+# kill
+SELECT id, payload FROM t WHERE id = 1;
+SELECT id, payload FROM t WHERE id = 2;
+INSERT INTO t VALUES (1, 'duplicate');
+INSERT INTO t VALUES (2, 'duplicate');

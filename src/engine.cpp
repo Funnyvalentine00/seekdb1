@@ -569,35 +569,48 @@ void Engine::collectVisible(Table &t, std::vector<RowRef> &rows) {
 }
 
 bool Engine::lookupById(Table &t, int64_t id, RowRef &row, uint32_t &slot) {
-  auto pit = pending_.find(t.def().id);
-  if (pit != pending_.end()) {
-    auto pi = pit->second.inserts.find(id);
-    if (pi != pit->second.inserts.end()) {
-      row.raw = nullptr;
-      row.pend = &pi->second;
-      row.slot = UINT32_MAX;
-      slot = UINT32_MAX;
+  const TableDef &def = t.def();
+  const auto pit = pending_.find(def.id);
+  const TablePending *pending = pit == pending_.end() ? nullptr : &pit->second;
+  if (pending) {
+    const auto inserted = pending->inserts.find(id);
+    if (inserted != pending->inserts.end()) {
+      row = {nullptr, &inserted->second, UINT32_MAX};
+      slot = row.slot;
       return true;
     }
   }
-  uint32_t s;
-  if (!t.findId(id, s)) return false;
-  if (pit != pending_.end()) {
-    auto ps = pit->second.slots.find(s);
-    if (ps != pit->second.slots.end()) {
-      if (ps->second.deleted) return false;
-      row.raw = nullptr;
-      row.pend = &ps->second.values;
-      row.slot = s;
-      slot = s;
+
+  uint32_t base_slot;
+  if (t.findId(id, base_slot)) {
+    const PendingSlot *change = nullptr;
+    if (pending) {
+      const auto updated = pending->slots.find(base_slot);
+      if (updated != pending->slots.end()) change = &updated->second;
+    }
+    if (!change) {
+      row = {t.slotPtr(base_slot), nullptr, base_slot};
+      slot = base_slot;
+      return true;
+    }
+    if (!change->deleted && change->values[def.pk_index].i == id) {
+      row = {nullptr, &change->values, base_slot};
+      slot = base_slot;
       return true;
     }
   }
-  row.raw = t.slotPtr(s);
-  row.pend = nullptr;
-  row.slot = s;
-  slot = s;
-  return true;
+
+  // The committed index does not contain keys moved to another slot in this transaction.
+  if (pending) {
+    for (const auto &[updated_slot, change] : pending->slots) {
+      if (!change.deleted && change.values[def.pk_index].i == id) {
+        row = {nullptr, &change.values, updated_slot};
+        slot = updated_slot;
+        return true;
+      }
+    }
+  }
+  return false;
 }
 
 void Engine::collectMatching(Table &t, const Expr *where, std::vector<RowRef> &rows,

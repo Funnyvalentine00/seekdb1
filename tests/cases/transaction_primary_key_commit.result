@@ -1,0 +1,16 @@
+[
+  {},
+  {"affected_rows": 2},
+  {},
+  {"affected_rows": 1},
+  {"affected_rows": 1},
+  {"affected_rows": 1},
+  {},
+  {"columns": ["id", "payload"], "rows": [[1, "second"], [2, "first"]]},
+  {"columns": ["id", "payload"], "rows": [[1, "second"]]},
+  {"columns": ["id", "payload"], "rows": [[2, "first"]]},
+  {"columns": ["id", "payload"], "rows": [[1, "second"]]},
+  {"columns": ["id", "payload"], "rows": [[2, "first"]]},
+  {"error": "duplicate_key"},
+  {"error": "duplicate_key"}
+]
