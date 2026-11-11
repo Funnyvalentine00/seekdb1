@@ -169,12 +169,9 @@ int64_t Parser::parseIntLit() {
   }
   if (cur_.kind != TokKind::Int) throwErr(ErrKind::Syntax, "expected integer");
   int64_t v;
-  if (!parseInt64(cur_.text, v)) throwErr(ErrKind::ValueOutOfRange, "integer literal out of range");
+  const bool parsed = neg ? parseInt64("-" + cur_.text, v) : parseInt64(cur_.text, v);
+  if (!parsed) throwErr(ErrKind::ValueOutOfRange, "integer literal out of range");
   advance();
-  if (neg) {
-    if (v == INT64_MIN) throwErr(ErrKind::ValueOutOfRange, "integer literal out of range");
-    v = -v;
-  }
   return v;
 }
 
