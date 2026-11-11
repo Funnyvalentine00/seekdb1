@@ -426,7 +426,7 @@ bool Engine::evalWhere(const TableDef &def, const Expr *e, const RowRef &row) co
           const char *p = reinterpret_cast<const char *>(row.raw + def.col_offset[rv->col_index] + 4);
           size_t n = std::min<size_t>(len, lit.size());
           int c = std::memcmp(lit.data(), p, n);
-          if (c == 0) c = (len < lit.size()) ? -1 : (len > lit.size() ? 1 : 0);
+          if (c == 0) c = (lit.size() < len) ? -1 : (lit.size() > len ? 1 : 0);
           return cmpResult(c);
         }
         return cmpResult(-(*row.pend)[rv->col_index].s.compare(lit));
@@ -461,7 +461,9 @@ bool Engine::evalWhere(const TableDef &def, const Expr *e, const RowRef &row) co
         return c;
       };
       Cell a = scalar(e->left.get()), b = scalar(e->right.get());
-      if (a.kind == Cell::Kind::Str && b.kind == Cell::Kind::Str) {
+      if (a.kind == Cell::Kind::Int && b.kind == Cell::Kind::Int) {
+        return cmpResult(a.i < b.i ? -1 : (a.i > b.i ? 1 : 0));
+      } else if (a.kind == Cell::Kind::Str && b.kind == Cell::Kind::Str) {
         int c = a.s.compare(b.s);
         switch (e->cmp) {
           case 0: return c == 0;
@@ -569,35 +571,48 @@ void Engine::collectVisible(Table &t, std::vector<RowRef> &rows) {
 }
 
 bool Engine::lookupById(Table &t, int64_t id, RowRef &row, uint32_t &slot) {
-  auto pit = pending_.find(t.def().id);
-  if (pit != pending_.end()) {
-    auto pi = pit->second.inserts.find(id);
-    if (pi != pit->second.inserts.end()) {
-      row.raw = nullptr;
-      row.pend = &pi->second;
-      row.slot = UINT32_MAX;
-      slot = UINT32_MAX;
+  const TableDef &def = t.def();
+  const auto pit = pending_.find(def.id);
+  const TablePending *pending = pit == pending_.end() ? nullptr : &pit->second;
+  if (pending) {
+    const auto inserted = pending->inserts.find(id);
+    if (inserted != pending->inserts.end()) {
+      row = {nullptr, &inserted->second, UINT32_MAX};
+      slot = row.slot;
       return true;
     }
   }
-  uint32_t s;
-  if (!t.findId(id, s)) return false;
-  if (pit != pending_.end()) {
-    auto ps = pit->second.slots.find(s);
-    if (ps != pit->second.slots.end()) {
-      if (ps->second.deleted) return false;
-      row.raw = nullptr;
-      row.pend = &ps->second.values;
-      row.slot = s;
-      slot = s;
+
+  uint32_t base_slot;
+  if (t.findId(id, base_slot)) {
+    const PendingSlot *change = nullptr;
+    if (pending) {
+      const auto updated = pending->slots.find(base_slot);
+      if (updated != pending->slots.end()) change = &updated->second;
+    }
+    if (!change) {
+      row = {t.slotPtr(base_slot), nullptr, base_slot};
+      slot = base_slot;
+      return true;
+    }
+    if (!change->deleted && change->values[def.pk_index].i == id) {
+      row = {nullptr, &change->values, base_slot};
+      slot = base_slot;
       return true;
     }
   }
-  row.raw = t.slotPtr(s);
-  row.pend = nullptr;
-  row.slot = s;
-  slot = s;
-  return true;
+
+  // The committed index may still map a moved key to its previous slot.
+  if (pending && pending->has_rekeyed_slots) {
+    for (const auto &[updated_slot, change] : pending->slots) {
+      if (!change.deleted && change.values[def.pk_index].i == id) {
+        row = {nullptr, &change.values, updated_slot};
+        slot = updated_slot;
+        return true;
+      }
+    }
+  }
+  return false;
 }
 
 void Engine::collectMatching(Table &t, const Expr *where, std::vector<RowRef> &rows,
@@ -841,6 +856,7 @@ void Engine::execUpdate(Statement &st, QueryResult &out) {
       ps.deleted = false;
       ps.values = ch.values;
       p.slots[ch.slot] = std::move(ps);
+      p.has_rekeyed_slots = p.has_rekeyed_slots || ch.values[def.pk_index].i != ch.old_id;
     }
   }
   out.affected = static_cast<int64_t>(changes.size());
@@ -995,12 +1011,12 @@ void Engine::execSelect(Statement &st, QueryResult &out) {
 
   // 无过滤且无事务暂存：走专用扫描（距离计算内联，避免逐行函数调用）
   if (topk_expr && !where && !tableHasPending(*t)) {
-    int64_t k = st.limit;
-    if (k <= 0) return;
+    const size_t k = std::min<size_t>(static_cast<size_t>(st.limit), t->rowCount());
+    if (k == 0) return;
     std::vector<TopKEntry> entries;
     int vcol = topk_expr->left->col_index;
     scanTopK(t->slotPtr(0), t->slotCount(), def.slot_size, def.col_offset[vcol],
-             def.cols[vcol].param, topk_expr->vec_lit.data(), static_cast<int>(k), entries);
+             def.cols[vcol].param, topk_expr->vec_lit.data(), k, entries);
     out.rows.reserve(entries.size());
     for (const TopKEntry &e : entries) {
       RowRef rr;
@@ -1017,8 +1033,8 @@ void Engine::execSelect(Statement &st, QueryResult &out) {
   collectMatching(*t, where, rows, nullptr, stop);
 
   if (topk_expr) {
-    int64_t k = st.limit;
-    if (k <= 0) return;
+    const size_t k = std::min<size_t>(static_cast<size_t>(st.limit), rows.size());
+    if (k == 0) return;
     struct Item {
       float dist;
       int64_t id;
@@ -1029,12 +1045,12 @@ void Engine::execSelect(Statement &st, QueryResult &out) {
       return a.id < b.id;
     };
     std::vector<Item> heap;
-    heap.reserve(static_cast<size_t>(k) + 1);
+    heap.reserve(k);
     for (size_t i = 0; i < rows.size(); ++i) {
       const float *v = getVec(def, rows[i], topk_expr->left->col_index);
       float d = l2Distance(v, topk_expr->vec_lit.data(), topk_expr->vec_lit.size());
       Item it{d, rowId(def, rows[i]), i};
-      if (static_cast<int64_t>(heap.size()) < k) {
+      if (heap.size() < k) {
         heap.push_back(it);
         std::push_heap(heap.begin(), heap.end(), cmp);
       } else if (d < heap.front().dist || (d == heap.front().dist && it.id < heap.front().id)) {

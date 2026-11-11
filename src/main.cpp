@@ -1,17 +1,20 @@
-// MiniVectorDB 进程入口：stdin 收 SQL，stdout 回结果，日志走 stderr。
+// MiniVectorDB 进程入口：评测使用 JSON Lines，本地驱动可直接发送 SQL。
 #include <signal.h>
 #include <unistd.h>
 
 #include <cctype>
+#include <cmath>
 #include <cstdio>
 #include <cstring>
 #include <iostream>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "common.h"
 #include "engine.h"
 #include "sql.h"
+#include "stdio_request.h"
 
 namespace {
 
@@ -23,11 +26,12 @@ struct Config {
   std::string separator = " | ";   // tsv 分隔符
   bool header = true;              // tsv 表头
   bool numeric_errors = false;
+  bool stdio = false;
 };
 
 void usage() {
   std::fprintf(stderr,
-               "usage: minivectordb [--data-dir=DIR] [--vector-mode=exact|ann]\n"
+               "usage: minivectordb [--stdio] [--data-dir=DIR] [--vector-mode=exact|ann]\n"
                "                    [--format=json|tsv] [--separator=STR] [--header=on|off]\n"
                "                    [--ready-marker=TOKEN] [--numeric-errors]\n");
 }
@@ -85,6 +89,8 @@ bool parseArgs(int argc, char **argv, Config &cfg) {
       cfg.ready_marker = val("--ready-marker=");
     } else if (a == "--numeric-errors") {
       cfg.numeric_errors = true;
+    } else if (a == "--stdio") {
+      cfg.stdio = true;
     } else if (a == "--ann") {
       cfg.vector_mode = "ann";
     } else if (a == "--exact") {
@@ -97,24 +103,46 @@ bool parseArgs(int argc, char **argv, Config &cfg) {
   return true;
 }
 
-void renderCellJson(const mvd::Cell &c, std::string &out) {
+void renderCellJson(const mvd::Cell &c, bool stdio, std::string &out) {
   using K = mvd::Cell::Kind;
   switch (c.kind) {
     case K::Int: out += std::to_string(c.i); break;
-    case K::Str: mvd::jsonEscape(c.s, out); break;
-    case K::Real: mvd::appendFloat(c.r, out); break;
+    case K::Str:
+      if (stdio) mvd::stdio::escapeString(c.s, out);
+      else mvd::jsonEscape(c.s, out);
+      break;
+    case K::Real:
+      if (stdio && !std::isfinite(c.r)) {
+        mvd::throwErr(mvd::ErrKind::ValueOutOfRange, "non-finite query result");
+      }
+      mvd::appendFloat(c.r, out);
+      break;
     case K::Vec: {
-      std::string v;
-      mvd::appendVector(c.v.data(), static_cast<int>(c.v.size()), v);
-      mvd::jsonEscape(v, out);
+      if (stdio) {
+        mvd::appendVector(c.v.data(), static_cast<int>(c.v.size()), out);
+      } else {
+        std::string v;
+        mvd::appendVector(c.v.data(), static_cast<int>(c.v.size()), v);
+        mvd::jsonEscape(v, out);
+      }
       break;
     }
   }
 }
 
-void renderJson(const mvd::QueryResult &r, std::string &out) {
+void beginStdioResponse(std::string_view id, bool ok, std::string &out) {
+  out = "{\"id\":";
+  out += id.empty() ? std::string_view("null") : id;
+  out += ok ? ",\"ok\":true" : ",\"ok\":false";
+}
+
+void renderJson(const mvd::QueryResult &r, std::string &out, std::string_view id = {}) {
+  const bool stdio = !id.empty();
+  if (stdio) beginStdioResponse(id, true, out);
+  else out = "{";
   if (r.has_rows) {
-    out += "{\"columns\":[";
+    if (stdio) out.push_back(',');
+    out += "\"columns\":[";
     for (size_t i = 0; i < r.columns.size(); ++i) {
       if (i) out.push_back(',');
       mvd::jsonEscape(r.columns[i], out);
@@ -126,16 +154,16 @@ void renderJson(const mvd::QueryResult &r, std::string &out) {
       const auto &row = r.rows[i];
       for (size_t j = 0; j < row.size(); ++j) {
         if (j) out.push_back(',');
-        renderCellJson(row[j], out);
+        renderCellJson(row[j], stdio, out);
       }
       out.push_back(']');
     }
-    out += "]}";
+    out += "]";
   } else if (r.affected >= 0) {
-    out += "{\"affected_rows\":" + std::to_string(r.affected) + "}";
-  } else {
-    out += "{}";
+    if (stdio) out.push_back(',');
+    out += "\"affected_rows\":" + std::to_string(r.affected);
   }
+  out.push_back('}');
 }
 
 void renderTsvCell(const mvd::Cell &c, std::string &out) {
@@ -181,7 +209,7 @@ void renderError(const mvd::SqlError &e, const Config &cfg, std::string &out) {
     }
     return;
   }
-  // 官方断言的错误对象只有 error 字段，这里严格对齐，避免多余字段导致比较失败。
+  // 本地 SQL 驱动使用简化的错误对象。
   out += "{\"error\":";
   mvd::jsonEscape(mvd::errName(e.kind), out);
   if (cfg.numeric_errors) {
@@ -194,6 +222,49 @@ void emit(const std::string &line) {
   std::fwrite(line.data(), 1, line.size(), stdout);
   std::fputc('\n', stdout);
   std::fflush(stdout);
+}
+
+mvd::QueryResult executeSql(mvd::Engine &engine, const std::string &sql) {
+  mvd::Parser parser(sql);
+  mvd::Statement statement = parser.parse();
+  mvd::QueryResult result;
+  engine.execute(statement, result);
+  return result;
+}
+
+void renderStdioError(const mvd::SqlError &error, std::string_view id, std::string &out) {
+  beginStdioResponse(id, false, out);
+  out += ",\"error\":{\"code\":";
+  mvd::jsonEscape(mvd::errName(error.kind), out);
+  out += ",\"message\":";
+  mvd::stdio::escapeString(error.msg, out);
+  out += "}}";
+}
+
+int runStdio(mvd::Engine &engine) {
+  emit("{\"type\":\"ready\"}");
+  for (std::string line; std::getline(std::cin, line);) {
+    mvd::stdio::Request request;
+    std::string out;
+    try {
+      mvd::stdio::RequestParser(line).parse(request);
+      if (request.shutdown) {
+        engine.shutdown();
+        renderJson({}, out, request.id);
+        emit(out);
+        return 0;
+      }
+      engine.setVectorMode(request.search_mode);
+      renderJson(executeSql(engine, request.sql), out, request.id);
+    } catch (const mvd::SqlError &error) {
+      renderStdioError(error, request.id, out);
+    } catch (const std::exception &error) {
+      renderStdioError({mvd::ErrKind::Internal, error.what()}, request.id, out);
+    }
+    emit(out);
+  }
+  engine.shutdown();
+  return 0;
 }
 
 bool blankSql(const std::string &s) {
@@ -241,6 +312,7 @@ int main(int argc, char **argv) {
     return 1;
   }
 
+  if (cfg.stdio) return runStdio(engine);
   if (!cfg.ready_marker.empty()) emit(cfg.ready_marker);
 
   bool stop = false;
@@ -259,10 +331,7 @@ int main(int argc, char **argv) {
     }
     std::string out;
     try {
-      mvd::Parser parser(sql);
-      mvd::Statement st = parser.parse();
-      mvd::QueryResult res;
-      engine.execute(st, res);
+      mvd::QueryResult res = executeSql(engine, sql);
       if (cfg.format == "tsv") renderTsv(res, cfg, out);
       else renderJson(res, out);
     } catch (const mvd::SqlError &e) {

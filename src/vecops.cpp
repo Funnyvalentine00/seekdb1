@@ -68,8 +68,8 @@ struct HeapCmp {
   }
 };
 
-inline void heapPush(std::vector<TopKEntry> &heap, int k, const TopKEntry &e) {
-  if (static_cast<int>(heap.size()) < k) {
+inline void heapPush(std::vector<TopKEntry> &heap, size_t k, const TopKEntry &e) {
+  if (heap.size() < k) {
     heap.push_back(e);
     std::push_heap(heap.begin(), heap.end(), HeapCmp());
   } else if (e.dist < heap.front().dist ||
@@ -83,11 +83,12 @@ inline void heapPush(std::vector<TopKEntry> &heap, int k, const TopKEntry &e) {
 }  // namespace
 
 void scanTopK(const uint8_t *base, uint32_t slot_count, uint32_t slot_size, uint32_t vec_off,
-              int dim, const float *query, int k, std::vector<TopKEntry> &out) {
+              int dim, const float *query, size_t k, std::vector<TopKEntry> &out) {
   out.clear();
-  if (k <= 0) return;
+  k = std::min<size_t>(k, slot_count);
+  if (k == 0) return;
   std::vector<TopKEntry> heap;
-  heap.reserve(static_cast<size_t>(k) + 1);
+  heap.reserve(k);
 #if defined(__x86_64__) || defined(__i386__)
   static const bool has_avx2 = __builtin_cpu_supports("avx2") && __builtin_cpu_supports("fma");
   if (has_avx2) {

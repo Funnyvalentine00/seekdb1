@@ -55,6 +55,7 @@ class Engine {
   struct TablePending {
     std::unordered_map<uint32_t, PendingSlot> slots;
     std::unordered_map<int64_t, std::vector<Value>> inserts;
+    bool has_rekeyed_slots = false;
   };
 
   TablePending &pend(Table &t) { return pending_[t.def().id]; }

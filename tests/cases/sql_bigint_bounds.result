@@ -1,0 +1,9 @@
+[
+  {},
+  {"affected_rows": 2},
+  {"columns": ["id"], "rows": [[-9223372036854775808]]},
+  {"columns": ["id"], "rows": [[9223372036854775807]]},
+  {"error": "value_out_of_range"},
+  {"error": "value_out_of_range"},
+  {"columns": ["id"], "rows": [[-9223372036854775808], [9223372036854775807]]}
+]
