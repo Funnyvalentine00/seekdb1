@@ -1,0 +1,80 @@
+name: MiniVectorDB round two
+
+on:
+  pull_request:
+    branches: [2026-competition-round2]
+  push:
+    branches: [2026-competition-round2]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  image-and-regressions:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+
+      - name: Check out the published protocol checker
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: oceanbase/seekdb
+          ref: f4d4e26653af823a7601668802f80e374ad6643c
+          path: official
+          persist-credentials: false
+          sparse-checkout: |
+            protocol_check
+            mysqltest
+
+      - name: Build the submitted Dockerfile
+        shell: bash
+        run: |
+          mkdir -p validation-logs
+          git rev-parse HEAD | tee validation-logs/revision.txt
+          docker build --tag minivectordb:round2-test . 2>&1 | tee validation-logs/docker-build.log
+          docker image inspect minivectordb:round2-test > validation-logs/image.json
+
+      - name: Check the actual image protocol and public cases
+        shell: bash
+        run: |
+          python3 official/protocol_check/run.py --image minivectordb:round2-test \
+            --handshake-only --output protocol-results/handshake
+          python3 official/protocol_check/run.py --image minivectordb:round2-test \
+            --output protocol-results/public
+
+      - name: Run regressions against the image binary
+        shell: bash
+        run: |
+          mvd_container_id=$(docker create minivectordb:round2-test)
+          trap 'docker rm -f "$mvd_container_id" >/dev/null 2>&1 || true' EXIT
+          mkdir -p image-bin
+          docker cp "$mvd_container_id:/usr/local/bin/minivectordb" image-bin/minivectordb
+          sha256sum image-bin/minivectordb | tee validation-logs/binary.sha256
+          python3 tests/run_cases.py mysqltest/cases --binary image-bin/minivectordb \
+            2>&1 | tee validation-logs/public-sql.log
+          python3 tests/run_cases.py tests/cases --binary image-bin/minivectordb \
+            2>&1 | tee validation-logs/regressions.log
+          python3 tests/stdio_protocol.py --binary image-bin/minivectordb \
+            2>&1 | tee validation-logs/stdio.log
+          python3 tests/query_boundaries.py --binary image-bin/minivectordb -v \
+            2>&1 | tee validation-logs/query-boundaries.log
+          python3 tests/topk_memory.py --binary image-bin/minivectordb \
+            2>&1 | tee validation-logs/topk-memory.log
+          python3 tests/fuzz.py --binary image-bin/minivectordb --seed 1 --rounds 60 \
+            2>&1 | tee validation-logs/fuzz.log
+
+      - name: Save validation reports
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: minivectordb-validation-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            protocol-results
+            validation-logs
+          retention-days: 14
+          if-no-files-found: warn

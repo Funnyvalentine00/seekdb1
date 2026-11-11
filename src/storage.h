@@ -38,6 +38,7 @@ class Table {
   void close();
 
   uint32_t slotCount() const { return slot_count_; }
+  size_t rowCount() const { return id_to_slot_.size(); }
   const uint8_t *slotPtr(uint32_t slot) const {
     return rows_map_ + kHeaderSize + static_cast<size_t>(slot) * def_.slot_size;
   }

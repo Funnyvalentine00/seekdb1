@@ -57,6 +57,8 @@ cmake --build build -j
 python3 tests/run_cases.py mysqltest/cases --binary ./build/minivectordb   # 官方公开用例 20/20
 python3 tests/run_cases.py tests/cases --binary ./build/minivectordb       # 语义回归用例
 python3 tests/stdio_protocol.py --binary ./build/minivectordb             # JSON Lines 编码与重启
+python3 tests/query_boundaries.py --binary ./build/minivectordb           # 比较精度、字符串前缀和大 LIMIT
+python3 tests/topk_memory.py --binary ./build/minivectordb                # Linux：删除大量行后的 TopK 内存上限
 python3 tests/fuzz.py --seed 1 --rounds 60                                  # 随机差分测试
 python3 tests/bench.py --binary ./build/minivectordb                        # 10k×128 性能基线
 python3 tests/bigdata.py --n 200000 --dim 32                                # 大数据量/重启恢复
@@ -77,3 +79,7 @@ JSONL
 收到 `shutdown` 时回滚未提交事务并关闭存储，返回响应后退出。
 也可在本地运行 `./build/minivectordb --stdio --data-dir=DIR`。
 从官方题包根目录可运行 `python3 protocol_check/run.py --image minivectordb --output protocol-results/public` 验证镜像。
+
+面向 `2026-competition-round2` 的 PR 会触发 `MiniVectorDB round two` 工作流，构建本分支的
+Dockerfile，并用固定版本的官方检查器验证实际镜像的握手和公开用例。工作流还从镜像中提取
+二进制运行自建回归，将提交号、镜像信息和测试日志保存在运行附件中。

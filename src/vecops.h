@@ -18,7 +18,7 @@ struct TopKEntry {
 // 无过滤 TopK 专用扫描：base 指向槽 0，槽内 valid 在 +0、id 在 +8、向量在 vec_off。
 // 结果按 (距离, 主键) 升序返回。
 void scanTopK(const uint8_t *base, uint32_t slot_count, uint32_t slot_size, uint32_t vec_off,
-              int dim, const float *query, int k, std::vector<TopKEntry> &out);
+              int dim, const float *query, size_t k, std::vector<TopKEntry> &out);
 
 #if defined(__x86_64__) || defined(__i386__)
 __attribute__((target("avx2,fma"))) float l2DistanceAvx2(const float *a, const float *b, size_t dim);
