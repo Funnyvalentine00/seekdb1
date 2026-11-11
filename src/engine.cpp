@@ -600,8 +600,8 @@ bool Engine::lookupById(Table &t, int64_t id, RowRef &row, uint32_t &slot) {
     }
   }
 
-  // The committed index does not contain keys moved to another slot in this transaction.
-  if (pending) {
+  // The committed index may still map a moved key to its previous slot.
+  if (pending && pending->has_rekeyed_slots) {
     for (const auto &[updated_slot, change] : pending->slots) {
       if (!change.deleted && change.values[def.pk_index].i == id) {
         row = {nullptr, &change.values, updated_slot};
@@ -854,6 +854,7 @@ void Engine::execUpdate(Statement &st, QueryResult &out) {
       ps.deleted = false;
       ps.values = ch.values;
       p.slots[ch.slot] = std::move(ps);
+      p.has_rekeyed_slots = p.has_rekeyed_slots || ch.values[def.pk_index].i != ch.old_id;
     }
   }
   out.affected = static_cast<int64_t>(changes.size());
