@@ -11,12 +11,12 @@ cmake --build build -j
 ./build/minivectordb --data-dir=/data
 ```
 
-进程从 stdin 逐条读取 SQL（以 `;` 结束，可跨行），向 stdout 输出一行 JSON：
+本地驱动可从 stdin 逐条发送 SQL（以 `;` 结束，可跨行），每条语句在 stdout 输出一行 JSON：
 
 - 查询：`{"columns":[...],"rows":[[...],...]}`
 - 增删改：`{"affected_rows":N}`
 - 其他成功语句：`{}`
-- 错误：`{"error":"<NAME>","message":"..."}`
+- 错误：`{"error":"<NAME>"}`
 
 日志只写 stderr。收到 EOF / `exit` / `quit` 时回滚未提交事务并关闭。
 
@@ -55,7 +55,8 @@ cmake --build build -j
 
 ```bash
 python3 tests/run_cases.py mysqltest/cases --binary ./build/minivectordb   # 官方公开用例 20/20
-python3 tests/run_cases.py tests/cases --binary ./build/minivectordb       # 自建语义用例 10/10
+python3 tests/run_cases.py tests/cases --binary ./build/minivectordb       # 语义回归用例
+python3 tests/stdio_protocol.py --binary ./build/minivectordb             # JSON Lines 编码与重启
 python3 tests/fuzz.py --seed 1 --rounds 60                                  # 随机差分测试
 python3 tests/bench.py --binary ./build/minivectordb                        # 10k×128 性能基线
 python3 tests/bigdata.py --n 200000 --dim 32                                # 大数据量/重启恢复
@@ -65,7 +66,14 @@ python3 tests/bigdata.py --n 200000 --dim 32                                # �
 
 ```bash
 docker build -t minivectordb .
-docker run -i --rm -v "$PWD/data:/data" minivectordb
+docker run -i --rm -v "$PWD/data:/data" minivectordb <<'JSONL'
+{"id":1,"op":"execute","sql":"CREATE TABLE IF NOT EXISTS docs (id BIGINT PRIMARY KEY);","search_mode":"exact"}
+{"id":2,"op":"shutdown"}
+JSONL
 ```
 
-镜像为多阶段构建，运行层只依赖 glibc。
+镜像默认以 `--stdio` 启动官方 JSON Lines 协议，恢复完成后主动输出 `{"type":"ready"}`。
+每个 `execute` 请求接收一条 SQL 和检索模式，响应回传原始 `id` 及布尔值 `ok`。
+收到 `shutdown` 时回滚未提交事务并关闭存储，返回响应后退出。
+也可在本地运行 `./build/minivectordb --stdio --data-dir=DIR`。
+从官方题包根目录可运行 `python3 protocol_check/run.py --image minivectordb --output protocol-results/public` 验证镜像。

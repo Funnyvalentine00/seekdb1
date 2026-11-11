@@ -21,4 +21,4 @@ RUN mkdir -p /data \
  && /usr/local/bin/minivectordb --help >/dev/null 2>&1 || true
 # 所有数据、日志与索引文件都在 /data 下；前台运行，仅用 stdin/stdout 通信。
 WORKDIR /data
-ENTRYPOINT ["/usr/local/bin/minivectordb", "--data-dir=/data"]
+ENTRYPOINT ["/usr/local/bin/minivectordb", "--stdio", "--data-dir=/data"]
