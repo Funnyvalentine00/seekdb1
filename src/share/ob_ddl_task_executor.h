@@ -28,6 +28,8 @@
 #include "share/location_cache/ob_location_struct.h"
 #include "share/ob_errno.h"
 #include "share/ob_thread_pool.h"
+#include <condition_variable>
+#include <mutex>
 
 namespace oceanbase
 {
@@ -191,12 +193,29 @@ public:
   void server_module_thread_wait();
   void destroy();
   int push_task(ObAsyncTask &task);
+  bool try_push_ik_primary(ObAsyncTask &task, int64_t parent_task_id);
+  bool begin_ik_primary(int64_t parent_task_id);
+  bool try_push_ik_companion(ObAsyncTask &task, int64_t parent_task_id);
+  bool begin_ik_companion();
+  void finish_ik_primary();
+  void finish_ik_companion();
+  bool ik_pair_enabled() const { return ik_pair_initialized_; }
 
 private:
   int64_t get_thread_cnt_() const;
+  void close_ik_admission();
   bool is_thread_started_;
   bool is_stopped_;
   ObAsyncTaskQueue task_queue_;
+  ObAsyncTaskQueue ik_pair_queue_;
+  std::mutex ik_pair_lock_;
+  std::condition_variable ik_pair_done_;
+  int64_t ik_primary_parent_ = 0;
+  bool ik_primary_running_ = false;
+  bool ik_companion_active_ = false;
+  bool ik_admission_closed_ = true;
+  bool ik_pair_shutting_down_ = false;
+  bool ik_pair_initialized_ = false;
 };
 
 }  // end namespace share

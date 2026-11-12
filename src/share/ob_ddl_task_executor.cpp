@@ -20,6 +20,7 @@
 #include "lib/stat/ob_diagnostic_info_guard.h"
 #include "share/rc/ob_server_runtime.h"
 #include "share/ob_force_print_log.h"
+#include <cstdlib>
 
 #define USING_LOG_PREFIX STORAGE
 
@@ -261,11 +262,19 @@ int ObDDLLocalBuilder::init()
     ret = OB_STATE_NOT_MATCH;
   } else if (OB_FAIL(task_queue_.init(get_thread_cnt_(), 4 << 10, "DdlBuild"))) {
   } else if (OB_FAIL(task_queue_.start())) {
+  } else if (lib::is_mini_mode() && std::getenv("SEEKDB_IK_SCOPED_OVERLAP_EXPERIMENT") != nullptr) {
+    if (OB_FAIL(ik_pair_queue_.init(1, 2, "IkDdlPair"))) {
+    } else if (OB_FAIL(ik_pair_queue_.start())) {
+    } else {
+      ik_pair_initialized_ = true;
+      is_thread_started_ = true;
+    }
   } else {
     is_thread_started_ = true;
     is_stopped_ = true;
   }
   if (OB_FAIL(ret)) {
+    ik_pair_queue_.destroy();
     task_queue_.destroy();
   }
   FLOG_INFO("[DDL_LOCAL_BUILDER] finish init ddl local builder",
@@ -281,6 +290,8 @@ int ObDDLLocalBuilder::start()
   if (OB_UNLIKELY(!is_thread_started_)) {
     ret = OB_STATE_NOT_MATCH;
   } else {
+    std::lock_guard<std::mutex> guard(ik_pair_lock_);
+    ik_admission_closed_ = false;
     is_stopped_ = false;
   }
   FLOG_INFO("[DDL_LOCAL_BUILDER] finish start ddl local builder",
@@ -293,6 +304,8 @@ void ObDDLLocalBuilder::stop()
   FLOG_INFO("[DDL_LOCAL_BUILDER] begin stop ddl local builder",
             K(is_thread_started_), K(is_stopped_));
   {
+    std::lock_guard<std::mutex> guard(ik_pair_lock_);
+    ik_admission_closed_ = true;
     is_stopped_ = true;
   }
   FLOG_INFO("[DDL_LOCAL_BUILDER] finish stop ddl local builder",
@@ -305,6 +318,10 @@ void ObDDLLocalBuilder::server_module_thread_stop()
             K(is_thread_started_), K(is_stopped_));
   if (is_thread_started_) {
     task_queue_.stop();
+    close_ik_admission();
+    if (ik_pair_initialized_) {
+      ik_pair_queue_.stop();
+    }
   }
   FLOG_INFO("[DDL_LOCAL_BUILDER] finish server_module_thread_stop ddl local builder",
             K(is_thread_started_), K(is_stopped_));
@@ -316,6 +333,9 @@ void ObDDLLocalBuilder::server_module_thread_wait()
             K(is_thread_started_), K(is_stopped_));
   if (is_thread_started_) {
     task_queue_.wait();
+    if (ik_pair_initialized_) {
+      ik_pair_queue_.wait();
+    }
   }
   FLOG_INFO("[DDL_LOCAL_BUILDER] finish server_module_thread_wait ddl local builder",
             K(is_thread_started_), K(is_stopped_));
@@ -327,8 +347,24 @@ void ObDDLLocalBuilder::destroy()
             K(is_thread_started_), K(is_stopped_));
   {
     if (is_thread_started_) {
+      task_queue_.stop();
+      close_ik_admission();
       is_stopped_ = true;
+      if (ik_pair_initialized_) {
+        ik_pair_queue_.stop();
+      }
+      // Drain queued copies before freeing ring storage so reinit has no stale slots.
+      task_queue_.wait();
       task_queue_.destroy();
+      if (ik_pair_initialized_) {
+        ik_pair_queue_.wait();
+        ik_pair_queue_.destroy();
+        ik_pair_initialized_ = false;
+      }
+      ik_primary_parent_ = 0;
+      ik_primary_running_ = false;
+      ik_companion_active_ = false;
+      ik_pair_shutting_down_ = false;
       is_thread_started_ = false;
     }
   }
@@ -346,6 +382,81 @@ int ObDDLLocalBuilder::push_task(ObAsyncTask &task)
   } else if (OB_FAIL(task_queue_.push(task))) {
   }
   return ret;
+}
+
+bool ObDDLLocalBuilder::try_push_ik_primary(ObAsyncTask &task, int64_t parent_task_id)
+{
+  std::lock_guard<std::mutex> guard(ik_pair_lock_);
+  bool submitted = false;
+  if (ik_pair_initialized_ && !ik_admission_closed_
+      && ik_primary_parent_ == 0 && !ik_primary_running_ && !ik_companion_active_) {
+    const int ret = push_task(task);
+    if (OB_SUCCESS == ret) {
+      ik_primary_parent_ = parent_task_id;
+      submitted = true;
+    }
+  }
+  return submitted;
+}
+
+bool ObDDLLocalBuilder::begin_ik_primary(int64_t parent_task_id)
+{
+  std::lock_guard<std::mutex> guard(ik_pair_lock_);
+  const bool admitted = !ik_pair_shutting_down_ && ik_primary_parent_ == parent_task_id;
+  if (admitted) {
+    ik_primary_running_ = true;
+    ik_pair_done_.notify_all();
+  }
+  return admitted;
+}
+
+bool ObDDLLocalBuilder::try_push_ik_companion(ObAsyncTask &task, int64_t parent_task_id)
+{
+  std::lock_guard<std::mutex> guard(ik_pair_lock_);
+  bool submitted = false;
+  if (ik_pair_initialized_ && !ik_admission_closed_ && ik_primary_parent_ == parent_task_id
+      && !ik_companion_active_) {
+    const int ret = ik_pair_queue_.push(task);
+    if (OB_SUCCESS == ret) {
+      ik_companion_active_ = true;
+      submitted = true;
+      FLOG_INFO("scoped IK companion admitted", K(parent_task_id));
+    } else {
+      FLOG_INFO("scoped IK companion falls back to primary queue", K(ret), K(parent_task_id));
+    }
+  }
+  return submitted;
+}
+
+bool ObDDLLocalBuilder::begin_ik_companion()
+{
+  std::unique_lock<std::mutex> guard(ik_pair_lock_);
+  ik_pair_done_.wait(guard, [&] { return ik_primary_running_ || ik_pair_shutting_down_; });
+  return !ik_pair_shutting_down_;
+}
+
+void ObDDLLocalBuilder::finish_ik_primary()
+{
+  std::unique_lock<std::mutex> guard(ik_pair_lock_);
+  ik_primary_parent_ = 0;
+  // Do not start another primary queue item while the reserved companion runs.
+  ik_pair_done_.wait(guard, [&] { return !ik_companion_active_ || ik_pair_shutting_down_; });
+  ik_primary_running_ = false;
+}
+
+void ObDDLLocalBuilder::finish_ik_companion()
+{
+  std::lock_guard<std::mutex> guard(ik_pair_lock_);
+  ik_companion_active_ = false;
+  ik_pair_done_.notify_all();
+}
+
+void ObDDLLocalBuilder::close_ik_admission()
+{
+  std::lock_guard<std::mutex> guard(ik_pair_lock_);
+  ik_admission_closed_ = true;
+  ik_pair_shutting_down_ = true;
+  ik_pair_done_.notify_all();
 }
 
 int64_t ObDDLLocalBuilder::get_thread_cnt_() const
