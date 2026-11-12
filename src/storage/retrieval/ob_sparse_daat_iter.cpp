@@ -75,8 +75,10 @@ int ObSRMergeCmp::cmp(
       const int64_t r_len = r_datum.len_;
       const int64_t min_len = l_len < r_len ? l_len : r_len;
       int c = 0;
-      if (OB_LIKELY(8 == min_len)) {
-        // domain ids are fixed 8-byte values; a constant-size compare is inlined
+      if (OB_LIKELY(16 == min_len)) {
+        // ObDocId is two uint64_t fields; specialize both common ID widths.
+        c = memcmp(l_datum.ptr_, r_datum.ptr_, 16);
+      } else if (8 == min_len) {
         c = memcmp(l_datum.ptr_, r_datum.ptr_, 8);
       } else if (min_len > 0) {
         c = memcmp(l_datum.ptr_, r_datum.ptr_, min_len);
