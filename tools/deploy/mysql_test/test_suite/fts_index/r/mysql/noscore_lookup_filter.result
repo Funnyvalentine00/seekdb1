@@ -1,0 +1,56 @@
+batch0_middle
+id	bucket	title
+2	20	qalpha qalpha
+3	20	qdelta
+7	20	qlambda
+batch0_last
+id	bucket	title
+4	30	qgamma
+batch0_null
+id	bucket	title
+10	NULL	qalpha
+batch0_ends
+id	bucket	title
+1	10	qalpha
+4	30	qgamma
+batch0_none
+id	bucket	title
+batch1_middle
+id	bucket	title
+2	20	qalpha qalpha
+3	20	qdelta
+7	20	qlambda
+batch1_last
+id	bucket	title
+4	30	qgamma
+batch1_null
+id	bucket	title
+10	NULL	qalpha
+batch1_ends
+id	bucket	title
+1	10	qalpha
+4	30	qgamma
+batch1_none
+id	bucket	title
+batch16_middle
+id	bucket	title
+2	20	qalpha qalpha
+3	20	qdelta
+7	20	qlambda
+batch16_last
+id	bucket	title
+4	30	qgamma
+batch16_null
+id	bucket	title
+10	NULL	qalpha
+batch16_ends
+id	bucket	title
+1	10	qalpha
+4	30	qgamma
+batch16_none
+id	bucket	title
+after_dml
+id	bucket	title
+3	20	qdelta
+4	20	qgamma
+7	20	qlambda

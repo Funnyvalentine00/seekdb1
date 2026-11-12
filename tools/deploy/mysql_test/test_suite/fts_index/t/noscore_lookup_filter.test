@@ -1,0 +1,58 @@
+--disable_query_log
+SET NAMES utf8mb4;
+SET SESSION ob_enable_plan_cache=0;
+CREATE TABLE noscore_lookup_filter (
+  id BIGINT PRIMARY KEY,
+  title VARCHAR(128),
+  body VARCHAR(256),
+  bucket INT,
+  FULLTEXT INDEX ft(title, body) WITH PARSER space
+);
+INSERT INTO noscore_lookup_filter VALUES
+  (1, 'qalpha', 'qbeta', 10),
+  (2, 'qalpha qalpha', 'qgamma', 20),
+  (3, 'qdelta', 'qbeta', 20),
+  (4, 'qgamma', 'qdelta', 30),
+  (5, 'qunrelated', 'qother', 40),
+  (6, '', '', 10),
+  (7, 'qlambda', 'qalpha', 20),
+  (8, NULL, NULL, 20),
+  (9, '全文', '稳定 database', 40);
+
+INSERT INTO noscore_lookup_filter VALUES (10,'qalpha','',NULL);
+--echo batch0_middle
+SELECT /*+ OPT_PARAM('ROWSETS_MAX_ROWS', 0) */ id,bucket,title FROM noscore_lookup_filter WHERE MATCH(title,body) AGAINST('qalpha qbeta qgamma') AND bucket=20 ORDER BY id;
+--echo batch0_last
+SELECT /*+ OPT_PARAM('ROWSETS_MAX_ROWS', 0) */ id,bucket,title FROM noscore_lookup_filter WHERE MATCH(title,body) AGAINST('qalpha qbeta qgamma') AND bucket=30 ORDER BY id;
+--echo batch0_null
+SELECT /*+ OPT_PARAM('ROWSETS_MAX_ROWS', 0) */ id,bucket,title FROM noscore_lookup_filter WHERE MATCH(title,body) AGAINST('qalpha qbeta qgamma') AND bucket IS NULL ORDER BY id;
+--echo batch0_ends
+SELECT /*+ OPT_PARAM('ROWSETS_MAX_ROWS', 0) */ id,bucket,title FROM noscore_lookup_filter WHERE MATCH(title,body) AGAINST('qalpha qbeta qgamma') AND bucket IN (10,30) ORDER BY id;
+--echo batch0_none
+SELECT /*+ OPT_PARAM('ROWSETS_MAX_ROWS', 0) */ id,bucket,title FROM noscore_lookup_filter WHERE MATCH(title,body) AGAINST('qalpha qbeta qgamma') AND bucket=99 ORDER BY id;
+--echo batch1_middle
+SELECT /*+ OPT_PARAM('ROWSETS_MAX_ROWS', 1) */ id,bucket,title FROM noscore_lookup_filter WHERE MATCH(title,body) AGAINST('qalpha qbeta qgamma') AND bucket=20 ORDER BY id;
+--echo batch1_last
+SELECT /*+ OPT_PARAM('ROWSETS_MAX_ROWS', 1) */ id,bucket,title FROM noscore_lookup_filter WHERE MATCH(title,body) AGAINST('qalpha qbeta qgamma') AND bucket=30 ORDER BY id;
+--echo batch1_null
+SELECT /*+ OPT_PARAM('ROWSETS_MAX_ROWS', 1) */ id,bucket,title FROM noscore_lookup_filter WHERE MATCH(title,body) AGAINST('qalpha qbeta qgamma') AND bucket IS NULL ORDER BY id;
+--echo batch1_ends
+SELECT /*+ OPT_PARAM('ROWSETS_MAX_ROWS', 1) */ id,bucket,title FROM noscore_lookup_filter WHERE MATCH(title,body) AGAINST('qalpha qbeta qgamma') AND bucket IN (10,30) ORDER BY id;
+--echo batch1_none
+SELECT /*+ OPT_PARAM('ROWSETS_MAX_ROWS', 1) */ id,bucket,title FROM noscore_lookup_filter WHERE MATCH(title,body) AGAINST('qalpha qbeta qgamma') AND bucket=99 ORDER BY id;
+--echo batch16_middle
+SELECT /*+ OPT_PARAM('ROWSETS_MAX_ROWS', 16) */ id,bucket,title FROM noscore_lookup_filter WHERE MATCH(title,body) AGAINST('qalpha qbeta qgamma') AND bucket=20 ORDER BY id;
+--echo batch16_last
+SELECT /*+ OPT_PARAM('ROWSETS_MAX_ROWS', 16) */ id,bucket,title FROM noscore_lookup_filter WHERE MATCH(title,body) AGAINST('qalpha qbeta qgamma') AND bucket=30 ORDER BY id;
+--echo batch16_null
+SELECT /*+ OPT_PARAM('ROWSETS_MAX_ROWS', 16) */ id,bucket,title FROM noscore_lookup_filter WHERE MATCH(title,body) AGAINST('qalpha qbeta qgamma') AND bucket IS NULL ORDER BY id;
+--echo batch16_ends
+SELECT /*+ OPT_PARAM('ROWSETS_MAX_ROWS', 16) */ id,bucket,title FROM noscore_lookup_filter WHERE MATCH(title,body) AGAINST('qalpha qbeta qgamma') AND bucket IN (10,30) ORDER BY id;
+--echo batch16_none
+SELECT /*+ OPT_PARAM('ROWSETS_MAX_ROWS', 16) */ id,bucket,title FROM noscore_lookup_filter WHERE MATCH(title,body) AGAINST('qalpha qbeta qgamma') AND bucket=99 ORDER BY id;
+UPDATE noscore_lookup_filter SET bucket=20 WHERE id=4;
+DELETE FROM noscore_lookup_filter WHERE id=2;
+--echo after_dml
+SELECT id,bucket,title FROM noscore_lookup_filter WHERE MATCH(title,body) AGAINST('qalpha qbeta qgamma') AND bucket=20 ORDER BY id;
+DROP TABLE noscore_lookup_filter;
+--enable_query_log
