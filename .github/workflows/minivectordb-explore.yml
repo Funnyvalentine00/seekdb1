@@ -1,0 +1,51 @@
+name: MiniVectorDB optimization exploration
+
+on:
+  push:
+    branches: [perf/minivectordb-round2-explore-20261112]
+
+permissions:
+  contents: read
+
+jobs:
+  compare:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: fe92d5bb2f8f7727354ff4a4914c9a106fa18d8b
+          path: experiment-base
+          persist-credentials: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: oceanbase/seekdb
+          ref: f4d4e26653af823a7601668802f80e374ad6643c
+          path: official
+          persist-credentials: false
+          sparse-checkout: |
+            protocol_check
+            mysqltest
+      - name: Build and validate every independent combination
+        run: |
+          python3 experiments/minivectordb/validate_variants.py \
+            --base experiment-base --official official --output experiment-results
+      - name: Serial paired JSONL benchmarks on the same runner
+        run: |
+          python3 experiments/minivectordb/bench_matrix.py \
+            --binaries experiment-results/binaries.json \
+            --output experiment-results/benchmark --pairs 5
+      - name: Archive experiment evidence
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: minivectordb-explore-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            experiment-results/*.json
+            experiment-results/logs
+            experiment-results/protocol
+            experiment-results/benchmark
+          retention-days: 14

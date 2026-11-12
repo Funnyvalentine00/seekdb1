@@ -1,0 +1,50 @@
+--- a/src/storage.cpp
++++ b/src/storage.cpp
+@@ -271,2 +271,8 @@
+-  // 序列化 payload
+-  std::vector<uint8_t> payload;
++  // 预留整帧空间，避免逐操作扩容和 payload 到 frame 的重复复制。
++  size_t payload_size = 4;
++  for (const Op &op : ops) {
++    payload_size += 1 + 4 + ((op.type == 3) ? 0 : 4 + op.data.size());
++  }
++  std::vector<uint8_t> frame;
++  frame.reserve(8 + payload_size + 8);
++  frame.resize(12);  // len + crc + nops
+@@ -274,2 +280 @@
+-  payload.resize(4);
+-  std::memcpy(payload.data(), &nops, 4);
++  std::memcpy(frame.data() + 8, &nops, 4);
+@@ -277,5 +282,3 @@
+-    size_t need = 1 + 4 + ((op.type == 3) ? 0 : 4 + op.data.size());
+-    payload.reserve(payload.size() + need);
+-    payload.push_back(op.type);
+-    payload.insert(payload.end(), reinterpret_cast<const uint8_t *>(&op.slot),
+-                   reinterpret_cast<const uint8_t *>(&op.slot) + 4);
++    frame.push_back(op.type);
++    frame.insert(frame.end(), reinterpret_cast<const uint8_t *>(&op.slot),
++                 reinterpret_cast<const uint8_t *>(&op.slot) + 4);
+@@ -284,14 +287,9 @@
+-      payload.insert(payload.end(), reinterpret_cast<const uint8_t *>(&dl),
+-                     reinterpret_cast<const uint8_t *>(&dl) + 4);
+-      payload.insert(payload.end(), op.data.begin(), op.data.end());
+-    }
+-  }
+-  uint32_t crc = crc32(payload.data(), payload.size());
+-  uint32_t len = static_cast<uint32_t>(payload.size());
+-  std::vector<uint8_t> frame;
+-  frame.reserve(8 + payload.size() + 8);
+-  frame.insert(frame.end(), reinterpret_cast<const uint8_t *>(&len),
+-               reinterpret_cast<const uint8_t *>(&len) + 4);
+-  frame.insert(frame.end(), reinterpret_cast<const uint8_t *>(&crc),
+-               reinterpret_cast<const uint8_t *>(&crc) + 4);
+-  frame.insert(frame.end(), payload.begin(), payload.end());
++      frame.insert(frame.end(), reinterpret_cast<const uint8_t *>(&dl),
++                   reinterpret_cast<const uint8_t *>(&dl) + 4);
++      frame.insert(frame.end(), op.data.begin(), op.data.end());
++    }
++  }
++  uint32_t crc = crc32(frame.data() + 8, payload_size);
++  uint32_t len = static_cast<uint32_t>(payload_size);
++  std::memcpy(frame.data(), &len, 4);
++  std::memcpy(frame.data() + 4, &crc, 4);

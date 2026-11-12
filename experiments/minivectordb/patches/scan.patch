@@ -1,0 +1,53 @@
+--- a/src/vecops.cpp
++++ b/src/vecops.cpp
+@@ -20,2 +20,4 @@
+-__attribute__((target("avx2,fma"))) float l2DistanceAvx2(const float *a, const float *b,
+-                                                         size_t dim) {
++namespace {
++
++__attribute__((target("avx2,fma"), always_inline))
++inline float l2DistanceAvx2Impl(const float *a, const float *b, size_t dim) {
+@@ -61,0 +64,8 @@
++
++}  // namespace
++
++__attribute__((target("avx2,fma"))) float l2DistanceAvx2(const float *a, const float *b,
++                                                       size_t dim) {
++  return l2DistanceAvx2Impl(a, b, dim);
++}
++
+@@ -82,0 +93,23 @@
++// Dispatch the whole scan once so the distance calculation can stay inlined.
++// Its accumulation and reduction order remains shared with l2DistanceAvx2.
++__attribute__((target("avx2,fma")))
++void scanTopKAvx2(const uint8_t *base, uint32_t slot_count, uint32_t slot_size,
++                 uint32_t vec_off, int dim, const float *query, size_t k,
++                 std::vector<TopKEntry> &heap) {
++  for (uint32_t s = 0; s < slot_count; ++s) {
++    const uint8_t *p = base + static_cast<size_t>(s) * slot_size;
++    if (p[0] == 0) continue;
++    int64_t id;
++    std::memcpy(&id, p + 8, sizeof(id));
++    float d = l2DistanceAvx2Impl(reinterpret_cast<const float *>(p + vec_off), query,
++                                static_cast<size_t>(dim));
++    // Most rows lose once the heap is full. Reject them before an out-of-line
++    // heap update can force an AVX/SSE transition and spill the scan state.
++    if (heap.size() == k) {
++      const TopKEntry &worst = heap.front();
++      if (!(d < worst.dist || (d == worst.dist && id < worst.id))) continue;
++    }
++    heapPush(heap, k, TopKEntry{d, id, s});
++  }
++}
++
+@@ -95,9 +128 @@
+-    for (uint32_t s = 0; s < slot_count; ++s) {
+-      const uint8_t *p = base + static_cast<size_t>(s) * slot_size;
+-      if (p[0] == 0) continue;
+-      int64_t id;
+-      std::memcpy(&id, p + 8, sizeof(id));
+-      float d = l2DistanceAvx2(reinterpret_cast<const float *>(p + vec_off), query,
+-                               static_cast<size_t>(dim));
+-      heapPush(heap, k, TopKEntry{d, id, s});
+-    }
++    scanTopKAvx2(base, slot_count, slot_size, vec_off, dim, query, k, heap);
