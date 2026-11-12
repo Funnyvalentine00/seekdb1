@@ -1027,6 +1027,81 @@ void Engine::execSelect(Statement &st, QueryResult &out) {
     return;
   }
 
+  // 单列等值过滤：绑定形状只判断一次，过滤后直接入堆，不收集全部候选行。
+  // 主键等值仍交给 collectMatching 的索引查找；事务暂存保留通用可见性路径。
+  if (topk_expr && where && where->kind == ExprKind::Compare && where->cmp == 0 &&
+      !tableHasPending(*t)) {
+    const Expr *column = where->left.get();
+    const Expr *literal = where->right.get();
+    if (column->kind != ExprKind::Column) std::swap(column, literal);
+    const bool int_equal = column->kind == ExprKind::Column &&
+                           column->col_type == static_cast<int>(ColType::BigInt) &&
+                           literal->kind == ExprKind::IntLit;
+    const bool str_equal = column->kind == ExprKind::Column &&
+                           column->col_type == static_cast<int>(ColType::VarChar) &&
+                           literal->kind == ExprKind::StrLit;
+    if ((int_equal || str_equal) && column->col_index != def.pk_index) {
+      const size_t k = std::min<size_t>(static_cast<size_t>(st.limit), t->rowCount());
+      if (k == 0) return;
+      std::vector<TopKEntry> heap;
+      // 大 LIMIT、零/少量命中时不按全表行数预留；容量仅随实际命中增长。
+      heap.reserve(std::min<size_t>(k, 128));
+      auto cmp = [](const TopKEntry &a, const TopKEntry &b) {
+        if (a.dist != b.dist) return a.dist < b.dist;
+        return a.id < b.id;
+      };
+      const uint32_t filter_offset = column->col_offset;
+      const uint32_t vec_offset = topk_expr->left->col_offset;
+      const uint32_t id_offset = def.col_offset[def.pk_index];
+      const auto &query = topk_expr->vec_lit;
+      const uint32_t n = t->slotCount();
+      auto scan = [&](auto matches) {
+        for (uint32_t s = 0; s < n; ++s) {
+          const uint8_t *p = t->slotPtr(s);
+          if (p[0] == 0 || !matches(p)) continue;
+          const float d = l2Distance(reinterpret_cast<const float *>(p + vec_offset),
+                                     query.data(), query.size());
+          int64_t id;
+          std::memcpy(&id, p + id_offset, sizeof(id));
+          TopKEntry entry{d, id, s};
+          if (heap.size() < k) {
+            heap.push_back(entry);
+            std::push_heap(heap.begin(), heap.end(), cmp);
+          } else if (d < heap.front().dist || (d == heap.front().dist && id < heap.front().id)) {
+            std::pop_heap(heap.begin(), heap.end(), cmp);
+            heap.back() = entry;
+            std::push_heap(heap.begin(), heap.end(), cmp);
+          }
+        }
+      };
+      if (int_equal) {
+        const int64_t value = literal->ival;
+        scan([&](const uint8_t *p) {
+          int64_t stored;
+          std::memcpy(&stored, p + filter_offset, sizeof(stored));
+          return stored == value;
+        });
+      } else {
+        const std::string &value = literal->sval;
+        scan([&](const uint8_t *p) {
+          uint32_t length;
+          std::memcpy(&length, p + filter_offset, sizeof(length));
+          return length == value.size() &&
+                 std::memcmp(p + filter_offset + sizeof(length), value.data(), length) == 0;
+        });
+      }
+      std::sort(heap.begin(), heap.end(), cmp);
+      out.rows.reserve(heap.size());
+      for (const TopKEntry &entry : heap) {
+        RowRef row;
+        row.raw = t->slotPtr(entry.slot);
+        row.slot = entry.slot;
+        out.rows.push_back(materialize(row));
+      }
+      return;
+    }
+  }
+
   // 无 ORDER BY 时可以用 LIMIT 提前终止扫描
   size_t stop = st.order_by.empty() && st.has_limit ? static_cast<size_t>(st.limit)
                                                     : static_cast<size_t>(-1);

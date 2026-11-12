@@ -268,33 +268,31 @@ void Table::resetWal() {
 
 void Table::commitOps(std::vector<Op> &ops) {
   if (ops.empty()) return;
-  // 序列化 payload
-  std::vector<uint8_t> payload;
-  uint32_t nops = static_cast<uint32_t>(ops.size());
-  payload.resize(4);
-  std::memcpy(payload.data(), &nops, 4);
+  // 预留整帧空间，避免逐操作扩容和 payload 到 frame 的重复复制。
+  size_t payload_size = 4;
   for (const Op &op : ops) {
-    size_t need = 1 + 4 + ((op.type == 3) ? 0 : 4 + op.data.size());
-    payload.reserve(payload.size() + need);
-    payload.push_back(op.type);
-    payload.insert(payload.end(), reinterpret_cast<const uint8_t *>(&op.slot),
-                   reinterpret_cast<const uint8_t *>(&op.slot) + 4);
+    payload_size += 1 + 4 + ((op.type == 3) ? 0 : 4 + op.data.size());
+  }
+  std::vector<uint8_t> frame;
+  frame.reserve(8 + payload_size + 8);
+  frame.resize(12);  // len + crc + nops
+  uint32_t nops = static_cast<uint32_t>(ops.size());
+  std::memcpy(frame.data() + 8, &nops, 4);
+  for (const Op &op : ops) {
+    frame.push_back(op.type);
+    frame.insert(frame.end(), reinterpret_cast<const uint8_t *>(&op.slot),
+                 reinterpret_cast<const uint8_t *>(&op.slot) + 4);
     if (op.type != 3) {
       uint32_t dl = static_cast<uint32_t>(op.data.size());
-      payload.insert(payload.end(), reinterpret_cast<const uint8_t *>(&dl),
-                     reinterpret_cast<const uint8_t *>(&dl) + 4);
-      payload.insert(payload.end(), op.data.begin(), op.data.end());
+      frame.insert(frame.end(), reinterpret_cast<const uint8_t *>(&dl),
+                   reinterpret_cast<const uint8_t *>(&dl) + 4);
+      frame.insert(frame.end(), op.data.begin(), op.data.end());
     }
   }
-  uint32_t crc = crc32(payload.data(), payload.size());
-  uint32_t len = static_cast<uint32_t>(payload.size());
-  std::vector<uint8_t> frame;
-  frame.reserve(8 + payload.size() + 8);
-  frame.insert(frame.end(), reinterpret_cast<const uint8_t *>(&len),
-               reinterpret_cast<const uint8_t *>(&len) + 4);
-  frame.insert(frame.end(), reinterpret_cast<const uint8_t *>(&crc),
-               reinterpret_cast<const uint8_t *>(&crc) + 4);
-  frame.insert(frame.end(), payload.begin(), payload.end());
+  uint32_t crc = crc32(frame.data() + 8, payload_size);
+  uint32_t len = static_cast<uint32_t>(payload_size);
+  std::memcpy(frame.data(), &len, 4);
+  std::memcpy(frame.data() + 4, &crc, 4);
   frame.insert(frame.end(), reinterpret_cast<const uint8_t *>(&kFrameMagic),
                reinterpret_cast<const uint8_t *>(&kFrameMagic) + 8);
 

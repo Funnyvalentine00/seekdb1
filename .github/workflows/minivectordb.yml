@@ -65,6 +65,10 @@ jobs:
             2>&1 | tee validation-logs/query-boundaries.log
           python3 tests/topk_memory.py --binary image-bin/minivectordb \
             2>&1 | tee validation-logs/topk-memory.log
+          python3 tests/filtered_topk.py --binary image-bin/minivectordb \
+            2>&1 | tee validation-logs/filtered-topk.log
+          python3 tests/filtered_topk.py --binary image-bin/minivectordb --memory \
+            2>&1 | tee validation-logs/filtered-topk-memory.log
           python3 tests/fuzz.py --binary image-bin/minivectordb --seed 1 --rounds 60 \
             2>&1 | tee validation-logs/fuzz.log
 
