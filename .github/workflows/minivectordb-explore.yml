@@ -37,7 +37,15 @@ jobs:
         run: |
           python3 experiments/minivectordb/bench_matrix.py \
             --binaries experiment-results/binaries.json \
-            --output experiment-results/benchmark --pairs 5
+            --output experiment-results/benchmark --pairs 5 --only wal,filtered,wal_filtered
+      - name: Check WAL batch-size sensitivity
+        run: |
+          for batch in 1 1000 10000; do
+            python3 experiments/minivectordb/bench_matrix.py \
+              --binaries experiment-results/binaries.json --only wal,wal_filtered \
+              --output "experiment-results/benchmark-batch-$batch" \
+              --batch "$batch" --queries 100 --pairs 5
+          done
       - name: Archive experiment evidence
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
@@ -47,5 +55,5 @@ jobs:
             experiment-results/*.json
             experiment-results/logs
             experiment-results/protocol
-            experiment-results/benchmark
+            experiment-results/benchmark*
           retention-days: 14

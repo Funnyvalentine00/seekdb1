@@ -19,6 +19,11 @@ timed query outputs must have the same digest as baseline. Reported metrics
 are write/query elapsed time, filtered/unfiltered portions, and process peak
 RSS. No platform score is inferred from these local measurements.
 
+The second pass focuses on the WAL and filtered candidates, adds process CPU
+time from Linux schedstat, and checks batches of 1, 1000, and 10000 in addition
+to the default 100. A per-run watchdog bounds blocked writes or incomplete
+responses; each run retains its stderr outside the timing interval.
+
 The exploration workflow builds and tests all variants on one Linux runner,
 then times them serially and uploads raw logs and JSON results. Its branch
 trigger is limited to `perf/minivectordb-round2-explore-20261112`. The official
