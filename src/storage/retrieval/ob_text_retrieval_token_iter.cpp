@@ -16,6 +16,7 @@
 
 #define USING_LOG_PREFIX STORAGE
 
+
 #include "ob_text_retrieval_token_iter.h"
 #include <string.h>
 #include "query/das/ob_das_iter_access.h"
@@ -556,6 +557,22 @@ int ObTextRetrievalDaaTTokenIter::get_next_batch(const int64_t capacity, int64_t
   return OB_NOT_IMPLEMENT;
 }
 
+int ObTextRetrievalDaaTTokenIter::get_next_doc_id_batch(const ObDocIdExt *&ids, int64_t &count)
+{
+  int ret = OB_SUCCESS;
+  ids = nullptr;
+  count = 0;
+  if (OB_FAIL(get_next_row())) {
+  } else if (OB_UNLIKELY(cur_idx_ < 0 || cur_idx_ >= count_)) {
+    ret = OB_ERR_UNEXPECTED;
+  } else {
+    ids = doc_id_.get_data() + cur_idx_;
+    count = count_ - cur_idx_;
+    cur_idx_ = count_ - 1;
+  }
+  return ret;
+}
+
 int ObTextRetrievalDaaTTokenIter::advance_to(const ObDatum &id_datum)
 {
   int ret = OB_SUCCESS;
@@ -568,8 +585,11 @@ int ObTextRetrievalDaaTTokenIter::advance_to(const ObDatum &id_datum)
       const int64_t rhs_len = rhs.len_;
       const int64_t min_len = lhs_len < rhs_len ? lhs_len : rhs_len;
       int c = 0;
-      if (OB_LIKELY(8 == min_len)) {
-        // domain ids are fixed 8-byte values; a constant-size compare is inlined
+      if (OB_LIKELY(16 == min_len)) {
+        // ObDocId contains two uint64_t fields. Keep the common width constant
+        // so the compiler can inline the comparison in posting-list seeks.
+        c = memcmp(lhs.ptr_, rhs.ptr_, 16);
+      } else if (8 == min_len) {
         c = memcmp(lhs.ptr_, rhs.ptr_, 8);
       } else if (min_len > 0) {
         c = memcmp(lhs.ptr_, rhs.ptr_, min_len);
