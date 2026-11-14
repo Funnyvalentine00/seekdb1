@@ -27,6 +27,7 @@
 #include "rootserver/ddl_task/ob_sys_ddl_util.h" // for ObSysDDLSchedulerUtil
 #include "rootserver/ob_ddl_service_launcher.h" // for ObDDLServiceLauncher
 #include "rootserver/ob_local_management_service.h"
+#include <cstdlib>
 
 using namespace oceanbase::rootserver;
 using namespace oceanbase::common;
@@ -46,6 +47,19 @@ int ObIndexSSTableBuildTask::set_addition_info(const ObIArray<ObTabletID> &index
 }
 
 int ObIndexSSTableBuildTask::process()
+{
+  const bool primary = ik_builder_ != nullptr && !ik_companion_ && ik_builder_->begin_ik_primary(ik_parent_);
+  const bool stopped = ik_companion_ && !ik_builder_->begin_ik_companion();
+  const int ret = stopped ? OB_CANCELED : process_build();
+  if (ik_companion_) {
+    ik_builder_->finish_ik_companion();
+  } else if (primary) {
+    ik_builder_->finish_ik_primary();
+  }
+  return ret;
+}
+
+int ObIndexSSTableBuildTask::process_build()
 {
   int ret = OB_SUCCESS;
   ObArenaAllocator arena("index_sst_build");
@@ -75,6 +89,11 @@ int ObIndexSSTableBuildTask::process()
     }
   }
 #endif
+  if (OB_SUCC(ret) && ik_companion_ && execution_id_ == 1
+      && std::getenv("SEEKDB_IK_SCOPED_RETRY_PROBE") != nullptr) {
+    ret = OB_EAGAIN;
+    LOG_INFO("scoped IK retry probe", K(task_id_), K(snapshot_version_), K(execution_id_), K(ret));
+  }
   if (OB_FAIL(ret)) {
   } else if (OB_FAIL(ObMultiVersionSchemaService::get_instance().get_runtime_schema_guard(
       schema_guard))) {
@@ -212,6 +231,8 @@ ObAsyncTask *ObIndexSSTableBuildTask::deep_copy(char *buf, const int64_t buf_siz
       task->~ObIndexSSTableBuildTask();
       task = nullptr;
       LOG_WARN_RET(OB_ALLOCATE_MEMORY_FAILED, "failed to set index partition ids");
+    } else {
+      task->set_ik_pair(ik_builder_, ik_parent_, ik_companion_);
     }
   }
   return task;
@@ -755,10 +776,34 @@ int ObIndexBuildTask::send_local_build_request(
           is_partitioned_local_index_task,
           is_retryable_ddl_);
       if (OB_FAIL(task.set_addition_info(index_partition_ids))) {
-      } else if (OB_FAIL(local_management_service_->submit_ddl_local_build_task(task))) {
       } else {
-        is_sstable_complete_task_submitted_ = true;
-        sstable_complete_request_time_ = ObTimeUtility::current_time();
+        bool submitted = false;
+        const auto index_type = create_index_arg_.index_type_;
+        const ObString &parser = create_index_arg_.index_option_.parser_name_;
+        if (!is_partitioned_local_index_task && parallelism == 1 && parent_task_id_ > 0
+            && (INDEX_TYPE_FTS_INDEX_LOCAL == index_type || INDEX_TYPE_FTS_DOC_WORD_LOCAL == index_type)
+            && (0 == parser.case_compare("ik") || 0 == parser.case_compare("ik.1"))) {
+          auto *scheduler = share::server_service<ObDDLScheduler>();
+          if (scheduler != nullptr && ObDDLServiceLauncher::is_ddl_service_started()) {
+            SERVER_MODULE_SCOPE {
+              auto &builder = scheduler->get_ddl_builder();
+              if (builder.ik_pair_enabled()) {
+                const bool companion = INDEX_TYPE_FTS_DOC_WORD_LOCAL == index_type;
+                task.set_ik_pair(&builder, parent_task_id_, companion);
+                submitted = companion ? builder.try_push_ik_companion(task, parent_task_id_)
+                                      : builder.try_push_ik_primary(task, parent_task_id_);
+                if (!submitted) {
+                  task.set_ik_pair(nullptr, 0, false);
+                }
+              }
+            }
+          }
+        }
+        if (!submitted && OB_FAIL(local_management_service_->submit_ddl_local_build_task(task))) {
+        } else {
+          is_sstable_complete_task_submitted_ = true;
+          sstable_complete_request_time_ = ObTimeUtility::current_time();
+        }
       }
     }
   }
