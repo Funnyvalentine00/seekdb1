@@ -146,7 +146,8 @@ private:
 
 void start(ObDDLLocalBuilder &builder, bool pair_enabled = true)
 {
-  CHECK((pair_enabled ? setenv(EXPERIMENT, "1", 1) : unsetenv(EXPERIMENT)) == 0);
+  // The overlap pair is on by default in mini mode; "0" is the opt-out.
+  CHECK((pair_enabled ? unsetenv(EXPERIMENT) : setenv(EXPERIMENT, "0", 1)) == 0);
   CHECK(builder.init() == OB_SUCCESS);
   CHECK(builder.ik_pair_enabled() == pair_enabled);
   CHECK(builder.start() == OB_SUCCESS);

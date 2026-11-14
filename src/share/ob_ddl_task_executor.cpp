@@ -256,13 +256,17 @@ ObDDLLocalBuilder::~ObDDLLocalBuilder()
 int ObDDLLocalBuilder::init()
 {
   int ret = OB_SUCCESS;
+  // IK overlap is on by default in mini mode; set SEEKDB_IK_SCOPED_OVERLAP_EXPERIMENT=0 to opt out.
+  const char *ik_overlap_gate = std::getenv("SEEKDB_IK_SCOPED_OVERLAP_EXPERIMENT");
+  const bool ik_overlap_enabled = lib::is_mini_mode()
+      && (nullptr == ik_overlap_gate || '0' != ik_overlap_gate[0]);
   FLOG_INFO("[DDL_LOCAL_BUILDER] begin init ddl local builder",
-            K(is_thread_started_), K(is_stopped_));
+            K(is_thread_started_), K(is_stopped_), K(ik_overlap_enabled));
   if (OB_UNLIKELY(is_thread_started_)) {
     ret = OB_STATE_NOT_MATCH;
   } else if (OB_FAIL(task_queue_.init(get_thread_cnt_(), 4 << 10, "DdlBuild"))) {
   } else if (OB_FAIL(task_queue_.start())) {
-  } else if (lib::is_mini_mode() && std::getenv("SEEKDB_IK_SCOPED_OVERLAP_EXPERIMENT") != nullptr) {
+  } else if (ik_overlap_enabled) {
     if (OB_FAIL(ik_pair_queue_.init(1, 2, "IkDdlPair"))) {
     } else if (OB_FAIL(ik_pair_queue_.start())) {
     } else {
