@@ -62,11 +62,14 @@ class Table {
   void buildSlot(const std::vector<Value> &values, std::vector<uint8_t> &out) const;
 
   // ---- 非主键等值过滤的懒建列桶索引 ----
-  // 首次对该列做等值过滤时按当前槽状态全量建桶；任何提交使桶失效，下次查询重建。
-  // 返回 nullptr 表示索引不可用（调用方回退全表扫描）；非空指针为候选槽列表
-  // （可能为空，表示确无匹配行）。桶建立在提交纪元一致的快照上，候选槽即为匹配行。
-  const std::vector<uint32_t> *strBucket(uint32_t col, const std::string &key);
-  const std::vector<uint32_t> *intBucket(uint32_t col, int64_t key);
+  // 首次对该列做等值过滤时按当前槽状态构建排序索引（CSR 平行数组，按 key 二分）；
+  // 任何提交使索引失效，下次查询重建。预计内存超过预算时不构建（返回 nullptr，
+  // 调用方回退全表扫描），保证查询期增量内存有界。
+  // 命中时返回连续的候选槽区间 [begin, end)（可能为空，表示确无匹配行）。
+  bool strCandidates(uint32_t col, const std::string &key, const uint32_t **begin,
+                     const uint32_t **end);
+  bool intCandidates(uint32_t col, int64_t key, const uint32_t **begin,
+                     const uint32_t **end);
 
  private:
   void ensureCapacity(uint32_t slots);
@@ -77,13 +80,21 @@ class Table {
   void ensureFilter(uint32_t col);
 
   struct ColFilter {
-    uint64_t epoch = 0;  // 建桶时的提交纪元；不等于当前纪元则失效
+    uint64_t epoch = 0;  // 构建时的提交纪元；不等于当前纪元则失效
     bool valid = false;
-    std::unordered_map<std::string, std::vector<uint32_t>> str;
-    std::unordered_map<int64_t, std::vector<uint32_t>> ints;
+    // int 列：按 (key, slot) 升序的平行数组。
+    std::vector<int64_t> int_keys;
+    std::vector<uint32_t> int_slots;
+    // str 列：key 池 + 平行数组（offset/len/slot），按 key 字典序排列。
+    std::string str_pool;
+    std::vector<uint32_t> str_off;
+    std::vector<uint32_t> str_len;
+    std::vector<uint32_t> str_slots;
   };
 
   static constexpr size_t kHeaderSize = 64;
+  // 查询期索引内存预算：超过则该列不建桶（回退全表扫描）。
+  static constexpr size_t kFilterBudget = 512 * 1024;
   TableDef def_;
   std::string dir_;
   int rows_fd_ = -1;

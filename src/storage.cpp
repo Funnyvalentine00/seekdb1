@@ -309,7 +309,8 @@ void Table::commitOps(std::vector<Op> &ops) {
 
 // ---------------- 懒建列桶索引 ----------------
 
-// 按当前槽状态重建第 col 列的等值桶（仅非主键的 BIGINT/VARCHAR 列）。
+// 按当前槽状态构建第 col 列的等值索引（CSR 平行数组，仅非主键的 BIGINT/VARCHAR 列）。
+// 预计内存超出 kFilterBudget 时保持 valid=false，查询方回退全表扫描。
 void Table::ensureFilter(uint32_t col) {
   if (filters_.size() < def_.cols.size()) filters_.resize(def_.cols.size());
   ColFilter &f = filters_[col];
@@ -317,58 +318,168 @@ void Table::ensureFilter(uint32_t col) {
   const ColumnDef &c = def_.cols[col];
   if (col == static_cast<uint32_t>(def_.pk_index) ||
       (c.type != ColType::VarChar && c.type != ColType::BigInt)) {
-    f.valid = false;  // 主键与向量列没有等值桶
-    f.str.clear();
-    f.ints.clear();
+    f.valid = false;  // 主键与向量列没有等值索引
+    f.int_keys.clear();
+    f.int_slots.clear();
+    f.str_pool.clear();
+    f.str_off.clear();
+    f.str_len.clear();
+    f.str_slots.clear();
     return;
   }
-  if (c.type == ColType::VarChar) f.str.clear();
-  else f.ints.clear();
   const uint32_t off = def_.col_offset[col];
   const uint32_t n = slot_count_;
-  if (c.type == ColType::VarChar) {
-    f.str.reserve(1024);
-    for (uint32_t s = 0; s < n; ++s) {
-      const uint8_t *p = slotPtr(s);
-      if (p[0] == 0) continue;
-      uint32_t len;
-      std::memcpy(&len, p + off, sizeof(len));
-      f.str[std::string(reinterpret_cast<const char *>(p + off + 4), len)].push_back(s);
+  if (c.type == ColType::BigInt) {
+    // int：每行约 12 字节（key 8 + slot 4）。预算超限则放弃构建。
+    if (static_cast<size_t>(n) * 12 > kFilterBudget) {
+      f.valid = false;
+      f.int_keys.clear();
+      f.int_slots.clear();
+      return;
     }
-  } else {
-    f.ints.reserve(1024);
+    f.int_keys.resize(n);
+    f.int_slots.resize(n);
+    uint32_t m = 0;
     for (uint32_t s = 0; s < n; ++s) {
       const uint8_t *p = slotPtr(s);
       if (p[0] == 0) continue;
       int64_t v;
       std::memcpy(&v, p + off, sizeof(v));
-      f.ints[v].push_back(s);
+      f.int_keys[m] = v;
+      f.int_slots[m] = s;
+      ++m;
     }
+    f.int_keys.resize(m);
+    f.int_slots.resize(m);
+    // 按 (key, slot) 升序：先按 key 排序的 indices，再重排两个平行数组。
+    std::vector<uint32_t> order(m);
+    for (uint32_t i = 0; i < m; ++i) order[i] = i;
+    std::sort(order.begin(), order.end(), [&](uint32_t x, uint32_t y) {
+      if (f.int_keys[x] != f.int_keys[y]) return f.int_keys[x] < f.int_keys[y];
+      return f.int_slots[x] < f.int_slots[y];
+    });
+    std::vector<int64_t> keys(m);
+    std::vector<uint32_t> slots(m);
+    for (uint32_t i = 0; i < m; ++i) {
+      keys[i] = f.int_keys[order[i]];
+      slots[i] = f.int_slots[order[i]];
+    }
+    f.int_keys.swap(keys);
+    f.int_slots.swap(slots);
+  } else {
+    // str：key 池 + (offset, len, slot)。每行约 24 字节 + 池内 key 长度。
+    size_t pool = 0;
+    for (uint32_t s = 0; s < n; ++s) {
+      const uint8_t *p = slotPtr(s);
+      if (p[0] == 0) continue;
+      uint32_t len;
+      std::memcpy(&len, p + off, sizeof(len));
+      pool += len;
+    }
+    if (static_cast<size_t>(n) * 24 + pool > kFilterBudget) {
+      f.valid = false;
+      f.str_pool.clear();
+      f.str_off.clear();
+      f.str_len.clear();
+      f.str_slots.clear();
+      return;
+    }
+    f.str_pool.clear();
+    f.str_pool.reserve(pool);
+    f.str_off.resize(n);
+    f.str_len.resize(n);
+    f.str_slots.resize(n);
+    uint32_t m = 0;
+    for (uint32_t s = 0; s < n; ++s) {
+      const uint8_t *p = slotPtr(s);
+      if (p[0] == 0) continue;
+      uint32_t len;
+      std::memcpy(&len, p + off, sizeof(len));
+      f.str_off[m] = static_cast<uint32_t>(f.str_pool.size());
+      f.str_len[m] = len;
+      f.str_slots[m] = s;
+      f.str_pool.append(reinterpret_cast<const char *>(p + off + 4), len);
+      ++m;
+    }
+    f.str_off.resize(m);
+    f.str_len.resize(m);
+    f.str_slots.resize(m);
+    // 按 key 字典序（len 再字节）排列；相同 key 内按 slot 升序。
+    auto keyLess = [&](uint32_t x, uint32_t y) {
+      uint32_t lx = f.str_len[x], ly = f.str_len[y];
+      int c = std::memcmp(f.str_pool.data() + f.str_off[x],
+                          f.str_pool.data() + f.str_off[y], std::min(lx, ly));
+      if (c != 0) return c < 0;
+      if (lx != ly) return lx < ly;
+      return f.str_slots[x] < f.str_slots[y];
+    };
+    std::vector<uint32_t> order(m);
+    for (uint32_t i = 0; i < m; ++i) order[i] = i;
+    std::sort(order.begin(), order.end(), keyLess);
+    std::vector<uint32_t> offs(m), lens(m), slots(m);
+    std::string pool_buf;
+    pool_buf.reserve(f.str_pool.size());
+    for (uint32_t i = 0; i < m; ++i) {
+      uint32_t src = order[i];
+      offs[i] = static_cast<uint32_t>(pool_buf.size());
+      lens[i] = f.str_len[src];
+      slots[i] = f.str_slots[src];
+      pool_buf.append(f.str_pool, f.str_off[src], f.str_len[src]);
+    }
+    f.str_pool.swap(pool_buf);
+    f.str_off.swap(offs);
+    f.str_len.swap(lens);
+    f.str_slots.swap(slots);
   }
   f.epoch = epoch_;
   f.valid = true;
 }
 
-const std::vector<uint32_t> *Table::strBucket(uint32_t col, const std::string &key) {
-  static const std::vector<uint32_t> kEmpty;
-  if (col >= def_.cols.size()) return nullptr;
+bool Table::strCandidates(uint32_t col, const std::string &key, const uint32_t **begin,
+                          const uint32_t **end) {
+  if (col >= def_.cols.size()) return false;
   ensureFilter(col);
-  if (filters_.size() <= col) return nullptr;
+  if (filters_.size() <= col) return false;
   const ColFilter &f = filters_[col];
-  if (!f.valid) return nullptr;
-  auto it = f.str.find(key);
-  return it == f.str.end() ? &kEmpty : &it->second;
+  if (!f.valid) return false;
+  // 二分定位 key 的字典序范围。
+  auto cmpKey = [&](uint32_t i) {
+    int c = std::memcmp(f.str_pool.data() + f.str_off[i], key.data(),
+                        std::min<size_t>(f.str_len[i], key.size()));
+    if (c != 0) return c < 0 ? -1 : 1;
+    if (f.str_len[i] != key.size()) return f.str_len[i] < key.size() ? -1 : 1;
+    return 0;
+  };
+  uint32_t lo = 0, hi = static_cast<uint32_t>(f.str_slots.size());
+  while (lo < hi) {
+    uint32_t mid = (lo + hi) / 2;
+    if (cmpKey(mid) < 0) lo = mid + 1;
+    else hi = mid;
+  }
+  uint32_t start = lo;
+  hi = static_cast<uint32_t>(f.str_slots.size());
+  while (lo < hi) {
+    uint32_t mid = (lo + hi) / 2;
+    if (cmpKey(mid) <= 0) lo = mid + 1;
+    else hi = mid;
+  }
+  *begin = f.str_slots.data() + start;
+  *end = f.str_slots.data() + lo;
+  return true;
 }
 
-const std::vector<uint32_t> *Table::intBucket(uint32_t col, int64_t key) {
-  static const std::vector<uint32_t> kEmpty;
-  if (col >= def_.cols.size()) return nullptr;
+bool Table::intCandidates(uint32_t col, int64_t key, const uint32_t **begin,
+                          const uint32_t **end) {
+  if (col >= def_.cols.size()) return false;
   ensureFilter(col);
-  if (filters_.size() <= col) return nullptr;
+  if (filters_.size() <= col) return false;
   const ColFilter &f = filters_[col];
-  if (!f.valid) return nullptr;
-  auto it = f.ints.find(key);
-  return it == f.ints.end() ? &kEmpty : &it->second;
+  if (!f.valid) return false;
+  auto lo_it = std::lower_bound(f.int_keys.begin(), f.int_keys.end(), key);
+  auto hi_it = std::upper_bound(f.int_keys.begin(), f.int_keys.end(), key);
+  *begin = f.int_slots.data() + (lo_it - f.int_keys.begin());
+  *end = f.int_slots.data() + (hi_it - f.int_keys.begin());
+  return true;
 }
 
 void Table::buildSlot(const std::vector<Value> &values, std::vector<uint8_t> &out) const {
