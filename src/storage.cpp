@@ -484,45 +484,6 @@ bool Table::intCandidates(uint32_t col, int64_t key, const uint32_t **begin,
   return true;
 }
 
-// ---------------- 无过滤 TopK 向量列连续缓存 ----------------
-
-void Table::ensureVecCache() {
-  if (vec_cache_valid_ && vec_cache_epoch_ == epoch_) return;
-  vec_cache_valid_ = false;
-  if (def_.vector_col < 0 || def_.vec_offset == 0) return;
-  const uint32_t dim = static_cast<uint32_t>(def_.cols[def_.vector_col].param);
-  const size_t live = id_to_slot_.size();
-  // 预算按活行数估算；超限则放弃缓存，调用方回退槽扫描。
-  if (live == 0 || live * (static_cast<size_t>(dim) * 4 + 8) > kVecCacheBudget) return;
-  const uint32_t off = def_.vec_offset;
-  const uint32_t n = slot_count_;
-  vec_cache_.clear();
-  vec_ids_.clear();
-  vec_cache_.reserve(live * dim);
-  vec_ids_.reserve(live);
-  for (uint32_t s = 0; s < n; ++s) {
-    const uint8_t *p = slotPtr(s);
-    if (p[0] == 0) continue;
-    int64_t id;
-    std::memcpy(&id, p + 8, sizeof(id));
-    vec_ids_.push_back(id);
-    const float *v = reinterpret_cast<const float *>(p + off);
-    vec_cache_.insert(vec_cache_.end(), v, v + dim);
-  }
-  vec_cache_epoch_ = epoch_;
-  vec_cache_valid_ = true;
-}
-
-bool Table::vecCache(uint64_t &epoch, const float *&vecs, int64_t const *&ids, uint32_t &count) {
-  ensureVecCache();
-  if (!vec_cache_valid_) return false;
-  epoch = vec_cache_epoch_;
-  vecs = vec_cache_.data();
-  ids = vec_ids_.data();
-  count = static_cast<uint32_t>(vec_ids_.size());
-  return true;
-}
-
 void Table::buildSlot(const std::vector<Value> &values, std::vector<uint8_t> &out) const {
   out.assign(def_.slot_size, 0);
   out[0] = 1;

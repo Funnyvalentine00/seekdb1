@@ -1010,44 +1010,20 @@ void Engine::execSelect(Statement &st, QueryResult &out) {
   if (st.has_limit && st.limit == 0) return;
 
   // 无过滤且无事务暂存：走专用扫描（距离计算内联，避免逐行函数调用）。
-  // 优先走向量列连续缓存（消除槽 stride 读放大）；缓存不可用时回退槽扫描。
+  // 注：曾试验向量列连续缓存（A/B 同机对照 Xeon 8573C 上无收益，且 peak_rss
+  // 增加 ~5MiB 恶化内存项），已回退为直接槽扫描。
   if (topk_expr && !where && !tableHasPending(*t)) {
     const size_t k = std::min<size_t>(static_cast<size_t>(st.limit), t->rowCount());
     if (k == 0) return;
     std::vector<TopKEntry> entries;
     int vcol = topk_expr->left->col_index;
-    const float *cache_vecs = nullptr;
-    int64_t const *cache_ids = nullptr;
-    uint32_t cache_count = 0;
-    uint64_t cache_epoch = 0;
-    static const bool no_vec_cache = [] {
-      const char *v = std::getenv("MVD_NOVECCACHE");
-      return v && *v;
-    }();
-    const bool use_cache = !no_vec_cache &&
-                           def.cols[vcol].param >= 32 && def.cols[vcol].param % 32 == 0 &&
-                           t->vecCache(cache_epoch, cache_vecs, cache_ids, cache_count);
-    if (use_cache) {
-      scanTopKContiguous(cache_vecs, cache_ids, cache_count, def.cols[vcol].param,
-                         topk_expr->vec_lit.data(), k, entries);
-    } else {
-      scanTopK(t->slotPtr(0), t->slotCount(), def.slot_size, def.col_offset[vcol],
-               def.cols[vcol].param, topk_expr->vec_lit.data(), k, entries);
-    }
+    scanTopK(t->slotPtr(0), t->slotCount(), def.slot_size, def.col_offset[vcol],
+             def.cols[vcol].param, topk_expr->vec_lit.data(), k, entries);
     out.rows.reserve(entries.size());
     for (const TopKEntry &e : entries) {
       RowRef rr;
-      if (use_cache) {
-        // 缓存扫描的 slot 字段是缓存下标；按主键回查物理槽做投影。
-        uint32_t slot = 0;
-        if (t->findId(e.id, slot)) {
-          rr.raw = t->slotPtr(slot);
-          rr.slot = slot;
-        }
-      } else {
-        rr.raw = t->slotPtr(e.slot);
-        rr.slot = e.slot;
-      }
+      rr.raw = t->slotPtr(e.slot);
+      rr.slot = e.slot;
       out.rows.push_back(materialize(rr));
     }
     return;
