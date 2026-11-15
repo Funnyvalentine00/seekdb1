@@ -18,6 +18,7 @@
 
 #include "config_bridge.h"
 #include "ob_index_build_task.h"
+#include "rootserver/ddl_task/fts_build_overlap.h"
 #include "share/rc/ob_server_runtime.h"
 #include "rootserver/ddl_task/ob_ddl_task_util.h"
 #include "rootserver/ob_local_ddl_serial_call.h"
@@ -782,7 +783,7 @@ int ObIndexBuildTask::send_local_build_request(
         const ObString &parser = create_index_arg_.index_option_.parser_name_;
         if (!is_partitioned_local_index_task && parallelism == 1 && parent_task_id_ > 0
             && (INDEX_TYPE_FTS_INDEX_LOCAL == index_type || INDEX_TYPE_FTS_DOC_WORD_LOCAL == index_type)
-            && (0 == parser.case_compare("ik") || 0 == parser.case_compare("ik.1"))) {
+            && is_fts_build_overlap_parser(parser)) {
           auto *scheduler = share::server_service<ObDDLScheduler>();
           if (scheduler != nullptr && ObDDLServiceLauncher::is_ddl_service_started()) {
             SERVER_MODULE_SCOPE {
