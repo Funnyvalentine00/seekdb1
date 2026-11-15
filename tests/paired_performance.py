@@ -22,6 +22,7 @@ import time
 PROFILES = {
     "default": (10000, 128, 100, 1000, "topk"),
     "batch1": (10000, 128, 1, 300, "topk"),
+    "batch1-1k": (1000, 128, 1, 300, "topk"),
     "batch10000": (10000, 128, 10000, 1000, "topk"),
     "dim8": (10000, 8, 100, 1000, "topk"),
     "responses": (1000, 8, 100, 5000, "point"),
@@ -29,7 +30,7 @@ PROFILES = {
     "smoke": (1000, 8, 100, 10, "topk"),
 }
 METRICS = ("write_ms", "query_ms", "filtered_ms", "unfiltered_ms", "large_ms", "first_query_ms",
-           "startup_ms", "recovery_warm_ms", "process_cpu_ms", "peak_rss_kib")
+           "startup_ms", "recovery_warm_ms", "process_cpu_ms", "peak_rss_kib", "cpu_write_ms", "cpu_query_ms")
 
 
 def sha(path):
@@ -41,8 +42,9 @@ def message(ident, sql):
                         "search_mode": "exact"}, separators=(",", ":")) + "\n").encode()
 
 
-def workload(profile):
+def workload(profile, query_multiplier=1):
     n, dim, batch, queries, mode = PROFILES[profile]
+    queries *= query_multiplier
     rng = random.Random(42)
     rows = []
     for ident in range(1, n + 1):
@@ -169,6 +171,12 @@ class Session:
         except ProcessLookupError:
             pass
 
+    def cpu_ns(self):
+        try:
+            return int(Path(f"/proc/{self.proc.pid}/schedstat").read_text().split()[0])
+        except (FileNotFoundError, PermissionError):
+            return None
+
 
 def run_once(binary, profile, inputs, output, run_id, cpu, timeout, data_root):
     inserts, selects, _ = inputs
@@ -183,13 +191,18 @@ def run_once(binary, profile, inputs, output, run_id, cpu, timeout, data_root):
             result["startup_ms"] = (time.perf_counter_ns() - start) / 1e6
             ddl = message(1, f"CREATE TABLE bench (id BIGINT PRIMARY KEY,cat VARCHAR(16),v VECTOR({dim}));")
             assert json.loads(session.exchange(ddl)) == {"id": 1, "ok": True}
+            cpu_before = session.cpu_ns()
             start = time.perf_counter_ns()
             replies = [session.exchange(request) for request, _, _ in inserts]
             result["write_ms"] = (time.perf_counter_ns() - start) / 1e6
+            cpu_after = session.cpu_ns()
+            if cpu_before is not None and cpu_after is not None:
+                result["cpu_write_ms"] = (cpu_after - cpu_before) / 1e6
             for reply, (_, ident, count) in zip(replies, inserts):
                 assert json.loads(reply) == {"id": ident, "ok": True, "affected_rows": count}, reply
             elapsed = {"filtered": 0, "unfiltered": 0, "large": 0}
             replies = []
+            cpu_before = session.cpu_ns()
             start = time.perf_counter_ns()
             for index, (request, _, kind) in enumerate(selects):
                 before = time.perf_counter_ns()
@@ -199,6 +212,9 @@ def run_once(binary, profile, inputs, output, run_id, cpu, timeout, data_root):
                 if index == 0:
                     result["first_query_ms"] = duration / 1e6
             result["query_ms"] = (time.perf_counter_ns() - start) / 1e6
+            cpu_after = session.cpu_ns()
+            if cpu_before is not None and cpu_after is not None:
+                result["cpu_query_ms"] = (cpu_after - cpu_before) / 1e6
             result.update({kind + "_ms": value / 1e6 for kind, value in elapsed.items()})
             digest = hashlib.sha256()
             for index, (reply, (_, ident, kind)) in enumerate(zip(replies, selects)):
@@ -267,7 +283,7 @@ def summarize(records, seed):
     for (profile, comparison, block), rows in groups.items():
         assert len(rows) == 4 and sum(r["arm"] == "A" for r in rows) == 2
         for metric in METRICS:
-            if any(row[metric] <= 0 for row in rows):
+            if any(row.get(metric, 0) <= 0 for row in rows):
                 continue
             a = [math.log(row[metric]) for row in rows if row["arm"] == "A"]
             b = [math.log(row[metric]) for row in rows if row["arm"] == "B"]
@@ -280,6 +296,9 @@ def summarize(records, seed):
         for comparison, metrics in comparisons.items():
             result = summary[profile][comparison] = {}
             for metric, logs in metrics.items():
+                paired_rows = [row for (p, c, _), group in groups.items()
+                               if p == profile and c == comparison and all(r.get(metric, 0) > 0 for r in group)
+                               for row in group]
                 boot = [statistics.median(rng.choices(logs, k=len(logs))) for _ in range(2000)]
                 changes = [100 * math.expm1(value) for value in logs]
                 noise = [abs(100 * math.expm1(v)) for v in comparisons.get("aa", {}).get(metric, [])]
@@ -290,8 +309,8 @@ def summarize(records, seed):
                                   "aa_p95_absolute_change_pct": quantile(noise, 0.95) if noise else None,
                                   "screen_threshold_pct": threshold,
                                   "regression_signal": comparison != "aa" and ci[0] > threshold,
-                                  "base_median": statistics.median(r[metric] for r in records if r["profile"] == profile and r["comparison"] == comparison and r["arm"] == "A"),
-                                  "candidate_median": statistics.median(r[metric] for r in records if r["profile"] == profile and r["comparison"] == comparison and r["arm"] == "B")}
+                                  "base_median": statistics.median(r[metric] for r in paired_rows if r["arm"] == "A"),
+                                  "candidate_median": statistics.median(r[metric] for r in paired_rows if r["arm"] == "B")}
     return summary
 
 
@@ -300,9 +319,11 @@ def main():
     parser.add_argument("--binaries", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--profiles", default="default,batch1,batch10000,dim8,responses,large-response")
+    parser.add_argument("--comparisons", default="crc,buffer,combined", help="Candidate arms; same-binary A/A is always included")
     parser.add_argument("--blocks", type=int, default=6)
     parser.add_argument("--aa-blocks", type=int, default=10)
     parser.add_argument("--seed", type=int, default=20261115)
+    parser.add_argument("--query-multiplier", type=int, default=1, help="Diagnostic longer query phase; changes the workload, not an official-equivalent score")
     parser.add_argument("--cpu", type=int)
     parser.add_argument("--client-cpu", type=int)
     parser.add_argument("--timeout", type=float, default=120)
@@ -310,9 +331,13 @@ def main():
     args = parser.parse_args()
     if not __debug__:
         parser.error("Python optimization disables validation assertions; do not use -O/PYTHONOPTIMIZE")
-    if min(args.blocks, args.aa_blocks, args.timeout) <= 0:
+    if min(args.blocks, args.aa_blocks, args.timeout, args.query_multiplier) <= 0:
         parser.error("blocks and timeout must be positive")
     profiles = args.profiles.split(",")
+    comparisons = args.comparisons.split(",")
+    if any(name not in ("crc", "buffer", "combined") for name in comparisons) or len(set(comparisons)) != len(comparisons):
+        parser.error("unknown or duplicate comparison")
+    comparisons = ["aa", *comparisons]
     if any(name not in PROFILES for name in profiles) or len(set(profiles)) != len(profiles):
         parser.error("unknown or duplicate profile")
     if args.cpu is not None and (not hasattr(os, "sched_getaffinity") or args.cpu not in os.sched_getaffinity(0)):
@@ -328,11 +353,11 @@ def main():
     binary_hashes = {k: sha(v) for k, v in binaries.items()}
     args.output.mkdir(parents=True, exist_ok=False)
     (args.output / "stderr").mkdir()
-    inputs = {name: workload(name) for name in profiles}
+    inputs = {name: workload(name, args.query_multiplier) for name in profiles}
     metadata = {"platform": platform.platform(), "binary_sha256": binary_hashes, "binaries": binaries,
                 "cpu": args.cpu, "client_cpu": args.client_cpu, "data_root": str(args.data_root or tempfile.gettempdir()),
-                "seed": args.seed, "blocks": args.blocks, "aa_blocks": args.aa_blocks,
-                "profiles": {name: {"parameters": PROFILES[name], "requests_sha256": inputs[name][2]} for name in profiles},
+                "seed": args.seed, "blocks": args.blocks, "aa_blocks": args.aa_blocks, "query_multiplier": args.query_multiplier, "comparisons": comparisons,
+                "profiles": {name: {"parameters": PROFILES[name], "effective_queries": len(inputs[name][1]), "requests_sha256": inputs[name][2]} for name in profiles},
                 "started_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
                 "recovery": "own identical-WAL fixture, warm OS cache; not cold-disk latency"}
     (args.output / "metadata.json").write_text(json.dumps(metadata, indent=2) + "\n")
@@ -340,7 +365,7 @@ def main():
     schedule = []
     orders = {}
     for profile in profiles:
-        for comparison in ("aa", "crc", "buffer", "combined"):
+        for comparison in comparisons:
             count = args.aa_blocks if comparison == "aa" else args.blocks
             sequence = ["ABBA", "BAAB"] * (count // 2)
             if count % 2:
@@ -349,7 +374,7 @@ def main():
             orders[profile, comparison] = sequence
     # Round-robin all workloads and comparisons, shuffled within each round.
     for block in range(max(args.blocks, args.aa_blocks)):
-        round_blocks = [(profile, comparison, block) for profile in profiles for comparison in ("aa", "crc", "buffer", "combined")
+        round_blocks = [(profile, comparison, block) for profile in profiles for comparison in comparisons
                         if block < (args.aa_blocks if comparison == "aa" else args.blocks)]
         rng.shuffle(round_blocks)
         for profile, comparison, block_id in round_blocks:

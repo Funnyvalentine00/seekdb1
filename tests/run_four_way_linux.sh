@@ -36,6 +36,7 @@ python3 harness/tests/paired_performance.py --binaries linux-build/binaries.json
   --output linux-smoke --profiles smoke --blocks 1 --aa-blocks 1 \
   --cpu "$server_cpu" --client-cpu "$client_cpu" --data-root "$case_root/data"
 python3 harness/tests/paired_performance.py --binaries linux-build/binaries.json \
-  --output linux-paired --blocks 6 --aa-blocks 10 --cpu "$server_cpu" --client-cpu "$client_cpu" \
+  --output linux-paired --profiles default,batch1-1k,batch10000,dim8,responses,large-response \
+  --blocks 6 --aa-blocks 10 --cpu "$server_cpu" --client-cpu "$client_cpu" \
   --data-root "$case_root/data"
 printf 'All Linux correctness checks and paired measurements completed.\n'
