@@ -2,12 +2,14 @@
 
 当前结论：四版已完成 Mac 和拯救者完整配对测试，恢复连接后的两项针对性补测也已完成。CRC 单项和组合版的稳定收益主要在暖缓存恢复（默认负载约 50%）；默认写入/查询整体收益较小，缓冲区单项未证明查询加速。短响应组合版的首轮变慢没有在补测中复现；batch10000 的 CRC 查询仍偏慢约 2.16%，尚不能排除 3% 级别回退，不能把未触发筛查阈值解释为全部无回退。
 
+电源条件补充：补测后用户告知拯救者当前未接电源。本轮没有逐次记录交流供电状态或Windows电源策略，无法追溯每个区块的功耗/频率条件。因此拯救者数据仅作诊断参考，不据此验收接电后的性能，也不能认定已观察到的变慢完全由电池供电造成。上述原始数值及不确定性保留，收益和回退幅度留待稳定接电条件下或正式测评机上的配对测试确认。用户已授权先推送当前开发分支。
+
 ## 冻结版本与执行环境
 
 - 产品基线：`a285f2e67be0f6de2ac68c2b32ec6a2426984f01`；组合版：`9db50ce9b4ea698144a1410eaca6baf4de36df2f`。CRC 单项只替换 `src/common.h`，buffer 单项只替换 `src/main.cpp`，其余产品源码逐文件 SHA 一致。
 - 本地：Apple M5 Pro、24 GiB，macOS arm64；四版均使用同一临时标量/fdatasync→fsync 兼容构建。
 - 拯救者：Intel Core Ultra 9 275HX，WSL2 Linux x86_64；原始 CMake Release 构建，真实 fdatasync，性能数据位于 WSL 原生 ext4。数据库/驱动固定在不同 guest CPU 2/4；这不保证 Windows 物理核心隔离。编译器、CPU flags、文件系统、源码与二进制 SHA 均归档。
-- 拯救者目录：`/home/xiazihan/benchmark/minivectordb-four-way-20261115-9db50ce`，通过 `ssh legion` 访问。四版源码和二进制都已保留在那里；没有向 GitHub 推送。
+- 拯救者目录：`/home/xiazihan/benchmark/minivectordb-four-way-20261115-9db50ce`，通过 `ssh legion` 访问。四版源码和二进制都已保留在那里；对应开发分支为`codex/minivectordb-round2-next`。
 
 ## 测量设计
 
