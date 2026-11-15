@@ -268,6 +268,7 @@ void Table::resetWal() {
 
 void Table::commitOps(std::vector<Op> &ops) {
   if (ops.empty()) return;
+  ++epoch_;  // 提交纪元推进：所有列桶在下一次查询时按需重建
   // 预留整帧空间，避免逐操作扩容和 payload 到 frame 的重复复制。
   size_t payload_size = 4;
   for (const Op &op : ops) {
@@ -304,6 +305,70 @@ void Table::commitOps(std::vector<Op> &ops) {
   for (const Op &op : ops) applyOp(op);
 
   if (wal_size_ > (64u << 20)) resetWal();
+}
+
+// ---------------- 懒建列桶索引 ----------------
+
+// 按当前槽状态重建第 col 列的等值桶（仅非主键的 BIGINT/VARCHAR 列）。
+void Table::ensureFilter(uint32_t col) {
+  if (filters_.size() < def_.cols.size()) filters_.resize(def_.cols.size());
+  ColFilter &f = filters_[col];
+  if (f.valid && f.epoch == epoch_) return;
+  const ColumnDef &c = def_.cols[col];
+  if (col == static_cast<uint32_t>(def_.pk_index) ||
+      (c.type != ColType::VarChar && c.type != ColType::BigInt)) {
+    f.valid = false;  // 主键与向量列没有等值桶
+    f.str.clear();
+    f.ints.clear();
+    return;
+  }
+  if (c.type == ColType::VarChar) f.str.clear();
+  else f.ints.clear();
+  const uint32_t off = def_.col_offset[col];
+  const uint32_t n = slot_count_;
+  if (c.type == ColType::VarChar) {
+    f.str.reserve(1024);
+    for (uint32_t s = 0; s < n; ++s) {
+      const uint8_t *p = slotPtr(s);
+      if (p[0] == 0) continue;
+      uint32_t len;
+      std::memcpy(&len, p + off, sizeof(len));
+      f.str[std::string(reinterpret_cast<const char *>(p + off + 4), len)].push_back(s);
+    }
+  } else {
+    f.ints.reserve(1024);
+    for (uint32_t s = 0; s < n; ++s) {
+      const uint8_t *p = slotPtr(s);
+      if (p[0] == 0) continue;
+      int64_t v;
+      std::memcpy(&v, p + off, sizeof(v));
+      f.ints[v].push_back(s);
+    }
+  }
+  f.epoch = epoch_;
+  f.valid = true;
+}
+
+const std::vector<uint32_t> *Table::strBucket(uint32_t col, const std::string &key) {
+  static const std::vector<uint32_t> kEmpty;
+  if (col >= def_.cols.size()) return nullptr;
+  ensureFilter(col);
+  if (filters_.size() <= col) return nullptr;
+  const ColFilter &f = filters_[col];
+  if (!f.valid) return nullptr;
+  auto it = f.str.find(key);
+  return it == f.str.end() ? &kEmpty : &it->second;
+}
+
+const std::vector<uint32_t> *Table::intBucket(uint32_t col, int64_t key) {
+  static const std::vector<uint32_t> kEmpty;
+  if (col >= def_.cols.size()) return nullptr;
+  ensureFilter(col);
+  if (filters_.size() <= col) return nullptr;
+  const ColFilter &f = filters_[col];
+  if (!f.valid) return nullptr;
+  auto it = f.ints.find(key);
+  return it == f.ints.end() ? &kEmpty : &it->second;
 }
 
 void Table::buildSlot(const std::vector<Value> &values, std::vector<uint8_t> &out) const {

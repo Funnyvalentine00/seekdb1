@@ -72,6 +72,14 @@ jobs:
           python3 tests/fuzz.py --binary image-bin/minivectordb --seed 1 --rounds 60 \
             2>&1 | tee validation-logs/fuzz.log
 
+      - name: Benchmark (native build, stdio protocol)
+        shell: bash
+        run: |
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+          cmake --build build -j
+          python3 tests/bench_stdio.py --binary build/minivectordb --runs 3 \
+            2>&1 | tee validation-logs/bench-stdio.log
+
       - name: Save validation reports
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2

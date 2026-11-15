@@ -61,12 +61,27 @@ class Table {
   // 构造一条新行的槽内容（不落盘）。
   void buildSlot(const std::vector<Value> &values, std::vector<uint8_t> &out) const;
 
+  // ---- 非主键等值过滤的懒建列桶索引 ----
+  // 首次对该列做等值过滤时按当前槽状态全量建桶；任何提交使桶失效，下次查询重建。
+  // 返回 nullptr 表示索引不可用（调用方回退全表扫描）；非空指针为候选槽列表
+  // （可能为空，表示确无匹配行）。桶建立在提交纪元一致的快照上，候选槽即为匹配行。
+  const std::vector<uint32_t> *strBucket(uint32_t col, const std::string &key);
+  const std::vector<uint32_t> *intBucket(uint32_t col, int64_t key);
+
  private:
   void ensureCapacity(uint32_t slots);
   void applyOp(const Op &op);
   void recover();
   void scanRows();
   void resetWal();
+  void ensureFilter(uint32_t col);
+
+  struct ColFilter {
+    uint64_t epoch = 0;  // 建桶时的提交纪元；不等于当前纪元则失效
+    bool valid = false;
+    std::unordered_map<std::string, std::vector<uint32_t>> str;
+    std::unordered_map<int64_t, std::vector<uint32_t>> ints;
+  };
 
   static constexpr size_t kHeaderSize = 64;
   TableDef def_;
@@ -80,6 +95,8 @@ class Table {
   uint32_t slot_count_ = 0;
   size_t wal_size_ = 0;
   std::unordered_map<int64_t, uint32_t> id_to_slot_;
+  std::vector<ColFilter> filters_;
+  uint64_t epoch_ = 1;
 };
 
 class Storage {

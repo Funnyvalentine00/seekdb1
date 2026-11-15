@@ -219,8 +219,12 @@ void renderError(const mvd::SqlError &e, const Config &cfg, std::string &out) {
 }
 
 void emit(const std::string &line) {
-  std::fwrite(line.data(), 1, line.size(), stdout);
-  std::fputc('\n', stdout);
+  // 换行并入同一次 fwrite，减少一次 stdio 锁与调用开销。
+  std::string buf;
+  buf.reserve(line.size() + 1);
+  buf.append(line);
+  buf.push_back('\n');
+  std::fwrite(buf.data(), 1, buf.size(), stdout);
   std::fflush(stdout);
 }
 
