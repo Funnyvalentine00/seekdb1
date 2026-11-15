@@ -61,6 +61,15 @@ jobs:
             2>&1 | tee validation-logs/regressions.log
           python3 tests/stdio_protocol.py --binary image-bin/minivectordb \
             2>&1 | tee validation-logs/stdio.log
+          g++ -std=c++17 -O3 -Wall -Wextra -Isrc tests/crc32.cpp -o image-bin/crc32-test
+          image-bin/crc32-test 2>&1 | tee validation-logs/crc32.log
+          python3 tests/wal_compatibility.py --baseline image-bin/minivectordb \
+            --candidate image-bin/minivectordb 2>&1 | tee validation-logs/wal-compatibility.log
+          python3 tests/transaction_model.py --binary image-bin/minivectordb --seed 1 --steps 1000 \
+            --failure-trace validation-logs/transaction-failure.sql \
+            2>&1 | tee validation-logs/transaction-model.log
+          python3 tests/wal_checkpoint.py --binary image-bin/minivectordb \
+            2>&1 | tee validation-logs/wal-checkpoint.log
           python3 tests/query_boundaries.py --binary image-bin/minivectordb -v \
             2>&1 | tee validation-logs/query-boundaries.log
           python3 tests/topk_memory.py --binary image-bin/minivectordb \

@@ -242,10 +242,12 @@ void renderStdioError(const mvd::SqlError &error, std::string_view id, std::stri
 }
 
 int runStdio(mvd::Engine &engine) {
+  constexpr size_t kMaxRetainedResponseCapacity = 64 * 1024;
   emit("{\"type\":\"ready\"}");
+  std::string out;
   for (std::string line; std::getline(std::cin, line);) {
     mvd::stdio::Request request;
-    std::string out;
+    out.clear();
     try {
       mvd::stdio::RequestParser(line).parse(request);
       if (request.shutdown) {
@@ -262,6 +264,7 @@ int runStdio(mvd::Engine &engine) {
       renderStdioError({mvd::ErrKind::Internal, error.what()}, request.id, out);
     }
     emit(out);
+    if (out.capacity() > kMaxRetainedResponseCapacity) std::string().swap(out);
   }
   engine.shutdown();
   return 0;

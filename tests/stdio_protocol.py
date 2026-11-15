@@ -62,13 +62,32 @@ def run(binary):
         assert responses[7] == {"id": 6, "ok": True, "affected_rows": 1}, responses[7]
         assert responses[8] == {"id": None, "ok": True}, responses[8]
 
-        reopened = subprocess.run(command, input=b'{"id":7,"op":"execute",'
-                                 b'"sql":"SELECT id FROM docs;"}\n{"id":8,"op":"shutdown"}\n',
-                                 check=True, capture_output=True, timeout=10)
-        assert [json.loads(line) for line in reopened.stdout.splitlines()] == [
-            {"type": "ready"}, {"id": 7, "ok": True, "columns": ["id"], "rows": [[bigint]]},
-            {"id": 8, "ok": True},
-        ], reopened.stdout
+        # Cross the buffer retention limit, then exercise success, a render-time
+        # error, invalid JSON, and shutdown in the same process.
+        large_value = "0123456789abcdef" * 5000
+        sequence = [
+            json.dumps({"id": 7, "op": "execute", "sql":
+                        f"SELECT '{large_value}' AS payload FROM docs;"}),
+            '{"id":8,"op":"execute","sql":"SELECT id FROM docs;"}',
+            '{"id":9,"op":"execute","sql":"SELECT L2_DISTANCE(v, \'[1e38,0]\') FROM docs;"}',
+            '{"id":10,"op":',
+            '{"id":11,"op":"shutdown"}',
+        ]
+        reopened = subprocess.run(command, input=("\n".join(sequence) + "\n").encode(),
+                                  check=True, capture_output=True, timeout=10)
+        lines = reopened.stdout.split(b"\n")
+        assert len(lines) == 7 and lines[-1] == b"", (len(lines), lines[-1][:100])
+        assert len(lines[1]) > 64 * 1024, len(lines[1])
+        assert [json.loads(line, parse_constant=reject_constant) for line in lines[:-1]] == [
+            {"type": "ready"},
+            {"id": 7, "ok": True, "columns": ["payload"], "rows": [[large_value]]},
+            {"id": 8, "ok": True, "columns": ["id"], "rows": [[bigint]]},
+            {"id": 9, "ok": False, "error": {"code": "value_out_of_range",
+                                             "message": "non-finite query result"}},
+            {"id": 10, "ok": False, "error": {"code": "invalid_argument",
+                                              "message": "invalid JSON request"}},
+            {"id": 11, "ok": True},
+        ], [line[:100] for line in lines]
 
 
 if __name__ == "__main__":
