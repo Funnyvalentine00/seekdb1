@@ -132,6 +132,9 @@ public:
   virtual int advance_to(const ObDatum &id_datum) override;
   virtual int get_curr_score(double &score) const override;
   virtual int get_curr_id(const ObDatum *&id_datum) const override;
+  // Consume the next owned doc-id batch. The view stays valid until this
+  // token is advanced again; other tokens may refill without invalidating it.
+  int get_next_doc_id_batch(const ObDocIdExt *&ids, int64_t &count);
 public:
   int get_token_doc_cnt(int64_t &token_doc_cnt) const { return token_iter_->get_token_doc_cnt(token_doc_cnt); }
   virtual int get_dim_max_score(double &score) override {
@@ -156,6 +159,7 @@ private:
   ObFixedArray<double, ObIAllocator> relevance_; // when ~ObFixedArray(), wikll destory itself
   ObFixedArray<ObDocIdExt, ObIAllocator> doc_id_;
   common::ObDatumCmpFuncType cmp_func_;
+  bool cmp_is_binary_;
   bool is_inited_;
   DISALLOW_COPY_AND_ASSIGN(ObTextRetrievalDaaTTokenIter);
 };

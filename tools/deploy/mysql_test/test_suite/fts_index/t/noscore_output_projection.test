@@ -1,0 +1,92 @@
+CREATE TABLE noscore_output_projection_a1 (
+  id BIGINT PRIMARY KEY,
+  title VARCHAR(128),
+  body VARCHAR(256),
+  bucket INT,
+  FULLTEXT INDEX ft(title, body) WITH PARSER space
+);
+INSERT INTO noscore_output_projection_a1 VALUES
+  (1, 'qalpha', 'qbeta', 10),
+  (2, 'qalpha qalpha', 'qgamma', 20),
+  (3, 'qdelta', 'qbeta', 20),
+  (4, 'qgamma', 'qdelta', 30),
+  (5, 'qunrelated', 'qother', 40),
+  (6, '', '', 10),
+  (7, 'qlambda', 'qalpha', 20),
+  (8, NULL, NULL, 20),
+  (9, '全文', '稳定 database', 40);
+
+SELECT id FROM noscore_output_projection_a1
+  WHERE MATCH(title, body) AGAINST('qalpha qbeta qgamma') ORDER BY id;
+SELECT COUNT(*) FROM noscore_output_projection_a1
+  WHERE MATCH(title, body) AGAINST('qalpha qbeta qgamma');
+SELECT id FROM noscore_output_projection_a1
+  WHERE MATCH(title, body) AGAINST('qalpha qbeta qgamma') > 0 ORDER BY id;
+SELECT id FROM noscore_output_projection_a1
+  WHERE 0 < MATCH(title, body) AGAINST('qalpha qbeta qgamma') ORDER BY id;
+SELECT id, MATCH(title, body) AGAINST('qalpha qbeta qgamma') AS score
+  FROM noscore_output_projection_a1
+  WHERE MATCH(title, body) AGAINST('qalpha qbeta qgamma') AND bucket = 20 ORDER BY id;
+SELECT id FROM noscore_output_projection_a1
+  WHERE MATCH(title, body) AGAINST('') ORDER BY id;
+SELECT id FROM noscore_output_projection_a1
+  WHERE MATCH(title, body) AGAINST('qabsent') ORDER BY id;
+SELECT id FROM noscore_output_projection_a1
+  WHERE MATCH(title, body) AGAINST(NULL) ORDER BY id;
+SELECT id FROM noscore_output_projection_a1
+  WHERE MATCH(title, body) AGAINST('qalpha qalpha qbeta') ORDER BY id;
+SELECT id FROM noscore_output_projection_a1
+  WHERE MATCH(title, body) AGAINST('全文 database') ORDER BY id;
+
+SELECT id, MATCH(title, body) AGAINST('qalpha qbeta qgamma') AS score
+  FROM noscore_output_projection_a1
+  WHERE MATCH(title, body) AGAINST('qalpha qbeta qgamma') ORDER BY id;
+SELECT id, MATCH(title, body) AGAINST('qalpha qbeta qgamma') AS score
+  FROM noscore_output_projection_a1 ORDER BY id;
+SELECT id, MATCH(title, body) AGAINST('qalpha qbeta qgamma') AS score
+  FROM noscore_output_projection_a1
+  WHERE MATCH(title, body) AGAINST('qalpha qbeta qgamma')
+  ORDER BY score DESC, id LIMIT 3;
+SELECT id FROM noscore_output_projection_a1
+  WHERE MATCH(title, body) AGAINST('qalpha qbeta qgamma') > 2.0 ORDER BY id;
+SELECT id FROM noscore_output_projection_a1
+  WHERE MATCH(title, body) AGAINST('+qalpha -qgamma' IN BOOLEAN MODE) ORDER BY id;
+SELECT id FROM noscore_output_projection_a1
+  WHERE MATCH(title, body) AGAINST('qalpha qbeta qgamma') ORDER BY id LIMIT 3;
+SELECT a.id FROM noscore_output_projection_a1 a
+  JOIN noscore_output_projection_a1 b ON a.id = b.id
+  WHERE MATCH(a.title, a.body) AGAINST('qalpha qbeta qgamma') AND b.bucket = 20
+  ORDER BY a.id;
+SELECT id FROM noscore_output_projection_a1
+  WHERE MATCH(title, body) AGAINST('qalpha qbeta qgamma')
+    AND id IN (SELECT id FROM noscore_output_projection_a1 WHERE bucket = 20)
+  ORDER BY id;
+SELECT id FROM noscore_output_projection_a1
+  WHERE MATCH(title, body) AGAINST('qalpha')
+     OR MATCH(title, body) AGAINST('qgamma') ORDER BY id;
+
+PREPARE ns FROM 'SELECT id FROM noscore_output_projection_a1
+  WHERE MATCH(title, body) AGAINST(''qalpha qbeta qgamma'') > ? ORDER BY id';
+SET @threshold = 0;
+EXECUTE ns USING @threshold;
+SET @threshold = 2.0;
+EXECUTE ns USING @threshold;
+SET @threshold = 0;
+EXECUTE ns USING @threshold;
+DEALLOCATE PREPARE ns;
+
+START TRANSACTION;
+UPDATE noscore_output_projection_a1 SET title = 'qabsent', body = '' WHERE id = 1;
+DELETE FROM noscore_output_projection_a1 WHERE id = 2;
+INSERT INTO noscore_output_projection_a1 VALUES (10, 'qalpha', '', 20);
+SELECT id FROM noscore_output_projection_a1
+  WHERE MATCH(title, body) AGAINST('qalpha qbeta qgamma') ORDER BY id;
+ROLLBACK;
+SELECT id FROM noscore_output_projection_a1
+  WHERE MATCH(title, body) AGAINST('qalpha qbeta qgamma') ORDER BY id;
+UPDATE noscore_output_projection_a1 SET title = 'qabsent', body = '' WHERE id = 1;
+DELETE FROM noscore_output_projection_a1 WHERE id = 2;
+INSERT INTO noscore_output_projection_a1 VALUES (10, 'qalpha', '', 20);
+SELECT id FROM noscore_output_projection_a1
+  WHERE MATCH(title, body) AGAINST('qalpha qbeta qgamma') ORDER BY id;
+DROP TABLE noscore_output_projection_a1;

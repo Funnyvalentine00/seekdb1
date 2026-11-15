@@ -37,6 +37,8 @@ struct ObSRDaaTRelevanceCollector
   virtual void reuse() = 0;
   virtual int collect_one_dim(const int64_t dim_idx, const double relevance) = 0;
   virtual int get_result(double &relevance, bool &is_valid) = 0;
+  // Only a stateless collector accepting every merged id with score 1.0 may opt in.
+  virtual bool is_no_score() const { return false; }
 };
 
 struct ObSRDaaTInnerProductRelevanceCollector : ObSRDaaTRelevanceCollector
@@ -74,6 +76,23 @@ private:
   int64_t dim_cnt_;
   sql::ObFtsEvalNode *boolean_compute_node_;
   ObFixedArray<double, ObIAllocator> boolean_relevances_;
+};
+
+// Hit-only merge: the index already returns the matching doc set, so every merged id is valid.
+struct ObSRDaaTNoScoreRelevanceCollector : ObSRDaaTRelevanceCollector
+{
+  ObSRDaaTNoScoreRelevanceCollector() : ObSRDaaTRelevanceCollector() {}
+  virtual ~ObSRDaaTNoScoreRelevanceCollector() {}
+  virtual bool is_no_score() const override { return true; }
+  virtual void reset() override {}
+  virtual void reuse() override {}
+  virtual int collect_one_dim(const int64_t, const double) override { return OB_SUCCESS; }
+  virtual int get_result(double &relevance, bool &is_valid) override
+  {
+    relevance = 1.0;
+    is_valid = true;
+    return OB_SUCCESS;
+  }
 };
 
 } // namespace storage

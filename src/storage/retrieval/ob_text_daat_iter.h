@@ -55,10 +55,12 @@ public:
   ObTextDaaTIter() : ObSRDaaTIterImpl(),
       bm25_param_estimator_(),
       mode_flag_(sql::ObMatchAgainstMode::NATURAL_LANGUAGE_MODE),
-      function_lookup_mode_(false) {}
+      function_lookup_mode_(false),
+      batch_merge_enabled_(false), batch_ids_{}, batch_counts_{}, batch_pos_{}, batch_end_{} {}
   virtual ~ObTextDaaTIter() { reset(); }
 
   int init(const ObTextDaaTParam &param);
+  virtual int get_next_rows(const int64_t capacity, int64_t &count) override;
   virtual void reuse(const bool switch_tablet = false) override;
   virtual void reset() override;
 protected:
@@ -68,6 +70,14 @@ protected:
   sql::ObMatchAgainstMode mode_flag_;
   bool function_lookup_mode_;
 private:
+  static const int64_t MAX_BATCH_MERGE_TERMS = 8;
+  void clear_batch_state();
+  int compare_batch_ids(const ObDatum &left, const ObDatum &right) const;
+  bool batch_merge_enabled_;
+  const ObDocIdExt *batch_ids_[MAX_BATCH_MERGE_TERMS];
+  int64_t batch_counts_[MAX_BATCH_MERGE_TERMS];
+  int64_t batch_pos_[MAX_BATCH_MERGE_TERMS];
+  bool batch_end_[MAX_BATCH_MERGE_TERMS];
   DISALLOW_COPY_AND_ASSIGN(ObTextDaaTIter);
 };
 
