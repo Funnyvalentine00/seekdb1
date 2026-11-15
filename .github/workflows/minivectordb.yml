@@ -44,7 +44,9 @@ jobs:
           grep -m1 "model name" /proc/cpuinfo | tee validation-logs/runner-cpu.txt
           nproc >> validation-logs/runner-cpu.txt
           python3 tests/bench_stdio.py --binary build/minivectordb --runs 3 \
-            2>&1 | tee validation-logs/bench-stdio.log
+            2>&1 | tee validation-logs/bench-cache-on.log
+          MVD_NOVECCACHE=1 python3 tests/bench_stdio.py --binary build/minivectordb --runs 3 \
+            2>&1 | tee validation-logs/bench-cache-off.log
 
       - name: Build the submitted Dockerfile
         shell: bash
