@@ -104,16 +104,35 @@ inline void reducePair(__m256 a0, __m256 a1, __m256 a2, __m256 a3, __m256 b0, __
   db = hsum256(sb);
 }
 
-// 双行交错、块数编译期固定的快路径。BLOCKS = dim/32。
-// 每行求和顺序与旧的单行实现一致（块 j 独立累加、同序归约），结果逐位不变。
-template <int BLOCKS>
+// 双行交错快路径。VECS = dim/8（__m256 个数），调用处保证 dim % 32 == 0，
+// 因此 VECS % 4 == 0：每 4 个 __m256（32 维）为一组，acc[j] 轮转累加——
+// acc[j] 的维集合与求和树与旧的单行实现完全一致，结果逐位不变。
+template <int VECS>
 void scanTopKBatched(const uint8_t *base, uint32_t slot_count, uint32_t slot_size,
                      uint32_t vec_off, const float *query, size_t k,
                      std::vector<TopKEntry> &out) {
   std::vector<TopKEntry> heap;
   heap.reserve(k);
-  __m256 q[BLOCKS];
-  for (int j = 0; j < BLOCKS; ++j) q[j] = _mm256_loadu_ps(query + j * 8);
+  __m256 q[VECS];
+  for (int i = 0; i < VECS; ++i) q[i] = _mm256_loadu_ps(query + i * 8);
+  constexpr int GROUPS = VECS / 4;
+
+  // 单行全维累加：acc[j] 汇总维 (g*32 + j*8 .. +8)，g 遍历各组。
+  auto accumRow = [&](const float *row, __m256 (&acc)[4]) {
+    acc[0] = acc[1] = acc[2] = acc[3] = _mm256_setzero_ps();
+    for (int g = 0; g < GROUPS; ++g) {
+      const float *r = row + g * 32;
+      const __m256 *qq = q + g * 4;
+      __m256 d0 = _mm256_sub_ps(_mm256_loadu_ps(r + 0), qq[0]);
+      acc[0] = _mm256_fmadd_ps(d0, d0, acc[0]);
+      __m256 d1 = _mm256_sub_ps(_mm256_loadu_ps(r + 8), qq[1]);
+      acc[1] = _mm256_fmadd_ps(d1, d1, acc[1]);
+      __m256 d2 = _mm256_sub_ps(_mm256_loadu_ps(r + 16), qq[2]);
+      acc[2] = _mm256_fmadd_ps(d2, d2, acc[2]);
+      __m256 d3 = _mm256_sub_ps(_mm256_loadu_ps(r + 24), qq[3]);
+      acc[3] = _mm256_fmadd_ps(d3, d3, acc[3]);
+    }
+  };
 
   uint32_t s = 0;
   for (; s + 2 <= slot_count; s += 2) {
@@ -122,23 +141,15 @@ void scanTopKBatched(const uint8_t *base, uint32_t slot_count, uint32_t slot_siz
     const bool va = pa[0] != 0;
     const bool vb = pb[0] != 0;
     if (va && vb) {
-      const float *ra = reinterpret_cast<const float *>(pa + vec_off);
-      const float *rb = reinterpret_cast<const float *>(pb + vec_off);
-      __m256 a[BLOCKS], b[BLOCKS];
-      for (int j = 0; j < BLOCKS; ++j) {
-        __m256 da = _mm256_sub_ps(_mm256_loadu_ps(ra + j * 8), q[j]);
-        __m256 db = _mm256_sub_ps(_mm256_loadu_ps(rb + j * 8), q[j]);
-        a[j] = _mm256_fmadd_ps(da, da, _mm256_setzero_ps());
-        b[j] = _mm256_fmadd_ps(db, db, _mm256_setzero_ps());
-      }
+      __m256 a[4], b[4];
+      accumRow(reinterpret_cast<const float *>(pa + vec_off), a);
+      accumRow(reinterpret_cast<const float *>(pb + vec_off), b);
       float da, db;
-      if (BLOCKS == 1) {
+      if (VECS == 4) {
         da = hsum256(a[0]);
         db = hsum256(b[0]);
       } else {
-        __m256 az = _mm256_setzero_ps();
-        reducePair(a[0], a[1], BLOCKS > 2 ? a[2] : az, BLOCKS > 3 ? a[3] : az,
-                   b[0], b[1], BLOCKS > 2 ? b[2] : az, BLOCKS > 3 ? b[3] : az, da, db);
+        reducePair(a[0], a[1], a[2], a[3], b[0], b[1], b[2], b[3], da, db);
       }
       int64_t ida, idb;
       std::memcpy(&ida, pa + 8, sizeof(ida));
@@ -148,20 +159,15 @@ void scanTopKBatched(const uint8_t *base, uint32_t slot_count, uint32_t slot_siz
     } else if (va || vb) {
       const uint8_t *p = va ? pa : pb;
       const uint32_t slot = va ? s : s + 1;
-      const float *row = reinterpret_cast<const float *>(p + vec_off);
-      __m256 acc[BLOCKS];
-      for (int j = 0; j < BLOCKS; ++j) {
-        __m256 d = _mm256_sub_ps(_mm256_loadu_ps(row + j * 8), q[j]);
-        acc[j] = _mm256_fmadd_ps(d, d, _mm256_setzero_ps());
-      }
+      __m256 acc[4];
+      accumRow(reinterpret_cast<const float *>(p + vec_off), acc);
       float dsum;
-      if (BLOCKS == 1) {
+      if (VECS == 4) {
         dsum = hsum256(acc[0]);
       } else {
         __m256 az = _mm256_setzero_ps();
         float db_unused;
-        reducePair(acc[0], acc[1], BLOCKS > 2 ? acc[2] : az, BLOCKS > 3 ? acc[3] : az,
-                   az, az, az, az, dsum, db_unused);
+        reducePair(acc[0], acc[1], acc[2], acc[3], az, az, az, az, dsum, db_unused);
       }
       int64_t id;
       std::memcpy(&id, p + 8, sizeof(id));
@@ -171,20 +177,15 @@ void scanTopKBatched(const uint8_t *base, uint32_t slot_count, uint32_t slot_siz
   if (s < slot_count) {
     const uint8_t *p = base + static_cast<size_t>(s) * slot_size;
     if (p[0] != 0) {
-      const float *row = reinterpret_cast<const float *>(p + vec_off);
-      __m256 acc[BLOCKS];
-      for (int j = 0; j < BLOCKS; ++j) {
-        __m256 d = _mm256_sub_ps(_mm256_loadu_ps(row + j * 8), q[j]);
-        acc[j] = _mm256_fmadd_ps(d, d, _mm256_setzero_ps());
-      }
+      __m256 acc[4];
+      accumRow(reinterpret_cast<const float *>(p + vec_off), acc);
       float dsum;
-      if (BLOCKS == 1) {
+      if (VECS == 4) {
         dsum = hsum256(acc[0]);
       } else {
         __m256 az = _mm256_setzero_ps();
         float db_unused;
-        reducePair(acc[0], acc[1], BLOCKS > 2 ? acc[2] : az, BLOCKS > 3 ? acc[3] : az,
-                   az, az, az, az, dsum, db_unused);
+        reducePair(acc[0], acc[1], acc[2], acc[3], az, az, az, az, dsum, db_unused);
       }
       int64_t id;
       std::memcpy(&id, p + 8, sizeof(id));
@@ -203,16 +204,16 @@ void scanTopKAvx2(const uint8_t *base, uint32_t slot_count, uint32_t slot_size, 
   if (dim >= 32 && dim % 32 == 0 && dim <= 128) {
     switch (dim / 32) {
       case 1:
-        scanTopKBatched<1>(base, slot_count, slot_size, vec_off, query, k, out);
+        scanTopKBatched<4>(base, slot_count, slot_size, vec_off, query, k, out);
         return;
       case 2:
-        scanTopKBatched<2>(base, slot_count, slot_size, vec_off, query, k, out);
+        scanTopKBatched<8>(base, slot_count, slot_size, vec_off, query, k, out);
         return;
       case 3:
-        scanTopKBatched<3>(base, slot_count, slot_size, vec_off, query, k, out);
+        scanTopKBatched<12>(base, slot_count, slot_size, vec_off, query, k, out);
         return;
       default:
-        scanTopKBatched<4>(base, slot_count, slot_size, vec_off, query, k, out);
+        scanTopKBatched<16>(base, slot_count, slot_size, vec_off, query, k, out);
         return;
     }
   }
