@@ -1,5 +1,7 @@
 #include "storage.h"
 
+#include "vecops.h"
+
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -211,7 +213,7 @@ void Table::recover() {
     uint64_t magic = 0;
     if (::pread(wal_fd_, &magic, 8, static_cast<off_t>(pos + 8 + len)) != 8) break;
     if (magic != kFrameMagic) break;
-    if (crc32(payload.data(), payload.size()) != crc) break;
+    if (crc32c(payload.data(), payload.size()) != crc) break;
     // 解析并应用
     size_t off = 0;
     uint32_t nops = 0;
@@ -290,7 +292,7 @@ void Table::commitOps(std::vector<Op> &ops) {
       frame.insert(frame.end(), op.data.begin(), op.data.end());
     }
   }
-  uint32_t crc = crc32(frame.data() + 8, payload_size);
+  uint32_t crc = crc32c(frame.data() + 8, payload_size);
   uint32_t len = static_cast<uint32_t>(payload_size);
   std::memcpy(frame.data(), &len, 4);
   std::memcpy(frame.data() + 4, &crc, 4);

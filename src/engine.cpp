@@ -1009,7 +1009,9 @@ void Engine::execSelect(Statement &st, QueryResult &out) {
   out.has_rows = true;
   if (st.has_limit && st.limit == 0) return;
 
-  // 无过滤且无事务暂存：走专用扫描（距离计算内联，避免逐行函数调用）
+  // 无过滤且无事务暂存：走专用扫描（距离计算内联，避免逐行函数调用）。
+  // 注：曾试验向量列连续缓存（A/B 同机对照 Xeon 8573C 上无收益，且 peak_rss
+  // 增加 ~5MiB 恶化内存项），已回退为直接槽扫描。
   if (topk_expr && !where && !tableHasPending(*t)) {
     const size_t k = std::min<size_t>(static_cast<size_t>(st.limit), t->rowCount());
     if (k == 0) return;
