@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""Build four comparable MiniVectorDB binaries from two extracted source archives."""
+"""Build the historical IEEE CRC32/response-buffer four-way campaign.
+
+This intentionally requires changes only in common.h/main.cpp, as in the frozen
+2026-11-15 a285f2e/9db50ce archives. It is not a constructor for the later
+CRC-32C integration (whose IEEE optimization was withdrawn).
+"""
 
 import argparse
 import hashlib

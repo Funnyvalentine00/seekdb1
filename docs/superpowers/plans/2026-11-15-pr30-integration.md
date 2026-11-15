@@ -35,3 +35,5 @@
 - Remote: user cannot power on Legion; do not retry it. macOS results are software/scalar only; Linux correctness must come from CI.
 
 - Mac verification: ordinary and ASan/UBSan each21 checks passed; 2Linux-only skips each. CRC-32C4102-case units passed in both builds.
+
+- Linux RED: run43732529292 caught 32-dimensional AVX2 Top1 returning id9 instead of id1. Root cause: target VECS==4 branches reduce only acc[0]. Ruling: retain batching/cache, remove incomplete special cases in all5 paths and use existing full reduction; required for correctness.

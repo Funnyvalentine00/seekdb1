@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Historical IEEE campaign (frozen a285f2e/9db50ce archives, not the CRC-32C integration).
 # Execute from a fresh uploaded bundle containing input/{baseline,candidate} and harness/.
 set -euo pipefail
 case_root=$(cd "$1" && pwd)
