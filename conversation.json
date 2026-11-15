@@ -8,7 +8,8 @@
     "branch": "2026-competition-round2",
     "contents": "src/ 源码（C++17，含官方 JSON Lines 协议层 stdio_request.h）、CMakeLists.txt、Dockerfile、conversation.json、tests/ 本地验证脚本、mysqltest/ 官方公开用例"
   },
-  "material_scope": "材料摘要：本文件收录 MiniVectorDB 加赛题的真实开发过程——需求拆解、存储与事务设计、崩溃恢复验证、性能测量、官方 JSON Lines 协议接入、平台首测失败后的定位与修复，以及 Agent prompt 材料格式的二次修正。evidence 数组按 agent-learning-evidence-v3-unbounded 规则给出 8 个独立证据实例，含评分理由、student_evidence 与 result_evidence（RFC6901 指针 + 不超过 240 字符的精确原文），覆盖问题理解与自主拆解、技术理解与迁移、独立验证与质疑、实验与反馈迭代、取舍与反思五个维度。",
+  "material_summary": "材料摘要：本文件是 MiniVectorDB 加赛题（题号 600081）随提交上传的 Agent prompt 学习材料，收录 2026-11-09 至 2026-11-15 的真实开发学习过程。学生本人的原始输入在 /user_prompts（u1-u7，逐字保留）；学生确认的理解、判断与取舍在 /conversations 中 source=student 的条目（c1-c7）；AI 编码助手的分析与实现为 source=agent 条目（c8-c15）；实际执行过的验证与真实输出在 /experiments（e1-e10，含修复前/修复后输出）与 /retrospective、/limitations。/evidence 按 agent-learning-evidence-v3-unbounded 规则给出 9 个独立证据实例，覆盖全部五个维度：问题理解与自主拆解 1 例、技术理解与迁移 2 例、独立验证与质疑 3 例、实验与反馈迭代 2 例、取舍与反思 1 例；每例含评分理由 rationale、student_evidence 与 result_evidence（RFC6901 JSON 指针 + 不超过 240 字符的精确原文）。文件为 UTF-8 编码的合法 JSON，未包含访问密钥或令牌，synthetic=false。",
+  "material_scope": "材料范围：本文件收录 MiniVectorDB 加赛题的真实开发过程——需求拆解、存储与事务设计、崩溃恢复验证、性能测量、官方 JSON Lines 协议接入、平台首测失败后的定位与修复，以及 Agent prompt 材料格式的二次修正。evidence 数组按 agent-learning-evidence-v3-unbounded 规则给出 9 个独立证据实例，含评分理由、student_evidence 与 result_evidence（RFC6901 指针 + 不超过 240 字符的精确原文），覆盖问题理解与自主拆解、技术理解与迁移、独立验证与质疑、实验与反馈迭代、取舍与反思五个维度。",
   "synthetic": false,
   "attribution": "source 字段标明来源角色：student = 参赛者本人的理解表述或原始输入（conversations 中 source=student 的条目为本人确认采用的表述，由 AI 助手按口述整理、经本人审阅）；agent = AI 编码助手的分析与实现；tool = 工具、测试或平台的真实输出。user_prompts 为本人原始输入逐字记录。",
   "desensitization": "未包含任何访问密钥、令牌或密码；仓库地址与分支为公开提交信息。",
@@ -330,8 +331,8 @@
         "quote": "功能准入这么狠，我的判断是正确性必须排在性能前面。一个用例崩了就全盘归零，所以先把公开的 5 个用例跑通，把基本 SQL 和向量距离做对，再补事务、重启和强杀恢复，最后才看性能。"
       },
       "result_evidence": {
-        "pointer": "/experiments/5/output_after_fix",
-        "quote": "官方公开用例 20/20 通过（native 与从提交 commit 重新构建的 Docker 镜像都验证）；平台第二次提交 MySQL 正式用例通过。"
+        "pointer": "/experiments/9/output_after_fix",
+        "quote": "镜像协议检查通过；平台第二次提交 MySQL 正式用例通过，性能原始指标 E = 2713.414515。"
       }
     },
     {
@@ -437,6 +438,21 @@
       "result_evidence": {
         "pointer": "/experiments/4/output_after_fix",
         "quote": "写入 5.9 s，重启到首行 325 ms，峰值 RSS 约 80 MiB，全表 20 万行查询正常"
+      }
+    },
+    {
+      "id": "ev9",
+      "dimension": "独立验证与质疑",
+      "instance": "发现 ORDER BY 向量列在单行表不报错、多行才报 type_mismatch 的语义不一致，判断类型检查时机错误并推动修复",
+      "rationale": "学生独立发现两个语义边界问题中的第二个：类型检查发生在运行时比较器里而非绑定阶段，导致行为随行数变化；预测机制后修复验证，任意行数下行为一致，构成独立的问题发现与验证链。",
+      "score": 1.5,
+      "student_evidence": {
+        "pointer": "/conversations/5/content",
+        "quote": "ORDER BY 一个向量列，只有一行的时候居然不报错，两行才报 type_mismatch，这个不一致也要修"
+      },
+      "result_evidence": {
+        "pointer": "/experiments/7/output_after_fix",
+        "quote": "无论行数多少，ORDER BY 向量列都稳定返回 type_mismatch。"
       }
     }
   ]
