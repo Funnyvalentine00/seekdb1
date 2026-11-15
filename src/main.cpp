@@ -16,6 +16,44 @@
 #include "sql.h"
 #include "stdio_request.h"
 
+#include <chrono>
+
+namespace {
+// MVD_PROFILE=1 时聚合各阶段耗时（写 stderr，不影响 stdout 协议）。
+struct Profile {
+  bool on = false;
+  double parse_us = 0, exec_us = 0, render_us = 0, io_us = 0;
+  double exec_filter_us = 0, exec_nofilter_us = 0;
+  size_t n_filter = 0, n_nofilter = 0;
+  size_t n = 0;
+  std::chrono::steady_clock::time_point t;
+  void start() { if (on) t = std::chrono::steady_clock::now(); }
+  double acc(double &slot) {
+    if (!on) return 0.0;
+    auto now = std::chrono::steady_clock::now();
+    double dt = std::chrono::duration<double, std::micro>(now - t).count();
+    slot += dt;
+    t = now;
+    return dt;
+  }
+  void report(const char *tag) {
+    if (!on || n == 0) return;
+    std::fprintf(stderr, "[profile] %s: n=%zu parse=%.1fus exec=%.1fus render=%.1fus io=%.1fus "
+                 "(per-op parse=%.2f exec=%.2f render=%.2f io=%.2f)\n",
+                 tag, n, parse_us, exec_us, render_us, io_us,
+                 parse_us / n, exec_us / n, render_us / n, io_us / n);
+    if (n_filter)
+      std::fprintf(stderr, "[profile]   filtered:  n=%zu exec=%.1fus (%.2f/op)\n",
+                   n_filter, exec_filter_us, exec_filter_us / n_filter);
+    if (n_nofilter)
+      std::fprintf(stderr, "[profile]   nofilter:  n=%zu exec=%.1fus (%.2f/op)\n",
+                   n_nofilter, exec_nofilter_us, exec_nofilter_us / n_nofilter);
+  }
+};
+Profile g_profile;
+}
+
+
 namespace {
 
 struct Config {
@@ -246,27 +284,43 @@ void renderStdioError(const mvd::SqlError &error, std::string_view id, std::stri
 }
 
 int runStdio(mvd::Engine &engine) {
+  g_profile.on = std::getenv("MVD_PROFILE") != nullptr;
   emit("{\"type\":\"ready\"}");
   for (std::string line; std::getline(std::cin, line);) {
     mvd::stdio::Request request;
     std::string out;
+    g_profile.start();
     try {
       mvd::stdio::RequestParser(line).parse(request);
       if (request.shutdown) {
         engine.shutdown();
         renderJson({}, out, request.id);
         emit(out);
+        g_profile.report("stdio");
         return 0;
       }
       engine.setVectorMode(request.search_mode);
-      renderJson(executeSql(engine, request.sql), out, request.id);
+      g_profile.acc(g_profile.parse_us);
+      bool is_filter = request.sql.find("WHERE") != std::string::npos;
+      mvd::QueryResult result = executeSql(engine, request.sql);
+      double dt_exec = g_profile.acc(g_profile.exec_us);
+      if (is_filter) { g_profile.exec_filter_us += dt_exec; ++g_profile.n_filter; }
+      else { g_profile.exec_nofilter_us += dt_exec; ++g_profile.n_nofilter; }
+      renderJson(result, out, request.id);
+      g_profile.acc(g_profile.render_us);
     } catch (const mvd::SqlError &error) {
+      g_profile.acc(g_profile.exec_us);
       renderStdioError(error, request.id, out);
     } catch (const std::exception &error) {
+      g_profile.acc(g_profile.exec_us);
       renderStdioError({mvd::ErrKind::Internal, error.what()}, request.id, out);
     }
+    g_profile.start();
     emit(out);
+    g_profile.acc(g_profile.io_us);
+    ++g_profile.n;
   }
+  g_profile.report("stdio");
   engine.shutdown();
   return 0;
 }

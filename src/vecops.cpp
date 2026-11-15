@@ -7,6 +7,55 @@
 
 namespace mvd {
 
+#if defined(__x86_64__) || defined(__i386__)
+__attribute__((target("sse4.2"))) uint32_t crc32c_hw(const void *data, size_t len,
+                                                     uint32_t seed) {
+  uint64_t c = seed ^ 0xFFFFFFFFu;
+  const uint8_t *p = static_cast<const uint8_t *>(data);
+  size_t rest = len;
+  while (rest >= 8) {
+    uint64_t v;
+    std::memcpy(&v, p, 8);
+    c = _mm_crc32_u64(c, v);
+    p += 8;
+    rest -= 8;
+  }
+  while (rest >= 4) {
+    uint32_t v;
+    std::memcpy(&v, p, 4);
+    c = _mm_crc32_u32(c, v);
+    p += 4;
+    rest -= 4;
+  }
+  while (rest--) {
+    c = _mm_crc32_u8(c, *p++);
+  }
+  return static_cast<uint32_t>(c) ^ 0xFFFFFFFFu;
+}
+#endif
+
+uint32_t crc32c(const void *data, size_t len, uint32_t seed) {
+#if defined(__x86_64__) || defined(__i386__)
+  static const bool has_sse42 = __builtin_cpu_supports("sse4.2");
+  if (has_sse42) return crc32c_hw(data, len, seed);
+#endif
+  // 表驱动兜底（CRC-32C 多项式 0x82F63B78，反射形式）。
+  static uint32_t table[256];
+  static bool init = false;
+  if (!init) {
+    for (uint32_t i = 0; i < 256; ++i) {
+      uint32_t v = i;
+      for (int k = 0; k < 8; ++k) v = (v & 1) ? (0x82F63B78u ^ (v >> 1)) : (v >> 1);
+      table[i] = v;
+    }
+    init = true;
+  }
+  uint32_t c = seed ^ 0xFFFFFFFFu;
+  const uint8_t *p = static_cast<const uint8_t *>(data);
+  for (size_t i = 0; i < len; ++i) c = table[(c ^ p[i]) & 0xFF] ^ (c >> 8);
+  return c ^ 0xFFFFFFFFu;
+}
+
 float l2DistanceScalar(const float *a, const float *b, size_t dim) {
   float s = 0.0f;
   for (size_t i = 0; i < dim; ++i) {
@@ -196,6 +245,101 @@ void scanTopKBatched(const uint8_t *base, uint32_t slot_count, uint32_t slot_siz
   out = std::move(heap);
 }
 
+// 连续布局的双行交错批处理：VECS = dim/8，GROUPS 组 × 4 累加器，
+// 求和树与 scanTopKBatched/单行路径一致，结果逐位相同。
+template <int VECS>
+void scanTopKContigBatched(const float *vecs, const int64_t *ids, uint32_t count,
+                           const float *query, size_t k, std::vector<TopKEntry> &out) {
+  std::vector<TopKEntry> heap;
+  heap.reserve(k);
+  __m256 q[VECS];
+  for (int i = 0; i < VECS; ++i) q[i] = _mm256_loadu_ps(query + i * 8);
+  constexpr int GROUPS = VECS / 4;
+  const int dim = VECS * 8;
+
+  auto accumRow = [&](const float *row, __m256 (&acc)[4]) {
+    acc[0] = acc[1] = acc[2] = acc[3] = _mm256_setzero_ps();
+    for (int g = 0; g < GROUPS; ++g) {
+      const float *r = row + g * 32;
+      const __m256 *qq = q + g * 4;
+      __m256 d0 = _mm256_sub_ps(_mm256_loadu_ps(r + 0), qq[0]);
+      acc[0] = _mm256_fmadd_ps(d0, d0, acc[0]);
+      __m256 d1 = _mm256_sub_ps(_mm256_loadu_ps(r + 8), qq[1]);
+      acc[1] = _mm256_fmadd_ps(d1, d1, acc[1]);
+      __m256 d2 = _mm256_sub_ps(_mm256_loadu_ps(r + 16), qq[2]);
+      acc[2] = _mm256_fmadd_ps(d2, d2, acc[2]);
+      __m256 d3 = _mm256_sub_ps(_mm256_loadu_ps(r + 24), qq[3]);
+      acc[3] = _mm256_fmadd_ps(d3, d3, acc[3]);
+    }
+  };
+
+  uint32_t s = 0;
+  for (; s + 2 <= count; s += 2) {
+    const float *ra = vecs + static_cast<size_t>(s) * dim;
+    const float *rb = ra + dim;
+    __m256 a[4], b[4];
+    accumRow(ra, a);
+    accumRow(rb, b);
+    float da, db;
+    if (VECS == 4) {
+      da = hsum256(a[0]);
+      db = hsum256(b[0]);
+    } else {
+      reducePair(a[0], a[1], a[2], a[3], b[0], b[1], b[2], b[3], da, db);
+    }
+    heapPush(heap, k, TopKEntry{da, ids[s], s});
+    heapPush(heap, k, TopKEntry{db, ids[s + 1], s + 1});
+  }
+  if (s < count) {
+    __m256 acc[4];
+    accumRow(vecs + static_cast<size_t>(s) * dim, acc);
+    float dsum;
+    if (VECS == 4) {
+      dsum = hsum256(acc[0]);
+    } else {
+      __m256 az = _mm256_setzero_ps();
+      float db_unused;
+      reducePair(acc[0], acc[1], acc[2], acc[3], az, az, az, az, dsum, db_unused);
+    }
+    heapPush(heap, k, TopKEntry{dsum, ids[s], s});
+  }
+  std::sort(heap.begin(), heap.end(), HeapCmp());
+  out = std::move(heap);
+}
+
+void scanTopKContiguousAvx2(const float *vecs, const int64_t *ids, uint32_t count, int dim,
+                            const float *query, size_t k, std::vector<TopKEntry> &out) {
+  out.clear();
+  k = std::min<size_t>(k, count);
+  if (k == 0) return;
+  if (dim >= 32 && dim % 32 == 0 && dim <= 128) {
+    switch (dim / 32) {
+      case 1:
+        scanTopKContigBatched<4>(vecs, ids, count, query, k, out);
+        return;
+      case 2:
+        scanTopKContigBatched<8>(vecs, ids, count, query, k, out);
+        return;
+      case 3:
+        scanTopKContigBatched<12>(vecs, ids, count, query, k, out);
+        return;
+      default:
+        scanTopKContigBatched<16>(vecs, ids, count, query, k, out);
+        return;
+    }
+  }
+  // 通用形状：逐行计算。
+  std::vector<TopKEntry> heap;
+  heap.reserve(k);
+  for (uint32_t s = 0; s < count; ++s) {
+    const float *row = vecs + static_cast<size_t>(s) * dim;
+    float d = l2DistanceAvx2(row, query, static_cast<size_t>(dim));
+    heapPush(heap, k, TopKEntry{d, ids[s], s});
+  }
+  std::sort(heap.begin(), heap.end(), HeapCmp());
+  out = std::move(heap);
+}
+
 void scanTopKAvx2(const uint8_t *base, uint32_t slot_count, uint32_t slot_size, uint32_t vec_off,
                   int dim, const float *query, size_t k, std::vector<TopKEntry> &out) {
   out.clear();
@@ -238,6 +382,29 @@ void scanTopKAvx2(const uint8_t *base, uint32_t slot_count, uint32_t slot_size, 
 #pragma GCC pop_options
 
 #endif  // x86
+
+void scanTopKContiguous(const float *vecs, const int64_t *ids, uint32_t count, int dim,
+                        const float *query, size_t k, std::vector<TopKEntry> &out) {
+#if defined(__x86_64__) || defined(__i386__)
+  static const bool has_avx2 = __builtin_cpu_supports("avx2") && __builtin_cpu_supports("fma");
+  if (has_avx2) {
+    scanTopKContiguousAvx2(vecs, ids, count, dim, query, k, out);
+    return;
+  }
+#endif
+  out.clear();
+  k = std::min<size_t>(k, count);
+  if (k == 0) return;
+  std::vector<TopKEntry> heap;
+  heap.reserve(k);
+  for (uint32_t s = 0; s < count; ++s) {
+    const float *row = vecs + static_cast<size_t>(s) * dim;
+    float d = l2DistanceScalar(row, query, static_cast<size_t>(dim));
+    heapPush(heap, k, TopKEntry{d, ids[s], s});
+  }
+  std::sort(heap.begin(), heap.end(), HeapCmp());
+  out = std::move(heap);
+}
 
 void scanTopK(const uint8_t *base, uint32_t slot_count, uint32_t slot_size, uint32_t vec_off,
               int dim, const float *query, size_t k, std::vector<TopKEntry> &out) {

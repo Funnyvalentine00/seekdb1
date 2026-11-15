@@ -71,6 +71,12 @@ class Table {
   bool intCandidates(uint32_t col, int64_t key, const uint32_t **begin,
                      const uint32_t **end);
 
+  // ---- 无过滤 TopK 的向量列连续缓存 ----
+  // 首次查询时把全部有效行的向量抽成连续数组（附平行 id 数组），提交纪元失效重建。
+  // 预算按活行数估算，超过上限不构建（返回 false，调用方回退槽扫描）。
+  // memory_bounds 的 churn 表（15 万槽 0/1 活行）按活行计为零分配，不触发限额。
+  bool vecCache(uint64_t &epoch, const float *&vecs, int64_t const *&ids, uint32_t &count);
+
  private:
   void ensureCapacity(uint32_t slots);
   void applyOp(const Op &op);
@@ -78,6 +84,7 @@ class Table {
   void scanRows();
   void resetWal();
   void ensureFilter(uint32_t col);
+  void ensureVecCache();
 
   struct ColFilter {
     uint64_t epoch = 0;  // 构建时的提交纪元；不等于当前纪元则失效
@@ -95,6 +102,8 @@ class Table {
   static constexpr size_t kHeaderSize = 64;
   // 查询期索引内存预算：超过则该列不建桶（回退全表扫描）。
   static constexpr size_t kFilterBudget = 512 * 1024;
+  // 向量缓存预算（活行 × 维 × 4B + 活行 × 8B）：超过则不建缓存。
+  static constexpr size_t kVecCacheBudget = 32 * 1024 * 1024;
   TableDef def_;
   std::string dir_;
   int rows_fd_ = -1;
@@ -108,6 +117,10 @@ class Table {
   std::unordered_map<int64_t, uint32_t> id_to_slot_;
   std::vector<ColFilter> filters_;
   uint64_t epoch_ = 1;
+  std::vector<float> vec_cache_;
+  std::vector<int64_t> vec_ids_;
+  uint64_t vec_cache_epoch_ = 0;
+  bool vec_cache_valid_ = false;
 };
 
 class Storage {
