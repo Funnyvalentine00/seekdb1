@@ -31,6 +31,14 @@ jobs:
             protocol_check
             mysqltest
 
+      - name: Build natively and benchmark (stdio protocol)
+        shell: bash
+        run: |
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+          cmake --build build -j
+          python3 tests/bench_stdio.py --binary build/minivectordb --runs 3 \
+            2>&1 | tee validation-logs/bench-stdio.log
+
       - name: Build the submitted Dockerfile
         shell: bash
         run: |
@@ -71,14 +79,6 @@ jobs:
             2>&1 | tee validation-logs/filtered-topk-memory.log
           python3 tests/fuzz.py --binary image-bin/minivectordb --seed 1 --rounds 60 \
             2>&1 | tee validation-logs/fuzz.log
-
-      - name: Benchmark (native build, stdio protocol)
-        shell: bash
-        run: |
-          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
-          cmake --build build -j
-          python3 tests/bench_stdio.py --binary build/minivectordb --runs 3 \
-            2>&1 | tee validation-logs/bench-stdio.log
 
       - name: Save validation reports
         if: always()
