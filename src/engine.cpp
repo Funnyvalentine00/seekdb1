@@ -1055,26 +1055,60 @@ void Engine::execSelect(Statement &st, QueryResult &out) {
       const uint32_t id_offset = def.col_offset[def.pk_index];
       const auto &query = topk_expr->vec_lit;
       const uint32_t n = t->slotCount();
+      auto pushCandidate = [&](const uint8_t *p, uint32_t s) {
+        const float d = l2Distance(reinterpret_cast<const float *>(p + vec_offset),
+                                   query.data(), query.size());
+        int64_t id;
+        std::memcpy(&id, p + id_offset, sizeof(id));
+        TopKEntry entry{d, id, s};
+        if (heap.size() < k) {
+          heap.push_back(entry);
+          std::push_heap(heap.begin(), heap.end(), cmp);
+        } else if (d < heap.front().dist || (d == heap.front().dist && id < heap.front().id)) {
+          std::pop_heap(heap.begin(), heap.end(), cmp);
+          heap.back() = entry;
+          std::push_heap(heap.begin(), heap.end(), cmp);
+        }
+      };
       auto scan = [&](auto matches) {
         for (uint32_t s = 0; s < n; ++s) {
           const uint8_t *p = t->slotPtr(s);
           if (p[0] == 0 || !matches(p)) continue;
-          const float d = l2Distance(reinterpret_cast<const float *>(p + vec_offset),
-                                     query.data(), query.size());
-          int64_t id;
-          std::memcpy(&id, p + id_offset, sizeof(id));
-          TopKEntry entry{d, id, s};
-          if (heap.size() < k) {
-            heap.push_back(entry);
-            std::push_heap(heap.begin(), heap.end(), cmp);
-          } else if (d < heap.front().dist || (d == heap.front().dist && id < heap.front().id)) {
-            std::pop_heap(heap.begin(), heap.end(), cmp);
-            heap.back() = entry;
-            std::push_heap(heap.begin(), heap.end(), cmp);
-          }
+          pushCandidate(p, s);
         }
       };
-      if (int_equal) {
+      // 懒建列索引：提交纪元一致的候选槽区间，跳过全表过滤判断。
+      // 候选仍过一遍 evalWhere 复核：索引只应给出超集，正确性不依赖索引内容。
+      const uint32_t *cand_begin = nullptr, *cand_end = nullptr;
+      const bool have_candidates =
+          str_equal ? t->strCandidates(column->col_index, literal->sval, &cand_begin, &cand_end)
+                    : t->intCandidates(column->col_index, literal->ival, &cand_begin, &cand_end);
+      if (have_candidates) {
+        static const bool debug_filter = [] {
+          const char *v = std::getenv("MVD_DEBUG_FILTER");
+          return v && *v;
+        }();
+        size_t checked = 0, matched = 0;
+        for (const uint32_t *it = cand_begin; it != cand_end; ++it) {
+          const uint32_t s = *it;
+          const uint8_t *p = t->slotPtr(s);
+          if (p[0] == 0) continue;  // 防御：索引与纪元一致，正常不会出现
+          ++checked;
+          RowRef rr;
+          rr.raw = p;
+          rr.slot = s;
+          if (!evalWhere(def, where, rr)) continue;
+          ++matched;
+          pushCandidate(p, s);
+        }
+        if (debug_filter) {
+          std::fprintf(stderr,
+                       "[filter-debug] col=%d candidates=%zu checked=%zu matched=%zu heap=%zu\n",
+                       column->col_index,
+                       static_cast<size_t>(cand_end - cand_begin), checked, matched,
+                       heap.size());
+        }
+      } else if (int_equal) {
         const int64_t value = literal->ival;
         scan([&](const uint8_t *p) {
           int64_t stored;

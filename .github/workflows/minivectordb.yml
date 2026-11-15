@@ -31,6 +31,19 @@ jobs:
             protocol_check
             mysqltest
 
+      - name: Build natively
+        shell: bash
+        run: |
+          mkdir -p validation-logs
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release 2>&1 | tee validation-logs/native-cmake.log
+          cmake --build build -j 2>&1 | tee validation-logs/native-build.log
+
+      - name: Benchmark (native build, stdio protocol)
+        shell: bash
+        run: |
+          python3 tests/bench_stdio.py --binary build/minivectordb --runs 3 \
+            2>&1 | tee validation-logs/bench-stdio.log
+
       - name: Build the submitted Dockerfile
         shell: bash
         run: |
