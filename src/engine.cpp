@@ -1078,14 +1078,31 @@ void Engine::execSelect(Statement &st, QueryResult &out) {
         }
       };
       // 懒建列桶：提交纪元一致的候选槽列表，跳过全表过滤判断。
+      // 候选仍过一遍 evalWhere 复核：桶只应给出超集，正确性不依赖桶内容。
       const std::vector<uint32_t> *bucket =
           str_equal ? t->strBucket(column->col_index, literal->sval)
                     : t->intBucket(column->col_index, literal->ival);
       if (bucket != nullptr) {
+        static const bool debug_filter = [] {
+          const char *v = std::getenv("MVD_DEBUG_FILTER");
+          return v && *v;
+        }();
+        size_t checked = 0, matched = 0;
         for (uint32_t s : *bucket) {
           const uint8_t *p = t->slotPtr(s);
           if (p[0] == 0) continue;  // 防御：桶与纪元一致，正常不会出现
+          ++checked;
+          RowRef rr;
+          rr.raw = p;
+          rr.slot = s;
+          if (!evalWhere(def, where, rr)) continue;
+          ++matched;
           pushCandidate(p, s);
+        }
+        if (debug_filter) {
+          std::fprintf(stderr,
+                       "[filter-debug] col=%d buckets=%zu checked=%zu matched=%zu heap=%zu\n",
+                       column->col_index, bucket->size(), checked, matched, heap.size());
         }
       } else if (int_equal) {
         const int64_t value = literal->ival;

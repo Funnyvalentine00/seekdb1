@@ -149,10 +149,19 @@ void scanTopKBatched(const uint8_t *base, uint32_t slot_count, uint32_t slot_siz
       const uint8_t *p = va ? pa : pb;
       const uint32_t slot = va ? s : s + 1;
       const float *row = reinterpret_cast<const float *>(p + vec_off);
-      float dsum = 0.0f;
+      __m256 acc[BLOCKS];
       for (int j = 0; j < BLOCKS; ++j) {
         __m256 d = _mm256_sub_ps(_mm256_loadu_ps(row + j * 8), q[j]);
-        dsum += hsum256(_mm256_fmadd_ps(d, d, _mm256_setzero_ps()));
+        acc[j] = _mm256_fmadd_ps(d, d, _mm256_setzero_ps());
+      }
+      float dsum;
+      if (BLOCKS == 1) {
+        dsum = hsum256(acc[0]);
+      } else {
+        __m256 az = _mm256_setzero_ps();
+        float db_unused;
+        reducePair(acc[0], acc[1], BLOCKS > 2 ? acc[2] : az, BLOCKS > 3 ? acc[3] : az,
+                   az, az, az, az, dsum, db_unused);
       }
       int64_t id;
       std::memcpy(&id, p + 8, sizeof(id));
@@ -163,10 +172,19 @@ void scanTopKBatched(const uint8_t *base, uint32_t slot_count, uint32_t slot_siz
     const uint8_t *p = base + static_cast<size_t>(s) * slot_size;
     if (p[0] != 0) {
       const float *row = reinterpret_cast<const float *>(p + vec_off);
-      float dsum = 0.0f;
+      __m256 acc[BLOCKS];
       for (int j = 0; j < BLOCKS; ++j) {
         __m256 d = _mm256_sub_ps(_mm256_loadu_ps(row + j * 8), q[j]);
-        dsum += hsum256(_mm256_fmadd_ps(d, d, _mm256_setzero_ps()));
+        acc[j] = _mm256_fmadd_ps(d, d, _mm256_setzero_ps());
+      }
+      float dsum;
+      if (BLOCKS == 1) {
+        dsum = hsum256(acc[0]);
+      } else {
+        __m256 az = _mm256_setzero_ps();
+        float db_unused;
+        reducePair(acc[0], acc[1], BLOCKS > 2 ? acc[2] : az, BLOCKS > 3 ? acc[3] : az,
+                   az, az, az, az, dsum, db_unused);
       }
       int64_t id;
       std::memcpy(&id, p + 8, sizeof(id));

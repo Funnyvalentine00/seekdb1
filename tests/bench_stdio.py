@@ -114,11 +114,19 @@ def run_once(binary, n, dim, queries, k, batch, work):
         t_query = time.perf_counter() - t0
         peak = mem_kb(client.proc.pid)
 
-        # 正确性抽查：前 5 条与暴力法比对
+        # 正确性抽查：前 5 条与暴力法比对（含 float32 距离复核）
+        import math
+        import struct
+
+        def f32(x):
+            return struct.unpack("f", struct.pack("f", x))[0]
+
+        by_id = {i: (c, v) for i, c, v in rows}
         bad = 0
         for sql, qv, cat in qs[:5]:
             resp = client.send(sql)
             got = [row[0] for row in resp["rows"]]
+            got_dist = {row[0]: row[1] for row in resp["rows"]}
             cand = [(i, sum((a - b) ** 2 for a, b in zip(v, qv))) for i, c, v in rows
                     if cat is None or c == cat]
             cand.sort(key=lambda x: (x[1], x[0]))
@@ -126,6 +134,18 @@ def run_once(binary, n, dim, queries, k, batch, work):
             if got != want:
                 bad += 1
                 print("MISMATCH", sql[:60], got[:5], want[:5])
+                print("  got detail:", [(i, got_dist.get(i)) for i in got])
+                print("  want detail:", [(i, math.sqrt(d)) for i, d in cand[:k]])
+                for i in got:
+                    c, v = by_id.get(i, (None, None))
+                    f32_dist = math.sqrt(sum((f32(a) - f32(b)) ** 2
+                                             for a, b in zip(v, qv)))
+                    print(f"  got row id={i} cat={c} engine_dist={got_dist.get(i)} "
+                          f"f32_dist={f32_dist:.9g} matches_filter={cat is None or c == cat}")
+                for i in want[:3]:
+                    c, v = by_id[i]
+                    print(f"  want row id={i} cat={c} "
+                          f"matches_filter={cat is None or c == cat}")
     finally:
         client.close()
         shutil.rmtree(os.path.dirname(data_dir), ignore_errors=True)
