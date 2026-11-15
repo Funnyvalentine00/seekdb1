@@ -47,6 +47,12 @@ public:
     set_retry_times(0);
   }
 
+  void set_ik_pair(share::ObDDLLocalBuilder *builder, int64_t parent, bool companion)
+  {
+    ik_builder_ = builder;
+    ik_parent_ = parent;
+    ik_companion_ = companion;
+  }
   int send_local_build_sql() const;
   int set_addition_info(const ObIArray<ObTabletID> &index_partition_ids);
   ObDDLTaskID get_ddl_task_id() { return ObDDLTaskID(task_id_); }
@@ -58,6 +64,7 @@ public:
                K_(execution_id), K_(trace_id), K_(parallelism), K_(is_partitioned_local_index_task),
                K_(addition_info), K_(is_retryable_ddl));
 private:
+  int process_build();
   inline bool is_partitioned_local_index_task() const { return is_partitioned_local_index_task_ == true; }
 private:
   int64_t task_id_;
@@ -72,6 +79,10 @@ private:
   common::ObArenaAllocator allocator_;
   ObDDLTaskInfo addition_info_;
   bool is_retryable_ddl_;
+
+  share::ObDDLLocalBuilder *ik_builder_ = nullptr;
+  int64_t ik_parent_ = 0;
+  bool ik_companion_ = false;
 
   DISALLOW_COPY_AND_ASSIGN(ObIndexSSTableBuildTask);
 };
