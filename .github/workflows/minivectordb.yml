@@ -31,6 +31,48 @@ jobs:
             protocol_check
             mysqltest
 
+      - name: Build natively
+        shell: bash
+        run: |
+          mkdir -p validation-logs
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release 2>&1 | tee validation-logs/native-cmake.log
+          cmake --build build -j 2>&1 | tee validation-logs/native-build.log
+
+      - name: Check CRC-32C and full-dimension TopK
+        shell: bash
+        run: |
+          g++ -std=c++17 -O3 -Wall -Wextra -Isrc tests/crc32c.cpp src/vecops.cpp -o build/crc32c-test
+          build/crc32c-test 2>&1 | tee validation-logs/crc32c.log
+          g++ -std=c++17 -O3 -Wall -Wextra -Isrc '-D__builtin_cpu_supports(x)=false' \
+            tests/crc32c.cpp src/vecops.cpp -o build/crc32c-software-test
+          build/crc32c-software-test 2>&1 | tee validation-logs/crc32c-software.log
+          python3 tests/topk_dimensions.py --binary build/minivectordb \
+            2>&1 | tee validation-logs/topk-dimensions.log
+
+      - name: Check out comparison baseline
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.base.sha || github.sha }}
+          path: target-baseline
+          persist-credentials: false
+
+      - name: Build comparison baseline
+        shell: bash
+        run: |
+          git -C target-baseline rev-parse HEAD | tee validation-logs/baseline-revision.txt
+          cmake -S target-baseline -B target-build -DCMAKE_BUILD_TYPE=Release
+          cmake --build target-build -j 2
+
+      - name: Benchmark (native build, stdio protocol)
+        shell: bash
+        run: |
+          grep -m1 "model name" /proc/cpuinfo | tee validation-logs/runner-cpu.txt
+          nproc >> validation-logs/runner-cpu.txt
+          python3 tests/bench_stdio.py --binary build/minivectordb --runs 3 \
+            2>&1 | tee validation-logs/bench-cache-on.log
+          MVD_NOVECCACHE=1 python3 tests/bench_stdio.py --binary build/minivectordb --runs 3 \
+            2>&1 | tee validation-logs/bench-cache-off.log
+
       - name: Build the submitted Dockerfile
         shell: bash
         run: |
@@ -61,10 +103,11 @@ jobs:
             2>&1 | tee validation-logs/regressions.log
           python3 tests/stdio_protocol.py --binary image-bin/minivectordb \
             2>&1 | tee validation-logs/stdio.log
-          g++ -std=c++17 -O3 -Wall -Wextra -Isrc tests/crc32.cpp -o image-bin/crc32-test
-          image-bin/crc32-test 2>&1 | tee validation-logs/crc32.log
-          python3 tests/wal_compatibility.py --baseline image-bin/minivectordb \
+          python3 tests/wal_compatibility.py --baseline target-build/minivectordb \
             --candidate image-bin/minivectordb 2>&1 | tee validation-logs/wal-compatibility.log
+          python3 tests/protocol_differential.py --baseline target-build/minivectordb \
+            --candidate image-bin/minivectordb --seed 42 --requests 3000 \
+            2>&1 | tee validation-logs/protocol-differential.log
           python3 tests/transaction_model.py --binary image-bin/minivectordb --seed 1 --steps 1000 \
             --failure-trace validation-logs/transaction-failure.sql \
             2>&1 | tee validation-logs/transaction-model.log

@@ -3,12 +3,22 @@
 
 import argparse
 import json
+import os
 import subprocess
 import tempfile
 
 
 def reject_constant(value):
     raise AssertionError(f"non-finite JSON number: {value}")
+
+
+def execute(command, payload, timeout=10):
+    environment = os.environ.copy()
+    environment.pop("MVD_PROFILE", None)
+    result = subprocess.run(command, input=payload, capture_output=True,
+                            timeout=timeout, env=environment)
+    assert result.returncode == 0, result.stderr.decode()
+    return result
 
 
 def run(binary):
@@ -34,7 +44,7 @@ def run(binary):
                         for index, request in enumerate(requests)) + "\n"
     with tempfile.TemporaryDirectory() as directory:
         command = [binary, "--stdio", f"--data-dir={directory}"]
-        output = subprocess.run(command, input=payload.encode(), capture_output=True, timeout=10)
+        output = execute(command, payload.encode())
         assert output.stdout, (output.returncode, output.stderr.decode())
         assert output.returncode == 0, output.stderr.decode()
         assert output.stdout.endswith(b"\n"), output.stdout
@@ -73,8 +83,13 @@ def run(binary):
             '{"id":10,"op":',
             '{"id":11,"op":"shutdown"}',
         ]
-        reopened = subprocess.run(command, input=("\n".join(sequence) + "\n").encode(),
-                                  check=True, capture_output=True, timeout=10)
+        payload = ("\n".join(sequence) + "\n").encode()
+        reopened = execute(command, payload)
+        profiled = subprocess.run(command, input=payload, capture_output=True, timeout=10,
+                                  env={**os.environ, "MVD_PROFILE": "1"})
+        assert profiled.returncode == 0, profiled.stderr
+        assert profiled.stdout == reopened.stdout, "profiling changed JSONL output"
+        assert b"[profile] stdio:" in profiled.stderr, profiled.stderr
         lines = reopened.stdout.split(b"\n")
         assert len(lines) == 7 and lines[-1] == b"", (len(lines), lines[-1][:100])
         assert len(lines[1]) > 64 * 1024, len(lines[1])

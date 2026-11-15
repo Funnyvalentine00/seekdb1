@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Check WAL bytes and recovery across two MiniVectorDB executables."""
+"""Check CRC-32C WAL bytes and recovery across two MiniVectorDB executables.
+
+Both executables must use the target branch's Castagnoli format. This does not
+claim compatibility with the earlier IEEE CRC32 WAL format.
+"""
 
 import argparse
 import json
@@ -8,12 +12,21 @@ import shutil
 import struct
 import subprocess
 import tempfile
-import zlib
 
 
 FRAME_MAGIC = 0x4D5644434F4D4D49
 DOCS_WAL = "t_1.wal"
 TAGS_WAL = "t_2.wal"
+
+
+def crc32c(data):
+    """Independent bitwise oracle, deliberately not the database's table/HW code."""
+    crc = 0xffffffff
+    for byte in data:
+        crc ^= byte
+        for _ in range(8):
+            crc = (crc >> 1) ^ (0x82f63b78 if crc & 1 else 0)
+    return crc ^ 0xffffffff
 
 
 def mutation(sql, count):
@@ -104,7 +117,7 @@ def validate_wal(data, expected_counts, context):
         if length < 4 or end > len(data):
             raise AssertionError(f"{context}: invalid frame length {length} at {pos}")
         payload = data[pos + 8:payload_end]
-        expect(zlib.crc32(payload), crc, f"{context}, CRC at {pos}")
+        expect(crc32c(payload), crc, f"{context}, CRC-32C at {pos}")
         expect(struct.unpack_from("=Q", data, payload_end)[0], FRAME_MAGIC,
                f"{context}, trailer at {pos}")
         counts.append(struct.unpack_from("=I", payload)[0])
@@ -183,6 +196,8 @@ def check_bad_tails(writer_dir, reader, root, wal, frame):
 
 
 def run(baseline, candidate):
+    expect(crc32c(b"123456789"), 0xe3069283, "CRC-32C known vector")
+    expect(crc32c(b""), 0, "CRC-32C empty input")
     with tempfile.TemporaryDirectory(prefix="mvd-wal-") as temp:
         root = Path(temp)
         baseline_dir, candidate_dir = root / "baseline", root / "candidate"

@@ -93,6 +93,7 @@ def main():
     run("regressions", "run_cases.py", ROOT / "tests/cases")
     run("stdio", "stdio_protocol.py")
     run("query-boundaries", "query_boundaries.py", "-v")
+    run("topk-dimensions", "topk_dimensions.py")
     run("filtered-topk", "filtered_topk.py")
     run("wal-cross-version" if cross_version else "wal-self-recovery", "wal_compatibility.py")
     run("protocol-cross-version" if cross_version else "protocol-self-check", "protocol_differential.py",

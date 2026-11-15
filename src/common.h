@@ -1,7 +1,6 @@
 // MiniVectorDB 公共定义：错误码、值类型、字符串与数值工具。
 #pragma once
 
-#include <array>
 #include <cstdint>
 #include <cstring>
 #include <cmath>
@@ -257,36 +256,19 @@ inline uint32_t alignUp(uint32_t x, uint32_t a) { return (x + a - 1) / a * a; }
 
 // CRC32（多项式 0xEDB88320），用于 WAL 帧校验。
 inline uint32_t crc32(const void *data, size_t len, uint32_t seed = 0) {
-  static constexpr auto tables = [] {
-    std::array<std::array<uint32_t, 256>, 8> result{};
+  static uint32_t table[256];
+  static bool init = false;
+  if (!init) {
     for (uint32_t i = 0; i < 256; ++i) {
       uint32_t c = i;
       for (int k = 0; k < 8; ++k) c = (c & 1) ? (0xEDB88320u ^ (c >> 1)) : (c >> 1);
-      result[0][i] = c;
+      table[i] = c;
     }
-    // 第 s 张表对应一个输入字节后再推进 s 个零字节。
-    for (size_t s = 1; s < result.size(); ++s) {
-      for (size_t i = 0; i < result[s].size(); ++i) {
-        const uint32_t c = result[s - 1][i];
-        result[s][i] = result[0][c & 0xffu] ^ (c >> 8);
-      }
-    }
-    return result;
-  }();
-
+    init = true;
+  }
   uint32_t c = seed ^ 0xFFFFFFFFu;
   const uint8_t *p = static_cast<const uint8_t *>(data);
-  while (len >= 8) {
-    // 按字节拼装，避免依赖地址对齐或主机字节序。
-    c ^= static_cast<uint32_t>(p[0]) | (static_cast<uint32_t>(p[1]) << 8) |
-         (static_cast<uint32_t>(p[2]) << 16) | (static_cast<uint32_t>(p[3]) << 24);
-    c = tables[7][c & 0xffu] ^ tables[6][(c >> 8) & 0xffu] ^
-        tables[5][(c >> 16) & 0xffu] ^ tables[4][c >> 24] ^
-        tables[3][p[4]] ^ tables[2][p[5]] ^ tables[1][p[6]] ^ tables[0][p[7]];
-    p += 8;
-    len -= 8;
-  }
-  for (size_t i = 0; i < len; ++i) c = tables[0][(c ^ p[i]) & 0xffu] ^ (c >> 8);
+  for (size_t i = 0; i < len; ++i) c = table[(c ^ p[i]) & 0xFF] ^ (c >> 8);
   return c ^ 0xFFFFFFFFu;
 }
 
