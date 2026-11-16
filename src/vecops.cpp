@@ -187,6 +187,11 @@ void scanTopKBatched(const uint8_t *base, uint32_t slot_count, uint32_t slot_siz
   for (; s + 2 <= slot_count; s += 2) {
     const uint8_t *pa = base + static_cast<size_t>(s) * slot_size;
     const uint8_t *pb = pa + slot_size;
+    if (s + 4 <= slot_count) {
+      // 硬件预取器对跨页 640B stride 的覆盖有限，软件预取下一对的首条向量线。
+      _mm_prefetch(reinterpret_cast<const char *>(pa + 2 * slot_size + vec_off), _MM_HINT_T0);
+      _mm_prefetch(reinterpret_cast<const char *>(pa + 3 * slot_size + vec_off), _MM_HINT_T0);
+    }
     const bool va = pa[0] != 0;
     const bool vb = pb[0] != 0;
     if (va && vb) {
