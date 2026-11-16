@@ -26,7 +26,7 @@
 - [x] Merge target, resolve runStdio with target profile/output and bounded response reuse; restore common.h to target.
 - [x] Demonstrate old IEEE WAL verifier fails on CRC-32C; replace its oracle with independent Castagnoli CRC, update helper/CI tests and record negative controls.
 - [x] Build exact target and integrated Mac compatibility binaries; run public SQL, regression suite, protocol/profile differential, WAL, fuzz/transaction and sanitizer checks.
-- [ ] Run Linux/image correctness CI with actual target cross-version comparison and focused dimension/CRC tests; fix evidenced integration regressions while keeping target optimizations.
+- [x] Run Linux/image correctness CI with actual target cross-version comparison and focused dimension/CRC tests; fix evidenced integration regressions while keeping target optimizations.
 - [ ] Fresh whole-branch review, archive logs, commit/push and verify PR refs, conflict status and final CI; rewrite title/body for final scope.
 
 ## Rulings / execution ledger
@@ -37,3 +37,6 @@
 - Mac verification: ordinary and ASan/UBSan each21 checks passed; 2Linux-only skips each. CRC-32C4102-case units passed in both builds.
 
 - Linux RED: run43732529292 caught 32-dimensional AVX2 Top1 returning id9 instead of id1. Root cause: target VECS==4 branches reduce only acc[0]. Ruling: retain batching/cache, remove incomplete special cases in all5 paths and use existing full reduction; required for correctness.
+
+- Linux GREEN: run43732902862 on product2bcf489 passed all native/image regression steps. Independent review found no Critical/Important production issues.
+- Final review ruling: promote the missing odd physical-slot tail fixture from minor to important coverage because it corresponds to a corrected branch; add the explicit last-coordinate fixture (44sessions) and run finalCI. No new production changes. Final PR/readback outcome is archived in the handoff manifest.

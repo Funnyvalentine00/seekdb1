@@ -24,3 +24,9 @@ Linux首轮运行 [43732529292](https://github.com/Funnyvalentine00/seekdb1/acti
 Linux CI执行原始CMake和Docker构建，核对原生CRC-32C、强制软件回退、完整维度TopK、实际镜像协议/公开用例、目标↔镜像WAL双向兼容、3000条协议差分、事务/检查点/查询边界/内存和随机模型。执行状态及日志以PR的最新检查为准，不用旧轮结果代替整合验证。
 
 原始证据目录：`/Users/xiazihan/seekdb-work/handoff/mvd-pr30-integration-20261115/`。本轮不进行性能验收。此前拯救者未接电源的数值仅作旧版本的诊断参考；本次机器无法启动，Linux验证改用GitHub Actions。
+
+## Linux 与独立审查结果
+
+修复后的完整 [Linux / 镜像CI 43732902862](https://github.com/Funnyvalentine00/seekdb1/actions/runs/43732902862) 在产品提交 `2bcf489` 上成功：实际镜像 handshake、20/20公开用例、13/13回归、CRC-32C正常/强制软件回退各4102例、目标↔镜像WAL双向兼容与14类损坏尾部、协议差分、事务/检查点/查询及两项Linux内存门槛均通过。结果包SHA-256：`e60197912eca0bd74993ac6d31bf4259a11f4ae9b438fd7cfa4506e5248aa267`。
+
+独立代码审查没有发现阻塞性源码问题，指出未缓存扫描的奇数物理槽尾行尚缺直接回归。已补充带最后坐标非零的额外尾行，避免漏算时误当Top1，维度/缓存/搜索模式组合扩展为44个会话。产品源码不因这次测试补充而改变；扩展用例的最终执行结果见PR最新CI。

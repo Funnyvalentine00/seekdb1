@@ -10,11 +10,18 @@ import tempfile
 
 def run(binary):
     count = 0
-    for dim in (8, 31, 32, 33, 64, 96, 128):
+    shapes = [(dim, extra_tail) for dim in (8, 31, 32, 33, 64, 96, 128)
+              for extra_tail in ((False, True) if dim in (32, 64, 96, 128) else (False,))]
+    for dim, extra_tail in shapes:
         vectors = {i + 1: [0] * i + [i % 3 + 1] + [0] * (dim - i - 1)
                    for i in range(dim)}
         # Independent, exact integer squared norms for the single-nonzero fixtures.
         distances = {i + 1: (i % 3 + 1) ** 2 for i in range(dim)}
+        if extra_tail:
+            # An odd physical slot count reaches the uncached scanner's final
+            # row. Ignoring its last coordinate would incorrectly make it win.
+            vectors[dim + 1] = [0] * (dim - 1) + [2]
+            distances[dim + 1] = 4
         for cache in (True, False):
             env = os.environ.copy()
             env.pop('MVD_NOVECCACHE', None)
@@ -25,7 +32,7 @@ def run(binary):
                     ('CREATE TABLE t (id BIGINT PRIMARY KEY, cat BIGINT, v VECTOR(%d));' % dim, {}),
                     ('INSERT INTO t VALUES ' + ','.join(
                         "(%d,1,'%s')" % (i, json.dumps(v)) for i, v in vectors.items()) + ';',
-                     {'affected_rows': dim}),
+                     {'affected_rows': len(vectors)}),
                 ]
                 norms = dict(distances)
                 zero = json.dumps([0] * dim)
@@ -57,7 +64,7 @@ def run(binary):
                 assert actual[0] == {'type': 'ready'}
                 for i, (sql, expected) in enumerate(steps):
                     want = {'id': i, 'ok': True, **expected}
-                    assert actual[i+1] == want, (dim, cache, mode, sql, want, actual[i+1])
+                    assert actual[i+1] == want, (dim, extra_tail, cache, mode, sql, want, actual[i+1])
                 assert actual[-1] == {'id': len(steps), 'ok': True}
                 count += 1
     print(f'TopK every-coordinate, cache on/off, exact/ann, delete/update: {count} sessions passed')
