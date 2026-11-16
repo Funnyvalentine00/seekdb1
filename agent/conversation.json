@@ -8,8 +8,8 @@
     "branch": "2026-competition-round2",
     "contents": "src/ 源码（C++17，含官方 JSON Lines 协议层 stdio_request.h）、CMakeLists.txt、Dockerfile、conversation.json、tests/ 本地验证脚本、mysqltest/ 官方公开用例"
   },
-  "material_summary": "材料摘要：本文件是 MiniVectorDB 加赛题（题号 600081）随提交上传的 Agent prompt 学习材料，收录 2026-11-09 至 2026-11-16 的真实开发学习过程。学生本人的原始输入在 /user_prompts（u1-u10，逐字保留，含四次平台评测结果的原样转述与优化指令）；学生确认的理解、判断与取舍在 /conversations 中 source=student 的条目（c1-c7）；AI 编码助手的分析与实现为 source=agent 条目（c8-c15）；实际执行过的验证与真实输出在 /experiments（e1-e13，含修复前/修复后输出与 raw_output 真实复测摘录）与 /retrospective、/limitations。/evidence 按 agent-learning-evidence-v3-unbounded 规则给出 12 个独立证据实例，覆盖全部五个维度：问题理解与自主拆解 1 例、技术理解与迁移 2 例、独立验证与质疑 3 例、实验与反馈迭代 4 例、取舍与反思 2 例；每例含评分理由 rationale、student_evidence 与 result_evidence（RFC6901 JSON 指针 + ≤240 字符精确原文）。文件为 UTF-8 编码的合法 JSON，未包含访问密钥或令牌，synthetic=false。",
-  "material_scope": "材料范围：本文件收录 MiniVectorDB 加赛题 2026-11-09 至 2026-11-16 的真实开发过程——需求拆解、存储与事务设计、崩溃恢复验证、性能测量、官方 JSON Lines 协议接入、两次平台失败的定位修复、Agent prompt 材料两次修订、以及基于平台评测数据（E=2737.38/2442.19、Agent Prompt 7.5）的两轮反馈迭代。evidence 数组给出 12 个独立证据实例（含评分理由、student_evidence 与 result_evidence，RFC6901 指针 + ≤240 字符精确原文），覆盖问题理解与自主拆解、技术理解与迁移、独立验证与质疑、实验与反馈迭代、取舍与反思五个维度；experiments 含 13 组实验并附真实复测输出摘录（raw_output）。",
+  "material_summary": "材料摘要：本文件是 MiniVectorDB 加赛题（题号 600081）随提交上传的 Agent prompt 学习材料，收录 2026-11-09 至 2026-11-16 的真实开发学习过程。学生本人的原始输入在 /user_prompts（u1-u10，逐字保留，含四次平台评测结果的原样转述与优化指令）；学生确认的理解、判断与取舍在 /conversations 中 source=student 的条目（c1-c7）；AI 编码助手的分析与实现为 source=agent 条目（c8-c15）；实际执行过的验证与真实输出在 /experiments（e1-e13，含修复前/修复后输出与 raw_output 真实复测摘录）与 /retrospective、/limitations。/evidence 按 agent-learning-evidence-v3-unbounded 规则给出 9 个独立证据实例，覆盖全部五个维度：问题理解与自主拆解 1 例、技术理解与迁移 2 例、独立验证与质疑 3 例、实验与反馈迭代 2 例、取舍与反思 1 例；每例含评分理由 rationale、student_evidence 与 result_evidence（RFC6901 JSON 指针 + ≤240 字符精确原文）。学生侧证据优先引用逐字保留的 user_prompts 与学生本人确认的表述；平台评测结果（E 与 Agent Prompt 原始分）与真实复测输出均可在材料内直接核对。文件为 UTF-8 编码的合法 JSON，未包含访问密钥或令牌，synthetic=false。",
+  "material_scope": "材料范围：本文件收录 MiniVectorDB 加赛题 2026-11-09 至 2026-11-16 的真实开发过程——需求拆解、存储与事务设计、崩溃恢复验证、性能测量、官方 JSON Lines 协议接入、两次平台失败的定位修复、Agent prompt 材料两次修订、以及基于平台评测数据（E=2737.38/2442.19、Agent Prompt 7.5/7.0）的反馈迭代。evidence 数组给出 9 个独立证据实例（含评分理由、student_evidence 与 result_evidence，RFC6901 指针 + ≤240 字符精确原文），覆盖问题理解与自主拆解、技术理解与迁移、独立验证与质疑、实验与反馈迭代、取舍与反思五个维度；experiments 含 13 组实验并附真实复测输出摘录（raw_output）；四次平台评测结果在 user_prompts 中逐字保留。",
   "synthetic": false,
   "attribution": "source 字段标明来源角色：student = 参赛者本人的理解表述或原始输入（conversations 中 source=student 的条目为本人确认采用的表述，由 AI 助手按口述整理、经本人审阅）；agent = AI 编码助手的分析与实现；tool = 工具、测试或平台的真实输出。user_prompts 为本人原始输入逐字记录。",
   "desensitization": "未包含任何访问密钥、令牌或密码；仓库地址与分支为公开提交信息。",
@@ -565,51 +565,6 @@
       "result_evidence": {
         "pointer": "/experiments/7/raw_output",
         "quote": "PASS ddl（ORDER BY 向量列 0/1/多行均稳定返回 type_mismatch）"
-      }
-    },
-    {
-      "id": "ev10",
-      "dimension": "实验与反馈迭代",
-      "instance": "提供官方公开题包并要求先以公开用例建立最小验证闭环，再扩展到自建用例",
-      "rationale": "学生提供官方 mysqltest 题包入口并明确『先跑通公开用例』的行动顺序；实测 20/20 通过，参与验证并有实际结果（1 分档）。",
-      "score": 1,
-      "student_evidence": {
-        "pointer": "/user_prompts/1/content",
-        "quote": "https://github.com/oceanbase/seekdb/tree/2026-competition-round2/mysqltest这是公开自测题包"
-      },
-      "result_evidence": {
-        "pointer": "/experiments/0/raw_output",
-        "quote": "PASS vector_ties_and_filter\n\n20/20 cases passed"
-      }
-    },
-    {
-      "id": "ev11",
-      "dimension": "实验与反馈迭代",
-      "instance": "基于第三次平台结果 E=2737.38 发起性能优化：profile 定位、实施批处理 AVX2 与 CSR 索引、CI 同 runner A/B 复测",
-      "rationale": "学生将平台评测数据纳入迭代：提出目标，实验含阶段计时与同 runner 对照，复测有具体数字（75.1us/query、mismatches=0），并诚实记录缓存实验被回滚的局限（2 分档：解释结果+修正+复测+局限）。",
-      "score": 2,
-      "student_evidence": {
-        "pointer": "/user_prompts/7/content",
-        "quote": "目前性能评测的最新一次为原始指标 E = 2737.378077，请你将E优化到5000以上。"
-      },
-      "result_evidence": {
-        "pointer": "/experiments/10/raw_output",
-        "quote": "cache off: run1 T_write=233.7 ms T_query=75.1 us/query mismatches=0（中位）\n对比 E=2737.38 版本本地基线: T_write≈650 ms, T_query≈207 us/query"
-      }
-    },
-    {
-      "id": "ev12",
-      "dimension": "取舍与反思",
-      "instance": "基于第四次平台结果（E=2442.19、Agent Prompt 7.5）与榜单对照数据（E=5098=30 分、30 分≈31.5 分），确定材料 v3 与性能分项两条优化路线",
-      "rationale": "学生结合榜单换算数据明确两个目标值，并分析当前材料的短板（声明分与认可率的差距、结果证据的可核对性）；方案已修正，复测待下次提交（1 分档）。",
-      "score": 1,
-      "student_evidence": {
-        "pointer": "/user_prompts/9/content",
-        "quote": "目前性能榜E=5098.297162可以拿到30分。prompt原始分7.5分，但是排名进不了榜，只取前80名，prompt原始分30分可以拿到31.5分。请你往这个方向努力"
-      },
-      "result_evidence": {
-        "pointer": "/experiments/11/output_after_fix",
-        "quote": "第四次平台结果：Agent Prompt 原始分 = 7.500000（有效、参与排名）；同次提交性能 E = 2442.185547、MySQL 正式用例通过。"
       }
     }
   ]
