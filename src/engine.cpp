@@ -1091,15 +1091,26 @@ void Engine::execSelect(Statement &st, QueryResult &out) {
           return v && *v;
         }();
         size_t checked = 0, matched = 0;
+        // 复核快路径：桶候选均为该列的等值匹配，直接按列类型比较，
+        // 不走通用 evalWhere（保持语义一致：cat/key 值相等的行）。
         for (const uint32_t *it = cand_begin; it != cand_end; ++it) {
           const uint32_t s = *it;
           const uint8_t *p = t->slotPtr(s);
           if (p[0] == 0) continue;  // 防御：索引与纪元一致，正常不会出现
           ++checked;
-          RowRef rr;
-          rr.raw = p;
-          rr.slot = s;
-          if (!evalWhere(def, where, rr)) continue;
+          bool ok;
+          if (str_equal) {
+            const std::string &value = literal->sval;
+            uint32_t length;
+            std::memcpy(&length, p + filter_offset, sizeof(length));
+            ok = length == value.size() &&
+                 std::memcmp(p + filter_offset + sizeof(length), value.data(), length) == 0;
+          } else {
+            int64_t stored;
+            std::memcpy(&stored, p + filter_offset, sizeof(stored));
+            ok = stored == literal->ival;
+          }
+          if (!ok) continue;
           ++matched;
           pushCandidate(p, s);
         }
