@@ -1,4 +1,3 @@
-#define _GNU_SOURCE
 #include "storage.h"
 
 #include "vecops.h"
@@ -78,15 +77,8 @@ void Table::open() {
   std::string wal_path = tableFileName(dir_, def_.id, ".wal");
   rows_fd_ = ::open(rows_path.c_str(), O_RDWR | O_CREAT, 0644);
   if (rows_fd_ < 0) throwErr(ErrKind::Io, "cannot open " + rows_path);
-  {
-    // MVD_WAL_ODSYNC=1 时以 O_DSYNC 打开 WAL：pwrite 返回即完成数据持久化，
-    // 省去每批一次独立的 fdatasync 系统调用（语义等价：写返回 = 约定持久化完成）。
-    const char *odsync = std::getenv("MVD_WAL_ODSYNC");
-    int wal_flags = O_RDWR | O_CREAT;
-    if (odsync && odsync[0]) wal_flags |= O_DSYNC;
-    wal_fd_ = ::open(wal_path.c_str(), wal_flags, 0644);
-    if (wal_fd_ < 0) throwErr(ErrKind::Io, "cannot open " + wal_path);
-  }
+  wal_fd_ = ::open(wal_path.c_str(), O_RDWR | O_CREAT, 0644);
+  if (wal_fd_ < 0) throwErr(ErrKind::Io, "cannot open " + wal_path);
 
   struct stat st{};
   if (::fstat(rows_fd_, &st) != 0) throwErr(ErrKind::Io, "fstat failed");
@@ -105,11 +97,8 @@ void Table::open() {
   file_size_ = static_cast<size_t>(st.st_size);
   if (file_size_ < kHeaderSize) file_size_ = kHeaderSize;
   map_size_ = file_size_;
-  // MAP_PRIVATE（COW）：槽文件只是工作副本，不回写磁盘——提交的持久化完全由
-  // WAL（fdatasync）保证，恢复时 scanRows+recover 从 WAL 重放到最新。
-  // 好处：省去槽文件 5.76MB 的 writeback，写入路径 I/O 减半。
   rows_map_ = static_cast<uint8_t *>(
-      ::mmap(nullptr, map_size_, PROT_READ | PROT_WRITE, MAP_PRIVATE, rows_fd_, 0));
+      ::mmap(nullptr, map_size_, PROT_READ | PROT_WRITE, MAP_SHARED, rows_fd_, 0));
   if (rows_map_ == MAP_FAILED) {
     rows_map_ = nullptr;
     throwErr(ErrKind::Io, "mmap rows failed");
@@ -126,14 +115,13 @@ void Table::open() {
   if (::fstat(wal_fd_, &ws) != 0) throwErr(ErrKind::Io, "fstat wal failed");
   wal_size_ = static_cast<size_t>(ws.st_size);
 
-  wal_odsync_ = (std::getenv("MVD_WAL_ODSYNC") != nullptr && std::getenv("MVD_WAL_ODSYNC")[0] != 0);
   scanRows();
   recover();
 }
 
 void Table::close() {
   if (rows_map_) {
-    // MAP_PRIVATE 工作副本不回写文件；已提交数据的持久化由 WAL 保证。
+    ::msync(rows_map_, map_size_, MS_SYNC);
     ::munmap(rows_map_, map_size_);
     rows_map_ = nullptr;
   }
@@ -166,24 +154,14 @@ void Table::ensureCapacity(uint32_t slots) {
   need = (need + 4095) / 4096 * 4096;
   if (need < map_size_) need = map_size_;
   if (::ftruncate(rows_fd_, static_cast<off_t>(need)) != 0) throwErr(ErrKind::Io, "ftruncate grow failed");
-#if defined(__linux__)
-  // Linux：mremap 原地扩展 MAP_PRIVATE 映射，COW 修改原样保留，
-  // 新旧映射不并存（VmSize 只增增量）——RLIMIT_AS 限额下安全。
-  void *moved = ::mremap(rows_map_, map_size_, need, MREMAP_MAYMOVE);
-  if (moved == MAP_FAILED) throwErr(ErrKind::Io, "mremap grow failed");
-  rows_map_ = static_cast<uint8_t *>(moved);
-#else
-  // 非 Linux（本地调试）：mmap 新区域并拷贝旧内容（无 RLIMIT 场景）。
-  uint8_t *fresh = static_cast<uint8_t *>(
-      ::mmap(nullptr, need, PROT_READ | PROT_WRITE, MAP_PRIVATE, rows_fd_, 0));
-  if (fresh == MAP_FAILED) {
-    fresh = nullptr;
+  ::msync(rows_map_, map_size_, MS_ASYNC);
+  ::munmap(rows_map_, map_size_);
+  rows_map_ = static_cast<uint8_t *>(
+      ::mmap(nullptr, need, PROT_READ | PROT_WRITE, MAP_SHARED, rows_fd_, 0));
+  if (rows_map_ == MAP_FAILED) {
+    rows_map_ = nullptr;
     throwErr(ErrKind::Io, "mmap grow failed");
   }
-  std::memcpy(fresh, rows_map_, map_size_);
-  ::munmap(rows_map_, map_size_);
-  rows_map_ = fresh;
-#endif
   map_size_ = need;
   file_size_ = need;
   capacity_slots_ = new_cap;
@@ -284,13 +262,7 @@ void Table::recover() {
 }
 
 void Table::resetWal() {
-  // 全量 checkpoint：MAP_PRIVATE 工作副本不回写文件，截断 WAL 前必须把
-  // 当前全部有效槽写回槽文件并落盘，否则截断后重启会丢已提交数据。
-  if (slot_count_ > 0) {
-    writeAll(rows_fd_, rows_map_ + kHeaderSize,
-             static_cast<size_t>(slot_count_) * def_.slot_size, kHeaderSize);
-    ::fsync(rows_fd_);
-  }
+  ::msync(rows_map_, map_size_, MS_SYNC);
   if (::ftruncate(wal_fd_, 0) != 0) throwErr(ErrKind::Io, "truncate wal failed");
   ::fsync(wal_fd_);
   wal_size_ = 0;
@@ -328,11 +300,8 @@ void Table::commitOps(std::vector<Op> &ops) {
                reinterpret_cast<const uint8_t *>(&kFrameMagic) + 8);
 
   writeAll(wal_fd_, frame.data(), frame.size(), static_cast<off_t>(wal_size_));
-  // 提交点：必须先落盘再回复客户端。O_DSYNC 模式下 pwrite 返回即已持久化，
-  // 跳过重复的 fdatasync；普通模式仍显式 fdatasync。
-  if (!wal_odsync_) {
-    if (::fdatasync(wal_fd_) != 0) throwErr(ErrKind::Io, "fdatasync wal failed");
-  }
+  // 提交点：必须先落盘再回复客户端
+  if (::fdatasync(wal_fd_) != 0) throwErr(ErrKind::Io, "fdatasync wal failed");
   wal_size_ += frame.size();
 
   for (const Op &op : ops) applyOp(op);
