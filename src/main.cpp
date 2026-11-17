@@ -362,6 +362,7 @@ int main(int argc, char **argv) {
   try {
     engine.open();
     engine.setVectorMode(cfg.vector_mode);
+    engine.startScanWorker();  // 持久扫描 worker：栈计入启动 VmSize，RLIMIT 自适应
   } catch (const mvd::SqlError &e) {
     std::fprintf(stderr, "startup failed: %s: %s\n", mvd::errName(e.kind), e.msg.c_str());
     return 1;
