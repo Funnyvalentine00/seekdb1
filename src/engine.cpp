@@ -80,7 +80,7 @@ void Engine::setVectorMode(const std::string &m) {
   if (m != "exact" && m != "ann") {
     throwErr(ErrKind::InvalidArgument, "vector mode must be exact or ann");
   }
-  vector_mode_ = m;
+  if (vector_mode_ != m) vector_mode_ = m;  // 逐请求重复 set：值相同则跳过赋值
 }
 
 bool Engine::tableHasPending(Table &t) {
@@ -1010,14 +1010,13 @@ void Engine::execSelect(Statement &st, QueryResult &out) {
   if (st.has_limit && st.limit == 0) return;
 
   // 无过滤且无事务暂存：走专用扫描（距离计算内联，避免逐行函数调用）。
-  // 注：曾试验向量列连续缓存（A/B 同机对照 Xeon 8573C 上无收益，且 peak_rss
-  // 增加 ~5MiB 恶化内存项），已回退为直接槽扫描。
   if (topk_expr && !where && !tableHasPending(*t)) {
     const size_t k = std::min<size_t>(static_cast<size_t>(st.limit), t->rowCount());
     if (k == 0) return;
     std::vector<TopKEntry> entries;
     int vcol = topk_expr->left->col_index;
-    scanTopK(t->slotPtr(0), t->slotCount(), def.slot_size, def.col_offset[vcol],
+    const uint32_t n = t->slotCount();
+    scanTopK(t->slotPtr(0), n, def.slot_size, def.col_offset[vcol],
              def.cols[vcol].param, topk_expr->vec_lit.data(), k, entries);
     out.rows.reserve(entries.size());
     for (const TopKEntry &e : entries) {
@@ -1091,15 +1090,26 @@ void Engine::execSelect(Statement &st, QueryResult &out) {
           return v && *v;
         }();
         size_t checked = 0, matched = 0;
+        // 复核快路径：桶候选均为该列的等值匹配，直接按列类型比较，
+        // 不走通用 evalWhere（保持语义一致：cat/key 值相等的行）。
         for (const uint32_t *it = cand_begin; it != cand_end; ++it) {
           const uint32_t s = *it;
           const uint8_t *p = t->slotPtr(s);
           if (p[0] == 0) continue;  // 防御：索引与纪元一致，正常不会出现
           ++checked;
-          RowRef rr;
-          rr.raw = p;
-          rr.slot = s;
-          if (!evalWhere(def, where, rr)) continue;
+          bool ok;
+          if (str_equal) {
+            const std::string &value = literal->sval;
+            uint32_t length;
+            std::memcpy(&length, p + filter_offset, sizeof(length));
+            ok = length == value.size() &&
+                 std::memcmp(p + filter_offset + sizeof(length), value.data(), length) == 0;
+          } else {
+            int64_t stored;
+            std::memcpy(&stored, p + filter_offset, sizeof(stored));
+            ok = stored == literal->ival;
+          }
+          if (!ok) continue;
           ++matched;
           pushCandidate(p, s);
         }

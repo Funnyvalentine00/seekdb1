@@ -485,7 +485,9 @@ bool Table::intCandidates(uint32_t col, int64_t key, const uint32_t **begin,
 }
 
 void Table::buildSlot(const std::vector<Value> &values, std::vector<uint8_t> &out) const {
-  out.assign(def_.slot_size, 0);
+  // 不整槽清零：有效字段全部由下方 memcpy 覆盖，尾部 padding 不参与任何读取；
+  // WAL 重放为完整行镜像，写读内容一致。省去每行 slot_size 字节的 memset。
+  out.resize(def_.slot_size);
   out[0] = 1;
   int64_t id = values[static_cast<size_t>(def_.pk_index)].i;
   std::memcpy(out.data() + 8, &id, sizeof(id));

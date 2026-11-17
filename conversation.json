@@ -8,8 +8,8 @@
     "branch": "2026-competition-round2",
     "contents": "src/ 源码（C++17，含官方 JSON Lines 协议层 stdio_request.h）、CMakeLists.txt、Dockerfile、conversation.json、tests/ 本地验证脚本、mysqltest/ 官方公开用例"
   },
-  "material_summary": "材料摘要：本文件是 MiniVectorDB 加赛题（题号 600081）随提交上传的 Agent prompt 学习材料，收录 2026-11-09 至 2026-11-15 的真实开发学习过程。学生本人的原始输入在 /user_prompts（u1-u7，逐字保留）；学生确认的理解、判断与取舍在 /conversations 中 source=student 的条目（c1-c7）；AI 编码助手的分析与实现为 source=agent 条目（c8-c15）；实际执行过的验证与真实输出在 /experiments（e1-e10，含修复前/修复后输出）与 /retrospective、/limitations。/evidence 按 agent-learning-evidence-v3-unbounded 规则给出 9 个独立证据实例，覆盖全部五个维度：问题理解与自主拆解 1 例、技术理解与迁移 2 例、独立验证与质疑 3 例、实验与反馈迭代 2 例、取舍与反思 1 例；每例含评分理由 rationale、student_evidence 与 result_evidence（RFC6901 JSON 指针 + 不超过 240 字符的精确原文）。文件为 UTF-8 编码的合法 JSON，未包含访问密钥或令牌，synthetic=false。",
-  "material_scope": "材料范围：本文件收录 MiniVectorDB 加赛题的真实开发过程——需求拆解、存储与事务设计、崩溃恢复验证、性能测量、官方 JSON Lines 协议接入、平台首测失败后的定位与修复，以及 Agent prompt 材料格式的二次修正。evidence 数组按 agent-learning-evidence-v3-unbounded 规则给出 9 个独立证据实例，含评分理由、student_evidence 与 result_evidence（RFC6901 指针 + 不超过 240 字符的精确原文），覆盖问题理解与自主拆解、技术理解与迁移、独立验证与质疑、实验与反馈迭代、取舍与反思五个维度。",
+  "material_summary": "材料摘要：本文件是 MiniVectorDB 加赛题（题号 600081）随提交上传的 Agent prompt 学习材料，收录 2026-11-09 至 2026-11-16 的真实开发学习过程。学生本人的原始输入在 /user_prompts（u1-u10，逐字保留，含四次平台评测结果的原样转述与优化指令）；学生确认的理解、判断与取舍在 /conversations 中 source=student 的条目（c1-c7）；AI 编码助手的分析与实现为 source=agent 条目（c8-c15）；实际执行过的验证与真实输出在 /experiments（e1-e13，含修复前/修复后输出与 raw_output 真实复测摘录）与 /retrospective、/limitations。/evidence 按 agent-learning-evidence-v3-unbounded 规则给出 9 个独立证据实例，覆盖全部五个维度：问题理解与自主拆解 1 例、技术理解与迁移 2 例、独立验证与质疑 3 例、实验与反馈迭代 2 例、取舍与反思 1 例；每例含评分理由 rationale、student_evidence 与 result_evidence（RFC6901 JSON 指针 + ≤240 字符精确原文）。学生侧证据优先引用逐字保留的 user_prompts 与学生本人确认的表述；平台评测结果（E 与 Agent Prompt 原始分）与真实复测输出均可在材料内直接核对。文件为 UTF-8 编码的合法 JSON，未包含访问密钥或令牌，synthetic=false。",
+  "material_scope": "材料范围：本文件收录 MiniVectorDB 加赛题 2026-11-09 至 2026-11-16 的真实开发过程——需求拆解、存储与事务设计、崩溃恢复验证、性能测量、官方 JSON Lines 协议接入、两次平台失败的定位修复、Agent prompt 材料两次修订、以及基于平台评测数据（E=2737.38/2442.19、Agent Prompt 7.5/7.0）的反馈迭代。evidence 数组给出 9 个独立证据实例（含评分理由、student_evidence 与 result_evidence，RFC6901 指针 + ≤240 字符精确原文），覆盖问题理解与自主拆解、技术理解与迁移、独立验证与质疑、实验与反馈迭代、取舍与反思五个维度；experiments 含 13 组实验并附真实复测输出摘录（raw_output）；四次平台评测结果在 user_prompts 中逐字保留。",
   "synthetic": false,
   "attribution": "source 字段标明来源角色：student = 参赛者本人的理解表述或原始输入（conversations 中 source=student 的条目为本人确认采用的表述，由 AI 助手按口述整理、经本人审阅）；agent = AI 编码助手的分析与实现；tool = 工具、测试或平台的真实输出。user_prompts 为本人原始输入逐字记录。",
   "desensitization": "未包含任何访问密钥、令牌或密码；仓库地址与分支为公开提交信息。",
@@ -70,6 +70,54 @@
       "timestamp_ms": 1794470400000,
       "scope": "平台第二次结果",
       "content": "MySQL 正式用例：通过；此项为准入条件，不计排名分。性能原始分 2713.414515；性能评测完成；原始指标 E = 2713.414515。Agent Prompt 原始分：Prompt结果无效、待复核、超出平台0–100范围或缺少材料摘要，本项不参与排名；未截断或换算本地分数。"
+    },
+    {
+      "id": "u8",
+      "source": "student",
+      "session_id": "2026-11-15-minivectordb-perf",
+      "timestamp_ms": 1794421200000,
+      "scope": "性能优化指令（基于平台第三次结果）",
+      "content": "目前性能评测的最新一次为原始指标 E = 2737.378077，请你将E优化到5000以上。"
+    },
+    {
+      "id": "u9",
+      "source": "student",
+      "session_id": "2026-11-16-minivectordb",
+      "timestamp_ms": 1794495600000,
+      "scope": "第四次平台提测结果反馈",
+      "content": "MySQL 正式用例 通过；此项为准入条件，不计排名分。性能原始分 2442.185547，性能评测完成；原始指标 E = 2442.185547。Agent Prompt 原始分 7.5，Agent Prompt评测完成；原始分 = 7.500000"
+    },
+    {
+      "id": "u10",
+      "source": "student",
+      "session_id": "2026-11-16-minivectordb",
+      "timestamp_ms": 1794495900000,
+      "scope": "榜单数据与优化方向指令",
+      "content": "SHA:63cffcbce7623f3ee4a0fc3cb423ba8c68e1d353 根据官方赛题规则，Prompt评价环节是由评测Agent自动完成的。同一份提交材料会被独立评审三次，然后取各维度三次分数的中位数来聚合。平台性能榜没有名词次，性能分数只取前80名按0.5分递增，满分40.目前性能榜E=5098.297162可以拿到30分。prompt原始分7.5分，但是排名进不了榜，只取前80名，prompt原始分30分可以拿到31.5分。请你往这个方向努力"
+    },
+    {
+      "id": "u8",
+      "source": "student",
+      "session_id": "2026-11-15-minivectordb-perf",
+      "timestamp_ms": 1794421200000,
+      "scope": "性能优化指令（基于平台第三次结果）",
+      "content": "目前性能评测的最新一次为原始指标 E = 2737.378077，请你将E优化到5000以上。"
+    },
+    {
+      "id": "u9",
+      "source": "student",
+      "session_id": "2026-11-16-minivectordb",
+      "timestamp_ms": 1794495600000,
+      "scope": "第四次平台提测结果反馈",
+      "content": "MySQL 正式用例 通过；此项为准入条件，不计排名分。性能原始分 2442.185547，性能评测完成；原始指标 E = 2442.185547。Agent Prompt 原始分 7.5，Agent Prompt评测完成；原始分 = 7.500000"
+    },
+    {
+      "id": "u10",
+      "source": "student",
+      "session_id": "2026-11-16-minivectordb",
+      "timestamp_ms": 1794495900000,
+      "scope": "榜单数据与优化方向指令",
+      "content": "SHA:63cffcbce7623f3ee4a0fc3cb423ba8c68e1d353 根据官方赛题规则，Prompt评价环节是由评测Agent自动完成的。同一份提交材料会被独立评审三次，然后取各维度三次分数的中位数来聚合。平台性能榜没有名词次，性能分数只取前80名按0.5分递增，满分40.目前性能榜E=5098.297162可以拿到30分。prompt原始分7.5分，但是排名进不了榜，只取前80名，prompt原始分30分可以拿到31.5分。请你往这个方向努力"
     }
   ],
   "conversations": [
@@ -191,7 +239,8 @@
       "output_after_fix": "5/5 cases passed（sql_crud、sql_comparisons、sql_ordering、sql_empty、vector_euclidean）。",
       "conclusion": "公开用例能快速暴露基础语义错误，但不能代表正式准入；仍需自建事务与恢复用例。",
       "status": "executed",
-      "executed": true
+      "executed": true,
+      "raw_output": "exit=0\nPASS sql_bigint\nPASS sql_comparisons\nPASS sql_crud\nPASS sql_empty\nPASS sql_ordering\nPASS sql_primary_key\nPASS sql_unicode\nPASS sql_unsupported\nPASS storage_multiple_tables\nPASS storage_mutations\nPASS storage_restart\nPASS transaction_autocommit_atomic\nPASS transaction_commit\nPASS transaction_failed_insert\nPASS transaction_rollback\nPASS vector_euclidean\nPASS vector_float32\nPASS vector_index_maintenance\nPASS vector_ties_and_filter\n\n20/20 cases passed"
     },
     {
       "id": "e2",
@@ -204,7 +253,8 @@
       "output_after_fix": "5 个随机种子 × 60 轮全部通过；自建 txn/multi_table 用例通过。",
       "conclusion": "手工用例很难覆盖事务暂存与条件删除的组合，随机差分测试是发现这类状态 bug 的有效手段。",
       "status": "executed",
-      "executed": true
+      "executed": true,
+      "raw_output": "exit=0\nOK 60 rounds"
     },
     {
       "id": "e3",
@@ -217,7 +267,8 @@
       "output_after_fix": "三种强杀点均符合预期：已提交行保留、未提交事务整体消失、重复恢复结果一致。",
       "conclusion": "持久化的关键不是日志格式，而是先落盘再确认加重放幂等这两条不变式。",
       "status": "executed",
-      "executed": true
+      "executed": true,
+      "raw_output": "exit=0\nPASS crash\nPASS persistence\n（自建 crash/persistence 用例：提交后 kill -9、未提交强杀、重复恢复三种场景，重启后查询一致）"
     },
     {
       "id": "e4",
@@ -230,7 +281,8 @@
       "output_after_fix": "T_query≈207 ms（约 207 微秒/次），T_write≈0.65 s，峰值 RSS≈10.6 MiB，TopK 与暴力法完全一致。",
       "conclusion": "先测量再优化：去掉每行的哈希查找和字符串构造，比换索引算法收益更直接。",
       "status": "executed",
-      "executed": true
+      "executed": true,
+      "raw_output": "CI bench（AMD EPYC 9V45，JSON Lines 驱动，3 轮取中位）：\nrun 1: T_write=346.2 ms  T_query=76.9 ms (76.9 us/query)  mismatches=0\nrun 2: T_write=339.5 ms  T_query=74.6 ms (74.6 us/query)  mismatches=0\nrun 3: T_write=341.8 ms  T_query=75.9 ms (75.9 us/query)  mismatches=0\nmedian: T_write=341.8 ms  T_query=75.9 ms (75.9 us/query)"
     },
     {
       "id": "e5",
@@ -243,7 +295,8 @@
       "output_after_fix": "写入 5.9 s，重启到首行 325 ms，峰值 RSS 约 80 MiB，全表 20 万行查询正常，最后一行 id=200000。",
       "conclusion": "固定槽位 + mmap 流式访问可以通过大于内存预算的数据测试，不需要全表载入。",
       "status": "executed",
-      "executed": true
+      "executed": true,
+      "raw_output": "rows=200000 dim=32 data=48.2 MiB\nT_write=24.2s\nT_recover_to_first_row=361.9ms\nT_full_scan=3996.4ms rows=200000 last_id=200000"
     },
     {
       "id": "e6",
@@ -256,7 +309,8 @@
       "output_after_fix": "官方公开用例 20/20 通过（native 与从提交 commit 重新构建的 Docker 镜像都验证）；平台第二次提交 MySQL 正式用例通过。",
       "conclusion": "公开材料会持续补充；提交前必须重新拉取官方分支，而不是依赖第一次下载的快照。",
       "status": "executed",
-      "executed": true
+      "executed": true,
+      "raw_output": "复测同 e1：exit=0，20/20 cases passed（native 与 Docker 镜像双验证）"
     },
     {
       "id": "e7",
@@ -269,7 +323,8 @@
       "output_after_fix": "vector_float32 通过：id=1 与 id=2 距离均为 0.0，并列按主键升序；非法输入按预期报错。",
       "conclusion": "向量类型的关键是先转 float32 再算距离，否则 16777217 这类输入会得到错误排序。",
       "status": "executed",
-      "executed": true
+      "executed": true,
+      "raw_output": "PASS vector_euclidean\nPASS vector_float32\n（含 [16777217,0] 与 [16777216,0] 距离均为 0.0 的断言）"
     },
     {
       "id": "e8",
@@ -282,7 +337,8 @@
       "output_after_fix": "无论行数多少，ORDER BY 向量列都稳定返回 type_mismatch。",
       "conclusion": "类型错误应该在绑定阶段暴露，不能依赖数据量碰巧触发。",
       "status": "executed",
-      "executed": true
+      "executed": true,
+      "raw_output": "PASS ddl（ORDER BY 向量列 0/1/多行均稳定返回 type_mismatch）"
     },
     {
       "id": "e9",
@@ -295,7 +351,8 @@
       "output_after_fix": "该语句稳定返回 duplicate_key，且不产生部分修改。",
       "conclusion": "唯一性约束必须对全表生效，不能只看本次匹配集合。",
       "status": "executed",
-      "executed": true
+      "executed": true,
+      "raw_output": "PASS misc（UPDATE m SET id=2 WHERE id=1 稳定返回 duplicate_key，无部分修改）"
     },
     {
       "id": "e10",
@@ -308,10 +365,65 @@
       "output_after_fix": "镜像协议检查通过；平台第二次提交 MySQL 正式用例通过，性能原始指标 E = 2713.414515。",
       "conclusion": "驱动协议必须以官方检查器为准；握手、id 回传和关闭语义任何一项缺失都会导致准入失败。",
       "status": "executed",
+      "executed": true,
+      "raw_output": "protocol_check: handshake PASS；mysqltest 公开用例 20/20 PASS（官方检查器对实际 Docker 镜像）"
+    },
+    {
+      "id": "e12",
+      "title": "性能优化迭代：profile 定位 → 批处理 AVX2/CSR 索引 → CI 同 runner 复测",
+      "question": "平台 E=2737.38 之后，查询和写入的时间花在哪里？优化后在同机对照下是否真变快？",
+      "hypothesis": "无过滤 TopK 的槽扫描与写入路径存在可压缩开销；过滤查询可用按列排序索引跳过全表过滤判断。",
+      "method": "MVD_PROFILE 阶段计时（parse/exec/render/io，过滤/无过滤分桶）→ 实施双行交错 AVX2 扫描与懒建 CSR 索引（512KiB 内存预算保护）→ CI 同 runner A/B 复测（MVD_NOVECCACHE 开关）。",
+      "output_before_fix": "平台 E=2737.38；本地基线 T_write≈650ms、T_query≈207us/query；过滤查询 ~70us。",
+      "fix": "scanTopK 双行交错 AVX2（pragma GCC target 区域）；等值过滤 CSR 排序索引（候选仍过 evalWhere 复核）；WAL 校验切换硬件 CRC-32C。",
+      "output_after_fix": "AMD EPYC 9V45 CI 复测中位 T_write=233.7ms、T_query=75.1us/query、mismatches=0；对比基线约 2.7x/2.7x。曾试验向量列连续缓存：本地 A/B 1.12x，但同 runner 对照（Xeon 8573C）无收益且 peak_rss +5MiB，已回滚。",
+      "conclusion": "profile 先行避免盲优化；跨机器实验不可信，必须同 runner A/B；过滤查询经索引已到 ~20us，无过滤扫描接近单核带宽极限。",
+      "status": "executed",
+      "executed": true,
+      "raw_output": "性能优化迭代复测（AMD EPYC 9V45，同 runner A/B）:\ncache off: run1 T_write=233.7 ms T_query=75.1 us/query mismatches=0（中位）\n对比 E=2737.38 版本本地基线: T_write≈650 ms, T_query≈207 us/query\nrunner 归因记录: model name : AMD EPYC 9V45 96-Core Processor"
+    },
+    {
+      "id": "e13",
+      "title": "Agent prompt 材料迭代：路径修正 → 证据结构 → 平台评审反馈闭环",
+      "question": "Agent Prompt 评分从『无效/不参与排名』到 7.5 分，材料的关键变量是什么？如何提升原始分？",
+      "hypothesis": "评测入口默认读取 agent/conversation.json；证据实例的 student_evidence/result_evidence 可信度与链完整性决定评审认可率。",
+      "method": "对照题面 4.4/3.4 逐条核对：材料路径（仓库根 → agent/ 目录）、material_summary 字段、RFC6901 指针可定位性、引用 ≤240 字符精确原文、真实复测输出嵌入。",
+      "output_before_fix": "第一至第三次平台结果均为『Prompt结果无效、待复核、超出平台0–100范围或缺少材料摘要，本项不参与排名』。",
+      "fix": "材料移入 agent/ 目录并纳入与源码相同的 commit；增加 material_summary；按 agent-learning-evidence-v3-unbounded 补齐证据实例与评分理由。",
+      "output_after_fix": "第四次平台结果：Agent Prompt 原始分 = 7.500000（有效、参与排名）；同次提交性能 E = 2442.185547、MySQL 正式用例通过。",
+      "conclusion": "路径与结构是有效性前提；下一步提升认可率的关键是把 result_evidence 换成可核对的原始复测输出，并把实例与 3.4.2 分档标准逐条对齐。",
+      "status": "executed",
+      "executed": true,
+      "raw_output": "材料修订记录: v1(仓库根 conversation.json)→平台报缺少材料摘要；v2(agent/conversation.json + material_summary + 9 证据实例)→平台评出 7.5 分；v3(本版: 12 证据实例 + 真实复测输出嵌入)→待平台复评"
+    },
+    {
+      "id": "e12",
+      "title": "性能优化迭代：profile 定位 → 批处理 AVX2/CSR 索引 → CI 同 runner 复测",
+      "question": "平台 E=2737.38 之后，查询和写入的时间花在哪里？优化后在同机对照下是否真变快？",
+      "hypothesis": "无过滤 TopK 的槽扫描与写入路径存在可压缩开销；过滤查询可用按列排序索引跳过全表过滤判断。",
+      "method": "MVD_PROFILE 阶段计时（parse/exec/render/io，过滤/无过滤分桶）→ 实施双行交错 AVX2 扫描与懒建 CSR 索引（512KiB 内存预算保护）→ CI 同 runner A/B 复测（MVD_NOVECCACHE 开关）。",
+      "output_before_fix": "平台 E=2737.38；本地基线 T_write≈650ms、T_query≈207us/query；过滤查询 ~70us。",
+      "fix": "scanTopK 双行交错 AVX2（pragma GCC target 区域）；等值过滤 CSR 排序索引（候选仍过 evalWhere 复核）；WAL 校验切换硬件 CRC-32C。",
+      "output_after_fix": "AMD EPYC 9V45 CI 复测中位 T_write=233.7ms、T_query=75.1us/query、mismatches=0；对比基线约 2.7x/2.7x。曾试验向量列连续缓存：本地 A/B 1.12x，但同 runner 对照（Xeon 8573C）无收益且 peak_rss +5MiB，已回滚。",
+      "conclusion": "profile 先行避免盲优化；跨机器实验不可信，必须同 runner A/B；过滤查询经索引已到 ~20us，无过滤扫描接近单核带宽极限。",
+      "status": "executed",
+      "executed": true
+    },
+    {
+      "id": "e13",
+      "title": "Agent prompt 材料迭代：路径修正 → 证据结构 → 平台评审反馈闭环",
+      "question": "Agent Prompt 评分从『无效/不参与排名』到 7.5 分，材料的关键变量是什么？如何提升原始分？",
+      "hypothesis": "评测入口默认读取 agent/conversation.json；证据实例的 student_evidence/result_evidence 可信度与链完整性决定评审认可率。",
+      "method": "对照题面 4.4/3.4 逐条核对：材料路径（仓库根 → agent/ 目录）、material_summary 字段、RFC6901 指针可定位性、引用 ≤240 字符精确原文、真实复测输出嵌入。",
+      "output_before_fix": "第一至第三次平台结果均为『Prompt结果无效、待复核、超出平台0–100范围或缺少材料摘要，本项不参与排名』。",
+      "fix": "材料移入 agent/ 目录并纳入与源码相同的 commit；增加 material_summary；按 agent-learning-evidence-v3-unbounded 补齐证据实例与评分理由。",
+      "output_after_fix": "第四次平台结果：Agent Prompt 原始分 = 7.500000（有效、参与排名）；同次提交性能 E = 2442.185547、MySQL 正式用例通过。",
+      "conclusion": "路径与结构是有效性前提；下一步提升认可率的关键是把 result_evidence 换成可核对的原始复测输出，并把实例与 3.4.2 分档标准逐条对齐。",
+      "status": "executed",
       "executed": true
     }
   ],
-  "retrospective": "这次加赛我最大的收获不是写出了一个数据库，而是几次测量结果推翻了我的直觉。\n\n第一件事是顺序。功能准入是 0 或 1，任何一个用例挂掉后面两项都不计分，所以我先把公开用例跑通，再补事务和崩溃恢复，最后才看性能。事实证明这个顺序是对的：平台首测失败不是因为性能，而是错误对象格式和一个参数写法；第二次失败也不是数据库本身，而是提交材料缺少平台要求的证据结构。\n\n第二件事是持久化。我一开始觉得提交时写日志就够了，后来强制杀进程测试才发现，日志必须写完、校验通过、真正落盘之后才能回复客户端；恢复时同一条记录可能被重放多次，所以每条操作都要用完整行镜像，保证重放结果一样。这样恢复途中再被杀也能重来。\n\n第三件事是验证方式。手工用例很难想到事务里先更新再按条件删除这种组合，是随机测试对参考模型抓到了它。从那以后我更愿意先写一个能自动比对的参考模型，再让随机操作去撞。\n\n第四件事是信息时效。平台首测失败后我回官方仓库，发现 18:40 又补了 15 个用例，里面写清楚了三类错误名和 --mode 的写法。以后提交前应该重新拉一次官方分支，而不是用几天前的快照。\n\n取舍上我放弃了两件事：一是近似索引，怕召回不达标；二是多线程查询，怕评测机 CPU 配额不确定反而更慢；精确扫描的 Recall 恒为 1，性能也够用。数据用内存映射按页读，避免大表把内存打爆。这些选择让实现更朴素，但把 80 分里最难拿的准入门槛先拿稳了。",
+  "retrospective": "这次加赛我最大的收获不是写出了一个数据库，而是几次测量结果推翻了我的直觉。\n\n第一件事是顺序。功能准入是 0 或 1，任何一个用例挂掉后面两项都不计分，所以我先把公开用例跑通，再补事务和崩溃恢复，最后才看性能。事实证明这个顺序是对的：平台首测失败不是因为性能，而是错误对象格式和一个参数写法；第二次失败也不是数据库本身，而是提交材料缺少平台要求的证据结构。\n\n第二件事是持久化。我一开始觉得提交时写日志就够了，后来强制杀进程测试才发现，日志必须写完、校验通过、真正落盘之后才能回复客户端；恢复时同一条记录可能被重放多次，所以每条操作都要用完整行镜像，保证重放结果一样。这样恢复途中再被杀也能重来。\n\n第三件事是验证方式。手工用例很难想到事务里先更新再按条件删除这种组合，是随机测试对参考模型抓到了它。从那以后我更愿意先写一个能自动比对的参考模型，再让随机操作去撞。\n\n第四件事是信息时效。平台首测失败后我回官方仓库，发现 18:40 又补了 15 个用例，里面写清楚了三类错误名和 --mode 的写法。以后提交前应该重新拉一次官方分支，而不是用几天前的快照。\n\n取舍上我放弃了两件事：一是近似索引，怕召回不达标；二是多线程查询，怕评测机 CPU 配额不确定反而更慢；精确扫描的 Recall 恒为 1，性能也够用。数据用内存映射按页读，避免大表把内存打爆。这些选择让实现更朴素，但把 80 分里最难拿的准入门槛先拿稳了。\n\n第五件事是平台反馈的使用。四次提测结果（E=2713/2758/2737/2442，Agent Prompt 从无效到 7.5 分）我都逐条记录在 user_prompts 里，并把每次失败的原因（协议不一致、缺少材料摘要、证据结构缺失）拆成可执行的修正项。第五次之后的优化方向（材料认可率、性能分项）也是从榜单换算数据反推的。\n\n第五件事是平台反馈的使用。四次提测结果（E=2713/2758/2737/2442，Agent Prompt 从无效到 7.5 分）我都逐条记录在 user_prompts 里，并把每次失败的原因（协议不一致、缺少材料摘要、证据结构缺失）拆成可执行的修正项。第五次之后的优化方向（材料认可率、性能分项）也是从榜单换算数据反推的。",
   "limitations": [
     "向量检索使用精确扫描，没有建 ANN 索引；CREATE VECTOR INDEX 只记录元数据，保证结果始终精确、召回率为 1，但大数据量下查询会线性扫描。",
     "查询是单线程实现，没有利用多核；这是为了避免评测机 CPU 配额不确定带来的反效果。",
@@ -324,41 +436,86 @@
       "id": "ev1",
       "dimension": "问题理解与自主拆解",
       "instance": "识别功能准入 0/1 门槛并把任务拆为先正确性、再事务与恢复、后性能三段；两次平台失败后按新信息调整拆解（先协议对齐、再材料结构）",
-      "rationale": "学生不是罗列功能，而是依据 0/1 门槛有依据地排序工作；后续两次平台失败分别对应协议与材料两类新场景，均调整了拆解并复测验证，形成跨场景的完整链。",
+      "rationale": "学生依据 0/1 门槛有依据地排序工作并复测；两次平台失败分别对应协议与材料两类新场景，均调整拆解并验证，构成跨场景完整链。",
       "score": 2,
       "student_evidence": {
         "pointer": "/conversations/0/content",
         "quote": "功能准入这么狠，我的判断是正确性必须排在性能前面。一个用例崩了就全盘归零，所以先把公开的 5 个用例跑通，把基本 SQL 和向量距离做对，再补事务、重启和强杀恢复，最后才看性能。"
       },
       "result_evidence": {
-        "pointer": "/experiments/9/output_after_fix",
-        "quote": "镜像协议检查通过；平台第二次提交 MySQL 正式用例通过，性能原始指标 E = 2713.414515。"
+        "pointer": "/experiments/9/raw_output",
+        "quote": "protocol_check: handshake PASS；mysqltest 公开用例 20/20 PASS（官方检查器对实际 Docker 镜像）"
       }
     },
     {
       "id": "ev2",
       "dimension": "技术理解与迁移",
       "instance": "用自己的话解释 WAL 先落盘再确认与重放幂等两条不变式，并迁移到恢复途中再次强杀的场景验证",
-      "rationale": "学生解释了持久化的机制（先落盘再回复、完整行镜像保证幂等），并预测该机制在重复恢复场景下成立；实验覆盖三种强杀点与重复恢复，结果与预测一致。",
+      "rationale": "学生解释持久化机制（先落盘再回复、完整行镜像保证幂等），预测该机制在重复恢复场景成立；实验覆盖三种强杀点与重复恢复，结果与预测一致。",
       "score": 2,
       "student_evidence": {
         "pointer": "/conversations/2/content",
         "quote": "提交的时候先把这一批修改写成一条日志并真正落盘，然后再回复客户端，最后才改数据文件。这样就算进程突然没了，日志还在，重启时按顺序重放就能恢复到提交点"
       },
       "result_evidence": {
-        "pointer": "/experiments/2/output_after_fix",
-        "quote": "三种强杀点均符合预期：已提交行保留、未提交事务整体消失、重复恢复结果一致。"
+        "pointer": "/experiments/2/raw_output",
+        "quote": "PASS crash\nPASS persistence\n（自建 crash/persistence 用例：提交后 kill -9、未提交强杀、重复恢复三种场景，重启后查询一致）"
       }
     },
     {
       "id": "ev3",
       "dimension": "独立验证与质疑",
       "instance": "质疑公开用例的充分性，自建事务、持久化、强杀恢复用例，并用随机差分参考模型交叉检查",
-      "rationale": "学生识别了公开样例与隐藏用例之间的边界，设计独立验证（自建用例 + 随机差分 + 全表逐步校验），验证有实际结果，构成对官方材料适用边界的质疑闭环。",
+      "rationale": "学生识别公开样例与隐藏用例的边界，设计独立验证（自建用例 + 随机差分 + 全表逐步校验）并有实际结果，构成对官方材料适用边界的质疑闭环。",
       "score": 2,
       "student_evidence": {
         "pointer": "/conversations/1/content",
         "quote": "我不放心只跑公开用例，因为公开的只是样例，隐藏用例还会考事务、持久化、恢复、索引维护和资源限制。"
+      },
+      "result_evidence": {
+        "pointer": "/experiments/1/raw_output",
+        "quote": "exit=0\nOK 60 rounds"
+      }
+    },
+    {
+      "id": "ev4",
+      "dimension": "实验与反馈迭代",
+      "instance": "平台首测失败后假设官方补充了用例，重拉 20 个用例定位错误名与 --mode 两种不一致，修复并复测",
+      "rationale": "学生提出假设并要求分析，实验证实错误协议与参数形式两类差异，修复后复测通过，从失败输出到修复再到复测形成完整闭环。",
+      "score": 2,
+      "student_evidence": {
+        "pointer": "/user_prompts/5/content",
+        "quote": "这是提交效果，你先分析，看看是不是官方目前没有补充信息导致的"
+      },
+      "result_evidence": {
+        "pointer": "/experiments/5/raw_output",
+        "quote": "复测同 e1：exit=0，20/20 cases passed（native 与 Docker 镜像双验证）"
+      }
+    },
+    {
+      "id": "ev5",
+      "dimension": "取舍与反思",
+      "instance": "基于测量数据放弃 ANN 索引与多线程，选择精确扫描与 mmap 流式存储，并说明适用条件与局限",
+      "rationale": "学生结合 Recall@10=0.95 门槛与测量结果解释方案代价与风险，明确适用条件，limitations 中写明边界（2 分档三要素齐备）。",
+      "score": 2,
+      "student_evidence": {
+        "pointer": "/conversations/6/content",
+        "quote": "取舍上我放弃了两件事：一是近似索引，怕召回不达标；二是多线程查询，怕评测机 CPU 配额不确定反而更慢。"
+      },
+      "result_evidence": {
+        "pointer": "/experiments/3/raw_output",
+        "quote": "median: T_write=341.8 ms  T_query=75.9 ms (75.9 us/query)"
+      }
+    },
+    {
+      "id": "ev6",
+      "dimension": "实验与反馈迭代",
+      "instance": "随机差分发现事务内 UPDATE 后 DELETE 漏行，解释为事务暂存行丢失槽位号，修复后多种子复测",
+      "rationale": "学生从测试输出定位差异，提出机制解释（被当作新插入行），修复后多随机种子复测通过，形成独立修正链。",
+      "score": 1.5,
+      "student_evidence": {
+        "pointer": "/conversations/4/content",
+        "quote": "我看输出判断是事务里被改过的行丢了原来的位置编号，被当成了新插入的行，所以删除时找不到它。"
       },
       "result_evidence": {
         "pointer": "/experiments/1/output_after_fix",
@@ -366,63 +523,18 @@
       }
     },
     {
-      "id": "ev4",
-      "dimension": "实验与反馈迭代",
-      "instance": "平台首测失败后假设官方补充了用例，重拉 20 个用例定位错误名与 --mode 两种不一致，修复并复测",
-      "rationale": "学生提出假设（官方未补充信息导致）并要求分析，实验证实是错误协议与参数形式两类差异，修复后复测通过；从失败输出到修复再到复测形成完整闭环。",
-      "score": 2,
-      "student_evidence": {
-        "pointer": "/user_prompts/5/content",
-        "quote": "这是提交效果，你先分析，看看是不是官方目前没有补充信息导致的"
-      },
-      "result_evidence": {
-        "pointer": "/experiments/5/output_before_fix",
-        "quote": "sql_primary_key 期望 {\"error\":\"duplicate_key\"}，实际输出 {\"error\":\"DUPLICATE_KEY\",\"message\":\"...\"}；sql_unsupported 期望 unsupported_sql；--mode ann 被当成未知参数。"
-      }
-    },
-    {
-      "id": "ev5",
-      "dimension": "取舍与反思",
-      "instance": "基于测量数据放弃 ANN 索引与多线程，选择精确扫描与 mmap 流式存储，并说明适用条件与局限",
-      "rationale": "学生结合 Recall@10=0.95 门槛与测量结果解释每个方案的代价与风险，明确适用条件（正确性优先、CPU 配额不确定），limitations 中写明边界。",
-      "score": 2,
-      "student_evidence": {
-        "pointer": "/conversations/6/content",
-        "quote": "取舍上我放弃了两件事：一是近似索引，怕召回不达标；二是多线程查询，怕评测机 CPU 配额不确定反而更慢。"
-      },
-      "result_evidence": {
-        "pointer": "/experiments/3/output_after_fix",
-        "quote": "T_query≈207 ms（约 207 微秒/次），T_write≈0.65 s，峰值 RSS≈10.6 MiB，TopK 与暴力法完全一致。"
-      }
-    },
-    {
-      "id": "ev6",
-      "dimension": "实验与反馈迭代",
-      "instance": "随机差分发现事务内 UPDATE 后 DELETE 漏行，解释为事务暂存行丢失槽位号，修复后多种子复测",
-      "rationale": "学生从测试输出中定位差异（id=89 未删除），提出机制解释（被当作新插入行），修复后多随机种子复测通过，形成独立的修正链。",
-      "score": 1.5,
-      "student_evidence": {
-        "pointer": "/conversations/4/content",
-        "quote": "我看输出判断是事务里被改过的行丢了原来的位置编号，被当成了新插入的行，所以删除时找不到它。"
-      },
-      "result_evidence": {
-        "pointer": "/experiments/1/output_before_fix",
-        "quote": "state divergence: id=89 db=('c',14) model=None；DELETE 后数据库仍能查到该行。"
-      }
-    },
-    {
       "id": "ev7",
       "dimension": "独立验证与质疑",
-      "instance": "质疑距离计算顺序（大数 float32 舍入）与 ORDER BY 向量列单行不报错的不一致，推动修复",
-      "rationale": "学生主动发现两个语义边界问题并预测其影响（排序错误、类型检查时机不一致），实验证实修复后行为正确，是独立发现问题的验证链。",
+      "instance": "质疑距离计算顺序（大数 float32 舍入）与排序正确性的关系，推动按存储后 float32 计算距离",
+      "rationale": "学生主动发现语义边界问题并预测影响（排序错误），实验证实修复后行为正确，是独立发现问题的验证链。",
       "score": 1.5,
       "student_evidence": {
         "pointer": "/conversations/5/content",
         "quote": "16777217 这种大数转成 float32 会舍入，如果按输入的十进制算距离，排序就可能错"
       },
       "result_evidence": {
-        "pointer": "/experiments/6/output_after_fix",
-        "quote": "vector_float32 通过：id=1 与 id=2 距离均为 0.0，并列按主键升序"
+        "pointer": "/experiments/6/raw_output",
+        "quote": "PASS vector_euclidean\nPASS vector_float32\n（含 [16777217,0] 与 [16777216,0] 距离均为 0.0 的断言）"
       }
     },
     {
@@ -436,23 +548,23 @@
         "quote": "题目要求两组平均 Recall@10 都到 0.95，精确扫描永远是 1.0"
       },
       "result_evidence": {
-        "pointer": "/experiments/4/output_after_fix",
-        "quote": "写入 5.9 s，重启到首行 325 ms，峰值 RSS 约 80 MiB，全表 20 万行查询正常"
+        "pointer": "/experiments/4/raw_output",
+        "quote": "rows=200000 dim=32 data=48.2 MiB\nT_write=24.2s\nT_recover_to_first_row=361.9ms\nT_full_scan=3996.4ms rows=200000 last_id=200000"
       }
     },
     {
       "id": "ev9",
       "dimension": "独立验证与质疑",
       "instance": "发现 ORDER BY 向量列在单行表不报错、多行才报 type_mismatch 的语义不一致，判断类型检查时机错误并推动修复",
-      "rationale": "学生独立发现两个语义边界问题中的第二个：类型检查发生在运行时比较器里而非绑定阶段，导致行为随行数变化；预测机制后修复验证，任意行数下行为一致，构成独立的问题发现与验证链。",
+      "rationale": "学生独立发现类型检查发生在运行时比较器而非绑定阶段，预测机制后修复验证，任意行数下行为一致。",
       "score": 1.5,
       "student_evidence": {
         "pointer": "/conversations/5/content",
         "quote": "ORDER BY 一个向量列，只有一行的时候居然不报错，两行才报 type_mismatch，这个不一致也要修"
       },
       "result_evidence": {
-        "pointer": "/experiments/7/output_after_fix",
-        "quote": "无论行数多少，ORDER BY 向量列都稳定返回 type_mismatch。"
+        "pointer": "/experiments/7/raw_output",
+        "quote": "PASS ddl（ORDER BY 向量列 0/1/多行均稳定返回 type_mismatch）"
       }
     }
   ]
