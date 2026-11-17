@@ -1010,8 +1010,6 @@ void Engine::execSelect(Statement &st, QueryResult &out) {
   if (st.has_limit && st.limit == 0) return;
 
   // 无过滤且无事务暂存：走专用扫描（距离计算内联，避免逐行函数调用）。
-  // 大表（≥4000 槽）用持久 worker 双线程对半扫描：各自完整 TopK 后按
-  // (dist,id) 归并，行集合与求和顺序与单线程一致，结果逐位相同。
   if (topk_expr && !where && !tableHasPending(*t)) {
     const size_t k = std::min<size_t>(static_cast<size_t>(st.limit), t->rowCount());
     if (k == 0) return;

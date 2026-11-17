@@ -199,12 +199,7 @@ void scanTopKBatched(const uint8_t *base, uint32_t slot_count, uint32_t slot_siz
       accumRow(reinterpret_cast<const float *>(pa + vec_off), a);
       accumRow(reinterpret_cast<const float *>(pb + vec_off), b);
       float da, db;
-      if (VECS == 4) {
-        da = hsum256(a[0]);
-        db = hsum256(b[0]);
-      } else {
-        reducePair(a[0], a[1], a[2], a[3], b[0], b[1], b[2], b[3], da, db);
-      }
+      reducePair(a[0], a[1], a[2], a[3], b[0], b[1], b[2], b[3], da, db);
       int64_t ida, idb;
       std::memcpy(&ida, pa + 8, sizeof(ida));
       std::memcpy(&idb, pb + 8, sizeof(idb));
@@ -216,13 +211,9 @@ void scanTopKBatched(const uint8_t *base, uint32_t slot_count, uint32_t slot_siz
       __m256 acc[4];
       accumRow(reinterpret_cast<const float *>(p + vec_off), acc);
       float dsum;
-      if (VECS == 4) {
-        dsum = hsum256(acc[0]);
-      } else {
-        __m256 az = _mm256_setzero_ps();
-        float db_unused;
-        reducePair(acc[0], acc[1], acc[2], acc[3], az, az, az, az, dsum, db_unused);
-      }
+      __m256 az = _mm256_setzero_ps();
+      float db_unused;
+      reducePair(acc[0], acc[1], acc[2], acc[3], az, az, az, az, dsum, db_unused);
       int64_t id;
       std::memcpy(&id, p + 8, sizeof(id));
       heapPush(heap, k, TopKEntry{dsum, id, slot});
@@ -234,13 +225,9 @@ void scanTopKBatched(const uint8_t *base, uint32_t slot_count, uint32_t slot_siz
       __m256 acc[4];
       accumRow(reinterpret_cast<const float *>(p + vec_off), acc);
       float dsum;
-      if (VECS == 4) {
-        dsum = hsum256(acc[0]);
-      } else {
-        __m256 az = _mm256_setzero_ps();
-        float db_unused;
-        reducePair(acc[0], acc[1], acc[2], acc[3], az, az, az, az, dsum, db_unused);
-      }
+      __m256 az = _mm256_setzero_ps();
+      float db_unused;
+      reducePair(acc[0], acc[1], acc[2], acc[3], az, az, az, az, dsum, db_unused);
       int64_t id;
       std::memcpy(&id, p + 8, sizeof(id));
       heapPush(heap, k, TopKEntry{dsum, id, s});
@@ -286,12 +273,7 @@ void scanTopKContigBatched(const float *vecs, const int64_t *ids, uint32_t count
     accumRow(ra, a);
     accumRow(rb, b);
     float da, db;
-    if (VECS == 4) {
-      da = hsum256(a[0]);
-      db = hsum256(b[0]);
-    } else {
-      reducePair(a[0], a[1], a[2], a[3], b[0], b[1], b[2], b[3], da, db);
-    }
+    reducePair(a[0], a[1], a[2], a[3], b[0], b[1], b[2], b[3], da, db);
     heapPush(heap, k, TopKEntry{da, ids[s], s});
     heapPush(heap, k, TopKEntry{db, ids[s + 1], s + 1});
   }
@@ -299,13 +281,9 @@ void scanTopKContigBatched(const float *vecs, const int64_t *ids, uint32_t count
     __m256 acc[4];
     accumRow(vecs + static_cast<size_t>(s) * dim, acc);
     float dsum;
-    if (VECS == 4) {
-      dsum = hsum256(acc[0]);
-    } else {
-      __m256 az = _mm256_setzero_ps();
-      float db_unused;
-      reducePair(acc[0], acc[1], acc[2], acc[3], az, az, az, az, dsum, db_unused);
-    }
+    __m256 az = _mm256_setzero_ps();
+    float db_unused;
+    reducePair(acc[0], acc[1], acc[2], acc[3], az, az, az, az, dsum, db_unused);
     heapPush(heap, k, TopKEntry{dsum, ids[s], s});
   }
   std::sort(heap.begin(), heap.end(), HeapCmp());

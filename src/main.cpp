@@ -284,11 +284,13 @@ void renderStdioError(const mvd::SqlError &error, std::string_view id, std::stri
 }
 
 int runStdio(mvd::Engine &engine) {
+  constexpr size_t kMaxRetainedResponseCapacity = 64 * 1024;
+  std::string out;
   g_profile.on = std::getenv("MVD_PROFILE") != nullptr;
   emit("{\"type\":\"ready\"}");
   for (std::string line; std::getline(std::cin, line);) {
     mvd::stdio::Request request;
-    std::string out;
+    out.clear();
     g_profile.start();
     try {
       mvd::stdio::RequestParser(line).parse(request);
@@ -317,6 +319,7 @@ int runStdio(mvd::Engine &engine) {
     }
     g_profile.start();
     emit(out);
+    if (out.capacity() > kMaxRetainedResponseCapacity) std::string().swap(out);
     g_profile.acc(g_profile.io_us);
     ++g_profile.n;
   }
