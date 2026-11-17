@@ -68,10 +68,50 @@ std::vector<float> parseVectorLiteral(const std::string &text, int dim) {
 }  // namespace
 
 Engine::Engine(std::string data_dir) : storage_(std::move(data_dir)) {}
-Engine::~Engine() = default;
+Engine::~Engine() { stopScanWorker(); }
 
 void Engine::open() { storage_.open(); }
+
+void Engine::startScanWorker() {
+  worker_started_ = true;
+  worker_ = std::thread([this] {
+    std::unique_lock<std::mutex> lk(worker_mu_);
+    for (;;) {
+      worker_cv_.wait(lk, [&] { return worker_stop_ || scan_task_.active; });
+      if (worker_stop_) return;
+      lk.unlock();
+      try {
+        scanTopK(scan_task_.base, scan_task_.slot_count, scan_task_.slot_size,
+                 scan_task_.vec_off, scan_task_.dim, scan_task_.query, scan_task_.k,
+                 scan_task_.result);
+        scan_task_.failed = false;
+      } catch (...) {
+        scan_task_.result.clear();
+        scan_task_.failed = true;
+      }
+      lk.lock();
+      scan_task_.active = false;
+      scan_task_.done = true;
+      lk.unlock();
+      worker_done_cv_.notify_one();
+      lk.lock();
+    }
+  });
+}
+
+void Engine::stopScanWorker() {
+  if (!worker_started_) return;
+  {
+    std::lock_guard<std::mutex> lk(worker_mu_);
+    worker_stop_ = true;
+  }
+  worker_cv_.notify_all();
+  if (worker_.joinable()) worker_.join();
+  worker_started_ = false;
+}
+
 void Engine::shutdown() {
+  stopScanWorker();
   clearPending();
   storage_.close();
 }
@@ -80,7 +120,7 @@ void Engine::setVectorMode(const std::string &m) {
   if (m != "exact" && m != "ann") {
     throwErr(ErrKind::InvalidArgument, "vector mode must be exact or ann");
   }
-  vector_mode_ = m;
+  if (vector_mode_ != m) vector_mode_ = m;  // 逐请求重复 set：值相同则跳过赋值
 }
 
 bool Engine::tableHasPending(Table &t) {
@@ -1010,15 +1050,55 @@ void Engine::execSelect(Statement &st, QueryResult &out) {
   if (st.has_limit && st.limit == 0) return;
 
   // 无过滤且无事务暂存：走专用扫描（距离计算内联，避免逐行函数调用）。
-  // 注：曾试验向量列连续缓存（A/B 同机对照 Xeon 8573C 上无收益，且 peak_rss
-  // 增加 ~5MiB 恶化内存项），已回退为直接槽扫描。
+  // 大表（≥4000 槽）用持久 worker 双线程对半扫描：各自完整 TopK 后按
+  // (dist,id) 归并，行集合与求和顺序与单线程一致，结果逐位相同。
   if (topk_expr && !where && !tableHasPending(*t)) {
     const size_t k = std::min<size_t>(static_cast<size_t>(st.limit), t->rowCount());
     if (k == 0) return;
     std::vector<TopKEntry> entries;
     int vcol = topk_expr->left->col_index;
-    scanTopK(t->slotPtr(0), t->slotCount(), def.slot_size, def.col_offset[vcol],
-             def.cols[vcol].param, topk_expr->vec_lit.data(), k, entries);
+    const uint32_t n = t->slotCount();
+    const bool par = worker_started_ && n >= 4000;
+    if (par) {
+      const uint32_t half = n / 2;
+      {
+        std::lock_guard<std::mutex> lk(worker_mu_);
+        scan_task_.base = t->slotPtr(half);
+        scan_task_.slot_count = n - half;
+        scan_task_.slot_size = def.slot_size;
+        scan_task_.vec_off = def.col_offset[vcol];
+        scan_task_.dim = def.cols[vcol].param;
+        scan_task_.query = topk_expr->vec_lit.data();
+        scan_task_.k = k;
+        scan_task_.active = true;
+        scan_task_.done = false;
+        scan_task_.failed = false;
+        scan_task_.result.clear();
+      }
+      worker_cv_.notify_one();
+      std::vector<TopKEntry> left;
+      scanTopK(t->slotPtr(0), half, def.slot_size, def.col_offset[vcol],
+               def.cols[vcol].param, topk_expr->vec_lit.data(), k, left);
+      {
+        std::unique_lock<std::mutex> lk(worker_mu_);
+        worker_done_cv_.wait(lk, [&] { return scan_task_.done; });
+        std::vector<TopKEntry> right = std::move(scan_task_.result);
+        scan_task_.done = false;
+        // worker 的 slot 是相对右半起点的下标：合并前转成全局槽号。
+        for (auto &e : right) e.slot += half;
+        entries = std::move(left);
+        entries.insert(entries.end(), right.begin(), right.end());
+      }
+      auto cmp = [](const TopKEntry &a, const TopKEntry &b) {
+        if (a.dist != b.dist) return a.dist < b.dist;
+        return a.id < b.id;
+      };
+      std::sort(entries.begin(), entries.end(), cmp);
+      if (entries.size() > k) entries.resize(k);
+    } else {
+      scanTopK(t->slotPtr(0), n, def.slot_size, def.col_offset[vcol],
+               def.cols[vcol].param, topk_expr->vec_lit.data(), k, entries);
+    }
     out.rows.reserve(entries.size());
     for (const TopKEntry &e : entries) {
       RowRef rr;
