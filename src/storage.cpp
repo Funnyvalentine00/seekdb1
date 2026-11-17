@@ -77,15 +77,8 @@ void Table::open() {
   std::string wal_path = tableFileName(dir_, def_.id, ".wal");
   rows_fd_ = ::open(rows_path.c_str(), O_RDWR | O_CREAT, 0644);
   if (rows_fd_ < 0) throwErr(ErrKind::Io, "cannot open " + rows_path);
-  {
-    // MVD_WAL_ODSYNC=1 时以 O_DSYNC 打开 WAL：pwrite 返回即完成数据持久化，
-    // 省去每批一次独立的 fdatasync 系统调用（语义等价：写返回 = 约定持久化完成）。
-    const char *odsync = std::getenv("MVD_WAL_ODSYNC");
-    int wal_flags = O_RDWR | O_CREAT;
-    if (odsync && odsync[0]) wal_flags |= O_DSYNC;
-    wal_fd_ = ::open(wal_path.c_str(), wal_flags, 0644);
-    if (wal_fd_ < 0) throwErr(ErrKind::Io, "cannot open " + wal_path);
-  }
+  wal_fd_ = ::open(wal_path.c_str(), O_RDWR | O_CREAT, 0644);
+  if (wal_fd_ < 0) throwErr(ErrKind::Io, "cannot open " + wal_path);
 
   struct stat st{};
   if (::fstat(rows_fd_, &st) != 0) throwErr(ErrKind::Io, "fstat failed");
@@ -122,7 +115,6 @@ void Table::open() {
   if (::fstat(wal_fd_, &ws) != 0) throwErr(ErrKind::Io, "fstat wal failed");
   wal_size_ = static_cast<size_t>(ws.st_size);
 
-  wal_odsync_ = (std::getenv("MVD_WAL_ODSYNC") != nullptr && std::getenv("MVD_WAL_ODSYNC")[0] != 0);
   scanRows();
   recover();
 }
@@ -308,11 +300,8 @@ void Table::commitOps(std::vector<Op> &ops) {
                reinterpret_cast<const uint8_t *>(&kFrameMagic) + 8);
 
   writeAll(wal_fd_, frame.data(), frame.size(), static_cast<off_t>(wal_size_));
-  // 提交点：必须先落盘再回复客户端。O_DSYNC 模式下 pwrite 返回即已持久化，
-  // 跳过重复的 fdatasync；普通模式仍显式 fdatasync。
-  if (!wal_odsync_) {
-    if (::fdatasync(wal_fd_) != 0) throwErr(ErrKind::Io, "fdatasync wal failed");
-  }
+  // 提交点：必须先落盘再回复客户端
+  if (::fdatasync(wal_fd_) != 0) throwErr(ErrKind::Io, "fdatasync wal failed");
   wal_size_ += frame.size();
 
   for (const Op &op : ops) applyOp(op);

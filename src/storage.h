@@ -105,7 +105,6 @@ class Table {
   size_t capacity_slots_ = 0;
   uint32_t slot_count_ = 0;
   size_t wal_size_ = 0;
-  bool wal_odsync_ = false;
   std::unordered_map<int64_t, uint32_t> id_to_slot_;
   std::vector<ColFilter> filters_;
   uint64_t epoch_ = 1;
