@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 #include "storage.h"
 
 #include "vecops.h"
@@ -165,7 +166,14 @@ void Table::ensureCapacity(uint32_t slots) {
   need = (need + 4095) / 4096 * 4096;
   if (need < map_size_) need = map_size_;
   if (::ftruncate(rows_fd_, static_cast<off_t>(need)) != 0) throwErr(ErrKind::Io, "ftruncate grow failed");
-  // MAP_PRIVATE 的 COW 修改不会写回文件：扩容重映射前先在进程内搬运旧内容。
+#if defined(__linux__)
+  // Linux：mremap 原地扩展 MAP_PRIVATE 映射，COW 修改原样保留，
+  // 新旧映射不并存（VmSize 只增增量）——RLIMIT_AS 限额下安全。
+  void *moved = ::mremap(rows_map_, map_size_, need, MREMAP_MAYMOVE);
+  if (moved == MAP_FAILED) throwErr(ErrKind::Io, "mremap grow failed");
+  rows_map_ = static_cast<uint8_t *>(moved);
+#else
+  // 非 Linux（本地调试）：mmap 新区域并拷贝旧内容（无 RLIMIT 场景）。
   uint8_t *fresh = static_cast<uint8_t *>(
       ::mmap(nullptr, need, PROT_READ | PROT_WRITE, MAP_PRIVATE, rows_fd_, 0));
   if (fresh == MAP_FAILED) {
@@ -175,6 +183,7 @@ void Table::ensureCapacity(uint32_t slots) {
   std::memcpy(fresh, rows_map_, map_size_);
   ::munmap(rows_map_, map_size_);
   rows_map_ = fresh;
+#endif
   map_size_ = need;
   file_size_ = need;
   capacity_slots_ = new_cap;
