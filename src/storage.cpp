@@ -104,8 +104,11 @@ void Table::open() {
   file_size_ = static_cast<size_t>(st.st_size);
   if (file_size_ < kHeaderSize) file_size_ = kHeaderSize;
   map_size_ = file_size_;
+  // MAP_PRIVATE（COW）：槽文件只是工作副本，不回写磁盘——提交的持久化完全由
+  // WAL（fdatasync）保证，恢复时 scanRows+recover 从 WAL 重放到最新。
+  // 好处：省去槽文件 5.76MB 的 writeback，写入路径 I/O 减半。
   rows_map_ = static_cast<uint8_t *>(
-      ::mmap(nullptr, map_size_, PROT_READ | PROT_WRITE, MAP_SHARED, rows_fd_, 0));
+      ::mmap(nullptr, map_size_, PROT_READ | PROT_WRITE, MAP_PRIVATE, rows_fd_, 0));
   if (rows_map_ == MAP_FAILED) {
     rows_map_ = nullptr;
     throwErr(ErrKind::Io, "mmap rows failed");
@@ -129,7 +132,7 @@ void Table::open() {
 
 void Table::close() {
   if (rows_map_) {
-    ::msync(rows_map_, map_size_, MS_SYNC);
+    // MAP_PRIVATE 工作副本不回写文件；已提交数据的持久化由 WAL 保证。
     ::munmap(rows_map_, map_size_);
     rows_map_ = nullptr;
   }
@@ -162,14 +165,16 @@ void Table::ensureCapacity(uint32_t slots) {
   need = (need + 4095) / 4096 * 4096;
   if (need < map_size_) need = map_size_;
   if (::ftruncate(rows_fd_, static_cast<off_t>(need)) != 0) throwErr(ErrKind::Io, "ftruncate grow failed");
-  ::msync(rows_map_, map_size_, MS_ASYNC);
-  ::munmap(rows_map_, map_size_);
-  rows_map_ = static_cast<uint8_t *>(
-      ::mmap(nullptr, need, PROT_READ | PROT_WRITE, MAP_SHARED, rows_fd_, 0));
-  if (rows_map_ == MAP_FAILED) {
-    rows_map_ = nullptr;
+  // MAP_PRIVATE 的 COW 修改不会写回文件：扩容重映射前先在进程内搬运旧内容。
+  uint8_t *fresh = static_cast<uint8_t *>(
+      ::mmap(nullptr, need, PROT_READ | PROT_WRITE, MAP_PRIVATE, rows_fd_, 0));
+  if (fresh == MAP_FAILED) {
+    fresh = nullptr;
     throwErr(ErrKind::Io, "mmap grow failed");
   }
+  std::memcpy(fresh, rows_map_, map_size_);
+  ::munmap(rows_map_, map_size_);
+  rows_map_ = fresh;
   map_size_ = need;
   file_size_ = need;
   capacity_slots_ = new_cap;
@@ -270,7 +275,13 @@ void Table::recover() {
 }
 
 void Table::resetWal() {
-  ::msync(rows_map_, map_size_, MS_SYNC);
+  // 全量 checkpoint：MAP_PRIVATE 工作副本不回写文件，截断 WAL 前必须把
+  // 当前全部有效槽写回槽文件并落盘，否则截断后重启会丢已提交数据。
+  if (slot_count_ > 0) {
+    writeAll(rows_fd_, rows_map_ + kHeaderSize,
+             static_cast<size_t>(slot_count_) * def_.slot_size, kHeaderSize);
+    ::fsync(rows_fd_);
+  }
   if (::ftruncate(wal_fd_, 0) != 0) throwErr(ErrKind::Io, "truncate wal failed");
   ::fsync(wal_fd_);
   wal_size_ = 0;
