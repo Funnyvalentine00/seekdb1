@@ -1,18 +1,14 @@
 // 执行引擎：DDL/DML/查询/事务。
 #pragma once
 
-#include <condition_variable>
 #include <memory>
-#include <mutex>
 #include <string>
-#include <thread>
 #include <unordered_map>
 #include <vector>
 
 #include "common.h"
 #include "sql.h"
 #include "storage.h"
-#include "vecops.h"
 
 namespace mvd {
 
@@ -38,12 +34,6 @@ class Engine {
 
   void open();
   void shutdown();
-
-  // 无过滤 TopK 双线程扫描：启动时创建持久 worker（栈计入启动 VmSize，
-  // RLIMIT_AS 自适应限额随之抬高，查询期不创建线程）。槽区间对半分，
-  // 各自完整 TopK 后按 (dist,id) 归并，结果与单线程逐位一致。
-  void startScanWorker();
-  void stopScanWorker();
 
   void execute(Statement &st, QueryResult &out);
 
@@ -119,23 +109,6 @@ class Engine {
   std::string vector_mode_ = "exact";
   bool in_txn_ = false;
   std::unordered_map<int, TablePending> pending_;
-
-  // 无过滤 TopK worker
-  struct ScanTask {
-    const uint8_t *base = nullptr;
-    uint32_t slot_count = 0, slot_size = 0, vec_off = 0;
-    int dim = 0;
-    const float *query = nullptr;
-    size_t k = 0;
-    bool active = false, done = false, failed = false;
-    std::vector<TopKEntry> result;
-  };
-  ScanTask scan_task_;
-  std::thread worker_;
-  std::mutex worker_mu_;
-  std::condition_variable worker_cv_, worker_done_cv_;
-  bool worker_stop_ = false;
-  bool worker_started_ = false;
 };
 
 }  // namespace mvd

@@ -68,50 +68,10 @@ std::vector<float> parseVectorLiteral(const std::string &text, int dim) {
 }  // namespace
 
 Engine::Engine(std::string data_dir) : storage_(std::move(data_dir)) {}
-Engine::~Engine() { stopScanWorker(); }
+Engine::~Engine() = default;
 
 void Engine::open() { storage_.open(); }
-
-void Engine::startScanWorker() {
-  worker_started_ = true;
-  worker_ = std::thread([this] {
-    std::unique_lock<std::mutex> lk(worker_mu_);
-    for (;;) {
-      worker_cv_.wait(lk, [&] { return worker_stop_ || scan_task_.active; });
-      if (worker_stop_) return;
-      lk.unlock();
-      try {
-        scanTopK(scan_task_.base, scan_task_.slot_count, scan_task_.slot_size,
-                 scan_task_.vec_off, scan_task_.dim, scan_task_.query, scan_task_.k,
-                 scan_task_.result);
-        scan_task_.failed = false;
-      } catch (...) {
-        scan_task_.result.clear();
-        scan_task_.failed = true;
-      }
-      lk.lock();
-      scan_task_.active = false;
-      scan_task_.done = true;
-      lk.unlock();
-      worker_done_cv_.notify_one();
-      lk.lock();
-    }
-  });
-}
-
-void Engine::stopScanWorker() {
-  if (!worker_started_) return;
-  {
-    std::lock_guard<std::mutex> lk(worker_mu_);
-    worker_stop_ = true;
-  }
-  worker_cv_.notify_all();
-  if (worker_.joinable()) worker_.join();
-  worker_started_ = false;
-}
-
 void Engine::shutdown() {
-  stopScanWorker();
   clearPending();
   storage_.close();
 }
@@ -1058,47 +1018,8 @@ void Engine::execSelect(Statement &st, QueryResult &out) {
     std::vector<TopKEntry> entries;
     int vcol = topk_expr->left->col_index;
     const uint32_t n = t->slotCount();
-    const bool par = worker_started_ && n >= 4000;
-    if (par) {
-      const uint32_t half = n / 2;
-      {
-        std::lock_guard<std::mutex> lk(worker_mu_);
-        scan_task_.base = t->slotPtr(half);
-        scan_task_.slot_count = n - half;
-        scan_task_.slot_size = def.slot_size;
-        scan_task_.vec_off = def.col_offset[vcol];
-        scan_task_.dim = def.cols[vcol].param;
-        scan_task_.query = topk_expr->vec_lit.data();
-        scan_task_.k = k;
-        scan_task_.active = true;
-        scan_task_.done = false;
-        scan_task_.failed = false;
-        scan_task_.result.clear();
-      }
-      worker_cv_.notify_one();
-      std::vector<TopKEntry> left;
-      scanTopK(t->slotPtr(0), half, def.slot_size, def.col_offset[vcol],
-               def.cols[vcol].param, topk_expr->vec_lit.data(), k, left);
-      {
-        std::unique_lock<std::mutex> lk(worker_mu_);
-        worker_done_cv_.wait(lk, [&] { return scan_task_.done; });
-        std::vector<TopKEntry> right = std::move(scan_task_.result);
-        scan_task_.done = false;
-        // worker 的 slot 是相对右半起点的下标：合并前转成全局槽号。
-        for (auto &e : right) e.slot += half;
-        entries = std::move(left);
-        entries.insert(entries.end(), right.begin(), right.end());
-      }
-      auto cmp = [](const TopKEntry &a, const TopKEntry &b) {
-        if (a.dist != b.dist) return a.dist < b.dist;
-        return a.id < b.id;
-      };
-      std::sort(entries.begin(), entries.end(), cmp);
-      if (entries.size() > k) entries.resize(k);
-    } else {
-      scanTopK(t->slotPtr(0), n, def.slot_size, def.col_offset[vcol],
-               def.cols[vcol].param, topk_expr->vec_lit.data(), k, entries);
-    }
+    scanTopK(t->slotPtr(0), n, def.slot_size, def.col_offset[vcol],
+             def.cols[vcol].param, topk_expr->vec_lit.data(), k, entries);
     out.rows.reserve(entries.size());
     for (const TopKEntry &e : entries) {
       RowRef rr;
