@@ -1,0 +1,224 @@
+--- a/src/storage.cpp
++++ b/src/storage.cpp
+@@ -11,6 +11,7 @@
+ #include <cstdio>
+ #include <fstream>
+ #include <sstream>
++#include <string_view>
+ 
+ namespace mvd {
+ 
+@@ -324,8 +325,7 @@
+     f.int_keys.clear();
+     f.int_slots.clear();
+     f.str_pool.clear();
+-    f.str_off.clear();
+-    f.str_len.clear();
++    f.str_groups.clear();
+     f.str_slots.clear();
+     return;
+   }
+@@ -369,69 +369,67 @@
+     f.int_keys.swap(keys);
+     f.int_slots.swap(slots);
+   } else {
+-    // str：key 池 + (offset, len, slot)。每行约 24 字节 + 池内 key 长度。
++    // 旧字典已经失效。重建和回退都先释放它，避免高基数纪元占用后续查询的内存。
++    f = ColFilter{};
++    auto slot_key = [&](uint32_t s) {
++      const uint8_t *p = slotPtr(s) + off;
++      uint32_t len;
++      std::memcpy(&len, p, sizeof(len));
++      return std::string_view(reinterpret_cast<const char *>(p + sizeof(len)), len);
++    };
+     size_t pool = 0;
++    uint32_t live = 0;
+     for (uint32_t s = 0; s < n; ++s) {
+-      const uint8_t *p = slotPtr(s);
+-      if (p[0] == 0) continue;
+-      uint32_t len;
+-      std::memcpy(&len, p + off, sizeof(len));
+-      pool += len;
+-    }
+-    if (static_cast<size_t>(n) * 24 + pool > kFilterBudget) {
+-      f.valid = false;
+-      f.str_pool.clear();
+-      f.str_off.clear();
+-      f.str_len.clear();
+-      f.str_slots.clear();
+-      return;
+-    }
+-    f.str_pool.clear();
+-    f.str_pool.reserve(pool);
+-    f.str_off.resize(n);
+-    f.str_len.resize(n);
+-    f.str_slots.resize(n);
+-    uint32_t m = 0;
+-    for (uint32_t s = 0; s < n; ++s) {
+-      const uint8_t *p = slotPtr(s);
+-      if (p[0] == 0) continue;
+-      uint32_t len;
+-      std::memcpy(&len, p + off, sizeof(len));
+-      f.str_off[m] = static_cast<uint32_t>(f.str_pool.size());
+-      f.str_len[m] = len;
+-      f.str_slots[m] = s;
+-      f.str_pool.append(reinterpret_cast<const char *>(p + off + 4), len);
+-      ++m;
+-    }
+-    f.str_off.resize(m);
+-    f.str_len.resize(m);
+-    f.str_slots.resize(m);
+-    // 按 key 字典序（len 再字节）排列；相同 key 内按 slot 升序。
+-    auto keyLess = [&](uint32_t x, uint32_t y) {
+-      uint32_t lx = f.str_len[x], ly = f.str_len[y];
+-      int c = std::memcmp(f.str_pool.data() + f.str_off[x],
+-                          f.str_pool.data() + f.str_off[y], std::min(lx, ly));
+-      if (c != 0) return c < 0;
+-      if (lx != ly) return lx < ly;
+-      return f.str_slots[x] < f.str_slots[y];
+-    };
+-    std::vector<uint32_t> order(m);
+-    for (uint32_t i = 0; i < m; ++i) order[i] = i;
+-    std::sort(order.begin(), order.end(), keyLess);
+-    std::vector<uint32_t> offs(m), lens(m), slots(m);
+-    std::string pool_buf;
+-    pool_buf.reserve(f.str_pool.size());
+-    for (uint32_t i = 0; i < m; ++i) {
+-      uint32_t src = order[i];
+-      offs[i] = static_cast<uint32_t>(pool_buf.size());
+-      lens[i] = f.str_len[src];
+-      slots[i] = f.str_slots[src];
+-      pool_buf.append(f.str_pool, f.str_off[src], f.str_len[src]);
+-    }
+-    f.str_pool.swap(pool_buf);
+-    f.str_off.swap(offs);
+-    f.str_len.swap(lens);
+-    f.str_slots.swap(slots);
++      if (!slotValid(s)) continue;
++      pool += slot_key(s).size();
++      ++live;
++    }
++    // 保留原准入规则：物理槽（含空洞）计 24 字节，另加所有有效行的 key 字节。
++    if (static_cast<size_t>(n) * 24 + pool > kFilterBudget) return;
++
++    std::vector<uint32_t> group_starts;
++    size_t distinct_bytes = 0;
++    {
++      struct Entry {
++        uint32_t offset, length, slot;
++      };
++      std::vector<Entry> entries;
++      entries.reserve(live);
++      std::string keys;
++      keys.reserve(pool);
++      for (uint32_t s = 0; s < n; ++s) {
++        if (!slotValid(s)) continue;
++        const auto value = slot_key(s);
++        entries.push_back({static_cast<uint32_t>(keys.size()),
++                           static_cast<uint32_t>(value.size()), s});
++        keys.append(value);
++      }
++      auto key_for = [&](const Entry &entry) {
++        return std::string_view(keys.data() + entry.offset, entry.length);
++      };
++      std::sort(entries.begin(), entries.end(), [&](const Entry &a, const Entry &b) {
++        const int cmp = key_for(a).compare(key_for(b));
++        return cmp != 0 ? cmp < 0 : a.slot < b.slot;
++      });
++      f.str_slots.reserve(live);
++      std::string_view previous;
++      for (const Entry &entry : entries) {
++        const auto value = key_for(entry);
++        if (f.str_slots.empty() || value != previous) {
++          group_starts.push_back(static_cast<uint32_t>(f.str_slots.size()));
++          distinct_bytes += value.size();
++          previous = value;
++        }
++        f.str_slots.push_back(entry.slot);
++      }
++    }  // 排序工作区先释放；最终字典的字节从每组第一行复制。
++    f.str_groups.reserve(group_starts.size() + 1);
++    f.str_pool.reserve(distinct_bytes);
++    for (uint32_t first : group_starts) {
++      f.str_groups.push_back({static_cast<uint32_t>(f.str_pool.size()), first});
++      f.str_pool.append(slot_key(f.str_slots[first]));
++    }
++    f.str_groups.push_back({static_cast<uint32_t>(distinct_bytes), live});
+   }
+   f.epoch = epoch_;
+   f.valid = true;
+@@ -444,29 +442,27 @@
+   if (filters_.size() <= col) return false;
+   const ColFilter &f = filters_[col];
+   if (!f.valid) return false;
+-  // 二分定位 key 的字典序范围。
+-  auto cmpKey = [&](uint32_t i) {
+-    int c = std::memcmp(f.str_pool.data() + f.str_off[i], key.data(),
+-                        std::min<size_t>(f.str_len[i], key.size()));
+-    if (c != 0) return c < 0 ? -1 : 1;
+-    if (f.str_len[i] != key.size()) return f.str_len[i] < key.size() ? -1 : 1;
+-    return 0;
+-  };
+-  uint32_t lo = 0, hi = static_cast<uint32_t>(f.str_slots.size());
++  if (f.str_slots.empty()) {
++    *begin = *end = f.str_slots.data();
++    return true;
++  }
++  // 每组的 key 唯一，二分命中后两个边界都已知。
++  uint32_t lo = 0, hi = static_cast<uint32_t>(f.str_groups.size() - 1);
+   while (lo < hi) {
+-    uint32_t mid = (lo + hi) / 2;
+-    if (cmpKey(mid) < 0) lo = mid + 1;
++    const uint32_t mid = lo + (hi - lo) / 2;
++    const StrGroup &group = f.str_groups[mid], &next = f.str_groups[mid + 1];
++    const std::string_view value(f.str_pool.data() + group.key_offset,
++                                 next.key_offset - group.key_offset);
++    const int cmp = value.compare(key);
++    if (cmp == 0) {
++      *begin = f.str_slots.data() + group.first_slot;
++      *end = f.str_slots.data() + next.first_slot;
++      return true;
++    }
++    if (cmp < 0) lo = mid + 1;
+     else hi = mid;
+   }
+-  uint32_t start = lo;
+-  hi = static_cast<uint32_t>(f.str_slots.size());
+-  while (lo < hi) {
+-    uint32_t mid = (lo + hi) / 2;
+-    if (cmpKey(mid) <= 0) lo = mid + 1;
+-    else hi = mid;
+-  }
+-  *begin = f.str_slots.data() + start;
+-  *end = f.str_slots.data() + lo;
++  *begin = *end = f.str_slots.data() + f.str_groups[lo].first_slot;
+   return true;
+ }
+ 
+--- a/src/storage.h
++++ b/src/storage.h
+@@ -79,16 +79,21 @@
+   void resetWal();
+   void ensureFilter(uint32_t col);
+ 
++  // VARCHAR 字典项：相邻项给出 key 字节区间和候选槽区间。
++  struct StrGroup {
++    uint32_t key_offset;
++    uint32_t first_slot;
++  };
++
+   struct ColFilter {
+     uint64_t epoch = 0;  // 构建时的提交纪元；不等于当前纪元则失效
+     bool valid = false;
+     // int 列：按 (key, slot) 升序的平行数组。
+     std::vector<int64_t> int_keys;
+     std::vector<uint32_t> int_slots;
+-    // str 列：key 池 + 平行数组（offset/len/slot），按 key 字典序排列。
++    // str 列：每个不同 key 只存一次，尾项记录池和槽列表的结束位置。
+     std::string str_pool;
+-    std::vector<uint32_t> str_off;
+-    std::vector<uint32_t> str_len;
++    std::vector<StrGroup> str_groups;
+     std::vector<uint32_t> str_slots;
+   };
+ 

@@ -1,0 +1,44 @@
+name: MiniVectorDB Linux paired experiments
+
+on:
+  push:
+    branches: [perf/minivectordb-linux-20261118]
+
+permissions:
+  contents: read
+
+env:
+  LC_ALL: C.UTF-8
+  PYTHONDONTWRITEBYTECODE: '1'
+
+jobs:
+  native-paired:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 8
+          persist-credentials: false
+
+      - name: Build the seven frozen variants
+        run: |
+          python3 -B experiments/minivectordb-linux/prepare.py build --repo . \
+            --scratch "$RUNNER_TEMP/mvd-linux-$GITHUB_RUN_ATTEMPT" --output mvd-linux-results
+
+      - name: Native correctness, CRC-32C WAL and Linux memory gates
+        run: python3 -B experiments/minivectordb-linux/prepare.py validate --output mvd-linux-results
+
+      - name: Serial paired workloads and A/A controls
+        run: |
+          python3 -B experiments/minivectordb-linux/paired.py --output mvd-linux-results \
+            --data-root "$RUNNER_TEMP/mvd-linux-$GITHUB_RUN_ATTEMPT"
+
+      - name: Save raw results and speedups
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: mvd-linux-paired-${{ github.run_attempt }}
+          path: mvd-linux-results/
+          if-no-files-found: error
+          retention-days: 14

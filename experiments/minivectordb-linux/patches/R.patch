@@ -1,0 +1,96 @@
+--- a/src/storage.cpp
++++ b/src/storage.cpp
+@@ -167,31 +167,31 @@
+   capacity_slots_ = new_cap;
+ }
+ 
+-void Table::applyOp(const Op &op) {
+-  const bool deleting = op.type == 3;
+-  if (deleting && op.slot >= slot_count_) return;
+-  if (!deleting) ensureCapacity(op.slot + 1);
+-  uint8_t *p = rows_map_ + kHeaderSize + static_cast<size_t>(op.slot) * def_.slot_size;
+-  if (op.slot < slot_count_ && p[0] != 0) {
++void Table::applyOp(uint8_t type, uint32_t slot, const uint8_t *image) {
++  const bool deleting = type == 3;
++  if (deleting && slot >= slot_count_) return;
++  if (!deleting) ensureCapacity(slot + 1);
++  uint8_t *p = rows_map_ + kHeaderSize + static_cast<size_t>(slot) * def_.slot_size;
++  if (slot < slot_count_ && p[0] != 0) {
+     int64_t old_id;
+     std::memcpy(&old_id, p + 8, sizeof(old_id));
+     const auto it = id_to_slot_.find(old_id);
+     // Another slot may already own this key during a multi-row change.
+-    if (it != id_to_slot_.end() && it->second == op.slot) id_to_slot_.erase(it);
++    if (it != id_to_slot_.end() && it->second == slot) id_to_slot_.erase(it);
+   }
+   if (deleting) {
+     p[0] = 0;
+     return;
+   }
+-  std::memcpy(p, op.data.data(), def_.slot_size);
++  std::memcpy(p, image, def_.slot_size);
+   p[0] = 1;
+-  if (op.slot >= slot_count_) {
+-    slot_count_ = op.slot + 1;
++  if (slot >= slot_count_) {
++    slot_count_ = slot + 1;
+     std::memcpy(rows_map_ + 12, &slot_count_, 4);
+   }
+   int64_t id;
+   std::memcpy(&id, p + 8, sizeof(id));
+-  id_to_slot_[id] = op.slot;
++  id_to_slot_[id] = slot;
+ }
+ 
+ void Table::recover() {
+@@ -226,12 +226,12 @@
+         ok = false;
+         break;
+       }
+-      Op op;
+-      op.type = payload[off];
+-      off += 1;
+-      std::memcpy(&op.slot, payload.data() + off, 4);
++      const uint8_t type = payload[off++];
++      uint32_t slot;
++      std::memcpy(&slot, payload.data() + off, 4);
+       off += 4;
+-      if (op.type != 3) {
++      const uint8_t *image = nullptr;
++      if (type != 3) {
+         uint32_t dl = 0;
+         if (off + 4 > payload.size()) {
+           ok = false;
+@@ -243,10 +243,10 @@
+           ok = false;
+           break;
+         }
+-        op.data.assign(payload.begin() + off, payload.begin() + off + dl);
++        image = payload.data() + off;
+         off += dl;
+       }
+-      applyOp(op);
++      applyOp(type, slot, image);
+     }
+     if (!ok) break;
+     pos += 8 + len + 8;
+@@ -304,7 +304,7 @@
+   if (::fdatasync(wal_fd_) != 0) throwErr(ErrKind::Io, "fdatasync wal failed");
+   wal_size_ += frame.size();
+ 
+-  for (const Op &op : ops) applyOp(op);
++  for (const Op &op : ops) applyOp(op.type, op.slot, op.data.data());
+ 
+   if (wal_size_ > (64u << 20)) resetWal();
+ }
+--- a/src/storage.h
++++ b/src/storage.h
+@@ -73,7 +73,7 @@
+ 
+  private:
+   void ensureCapacity(uint32_t slots);
+-  void applyOp(const Op &op);
++  void applyOp(uint8_t type, uint32_t slot, const uint8_t *image);
+   void recover();
+   void scanRows();
+   void resetWal();

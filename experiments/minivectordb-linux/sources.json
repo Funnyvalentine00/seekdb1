@@ -1,0 +1,43 @@
+{
+  "base_commit": "12c1733774faa77e0f8cddba1510e7dae93a8a48",
+  "variants": {
+    "B": [],
+    "I": [
+      "I"
+    ],
+    "F": [
+      "F"
+    ],
+    "O": [
+      "O"
+    ],
+    "R": [
+      "R"
+    ],
+    "IFOR": [
+      "I",
+      "F",
+      "O",
+      "R"
+    ],
+    "P": [
+      "P"
+    ]
+  },
+  "trees": {
+    "B": "c07ed1e29f4cbddcffa03d260643aa26ef027a26",
+    "I": "0689eafecacc8589182088b289c47a4729da3420",
+    "F": "b666c6d35541b802f85d135bb7e90e5054b3db9e",
+    "O": "c87e688011fdcb7afc2d896b001e003aae1a0477",
+    "R": "930e5bdc35974da09bfc3c83ca135583f3943a1d",
+    "IFOR": "c7102767d1ef3dfbbbc78d38e8b326da157bb895",
+    "P": "d5666abcc7740fc4387048f4bac3636ad5db5ac2"
+  },
+  "patches": {
+    "I": "13097340fbf138c79fe9093e371221e340e0fd6bed20915ab8f744b4c59f0808",
+    "F": "414fdce7f00d857e7a59dc58bf44077b231f09840e6f4b221fa423695f72e8c4",
+    "O": "bb506a395ab865ef19557be6391ffe395157ecedd714594905c5a0ed7f008456",
+    "R": "e3f02786658a3b0413d79ee6a62f7f817e756dbbdcd0bfd50a4053269b37505c",
+    "P": "a372118add67ca61ca1e03196bded1aa6b57859e41883c09fa2b255f145c12ad"
+  }
+}

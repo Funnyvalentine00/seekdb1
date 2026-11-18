@@ -1,0 +1,32 @@
+--- a/src/engine.cpp
++++ b/src/engine.cpp
+@@ -758,10 +758,20 @@
+   std::vector<std::vector<Value>> newRows;
+   newRows.reserve(st.insert_rows.size());
+   std::unordered_set<int64_t> stmtIds;
++  int64_t previousId = 0;
++  bool ascending = false;
+   for (auto &exprs : st.insert_rows) {
+     std::vector<Value> vals = buildFullRow(*t, exprs, st.insert_columns);
+     int64_t id = vals[def.pk_index].i;
+-    if (!stmtIds.insert(id).second) {
++    const bool adjacentDuplicate = !newRows.empty() && id == previousId;
++    if (newRows.size() == 1) ascending = id > previousId;
++    if (stmtIds.empty() && newRows.size() > 1 && !adjacentDuplicate &&
++        (id > previousId) != ascending) {
++      // The validated prefix is strictly monotone. Seed the set on the first reversal.
++      stmtIds.reserve(newRows.size() + 1);
++      for (const auto &row : newRows) stmtIds.insert(row[def.pk_index].i);
++    }
++    if (adjacentDuplicate || (!stmtIds.empty() && !stmtIds.insert(id).second)) {
+       throwErr(ErrKind::DuplicateKey, "duplicate primary key in statement");
+     }
+     RowRef existing;
+@@ -769,6 +779,7 @@
+     if (lookupById(*t, id, existing, slot)) {
+       throwErr(ErrKind::DuplicateKey, "duplicate primary key: " + std::to_string(id));
+     }
++    previousId = id;
+     newRows.push_back(std::move(vals));
+   }
+   for (auto &vals : newRows) {

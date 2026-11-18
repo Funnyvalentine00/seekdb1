@@ -1,0 +1,52 @@
+--- a/src/stdio_request.h
++++ b/src/stdio_request.h
+@@ -233,7 +233,29 @@
+ 
+   std::string readString() {
+     expect('"');
+-    std::string value;
++    const size_t start = pos_;
++    // Skip validated runs of printable ASCII without growing a byte-at-a-time buffer.
++    constexpr uint64_t byte_ones = 0x0101010101010101ull;
++    constexpr uint64_t high_bits = 0x8080808080808080ull;
++    constexpr uint64_t control_limit = 0x2020202020202020ull;
++    constexpr uint64_t quotes = byte_ones * '"';
++    constexpr uint64_t escapes = byte_ones * '\\';
++    const auto has_zero = [](uint64_t bytes) {
++      return ((bytes - byte_ones) & ~bytes & high_bits) != 0;
++    };
++    while (line_.size() - pos_ >= sizeof(uint64_t)) {
++      uint64_t bytes;
++      std::memcpy(&bytes, line_.data() + pos_, sizeof(bytes));
++      if (((bytes | (bytes - control_limit)) & high_bits) != 0 ||
++          has_zero(bytes ^ quotes) || has_zero(bytes ^ escapes)) break;
++      pos_ += sizeof(bytes);
++    }
++    while (true) {
++      const auto byte = static_cast<unsigned char>(peek());
++      if (byte < 0x20 || byte >= 0x80 || byte == '"' || byte == '\\') break;
++      ++pos_;
++    }
++    std::string value(line_.substr(start, pos_ - start));
+     while (!take('"')) {
+       const auto byte = static_cast<unsigned char>(peek());
+       if (byte < 0x20) invalidJson();
+--- a/src/sql.cpp
++++ b/src/sql.cpp
+@@ -44,6 +44,16 @@
+   if (c == '\'' || c == '"') {
+     char quote = static_cast<char>(c);
+     ++pos_;
++    if (quote == '\'') {
++      const size_t end = src_.find(quote, pos_);
++      if (end == std::string::npos) throwErr(ErrKind::Syntax, "unterminated string literal");
++      if (end + 1 == src_.size() || src_[end + 1] != quote) {
++        t.kind = TokKind::Str;
++        t.text.assign(src_, pos_, end - pos_);
++        pos_ = end + 1;
++        return t;
++      }
++    }
+     std::string val;
+     bool closed = false;
+     while (pos_ < src_.size()) {

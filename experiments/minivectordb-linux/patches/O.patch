@@ -1,0 +1,58 @@
+--- a/src/engine.cpp
++++ b/src/engine.cpp
+@@ -1148,6 +1148,23 @@
+     }
+   }
+ 
++  // 仅需要少量主键有序行时，从已提交索引取键和槽号，再读取入选行。
++  if (!where && st.has_limit && st.order_by.size() == 1 &&
++      static_cast<uint64_t>(st.limit) <= t->rowCount() / 4) {
++    const OrderItem &oi = st.order_by.front();
++    const Expr *key = oi.alias_index < 0 ? oi.expr.get() : st.select_items[oi.alias_index].expr.get();
++    if (key && key->kind == ExprKind::Column && key->col_index == def.pk_index &&
++        !tableHasPending(*t)) {
++      const auto entries = t->orderedPrimaryKeys(static_cast<size_t>(st.limit), oi.desc);
++      out.rows.reserve(entries.size());
++      for (const auto &entry : entries) {
++        const uint32_t slot = entry.second;
++        out.rows.push_back(materialize(RowRef{t->slotPtr(slot), nullptr, slot}));
++      }
++      return;
++    }
++  }
++
+   // 无 ORDER BY 时可以用 LIMIT 提前终止扫描
+   size_t stop = st.order_by.empty() && st.has_limit ? static_cast<size_t>(st.limit)
+                                                     : static_cast<size_t>(-1);
+--- a/src/storage.h
++++ b/src/storage.h
+@@ -1,9 +1,11 @@
+ // 存储层：catalog、定长行槽文件、WAL 与崩溃恢复。
+ #pragma once
+ 
++#include <algorithm>
+ #include <cstdint>
+ #include <string>
+ #include <unordered_map>
++#include <utility>
+ #include <vector>
+ 
+ #include "common.h"
+@@ -53,6 +55,17 @@
+     if (it == id_to_slot_.end()) return false;
+     slot = it->second;
+     return true;
++  }
++
++  // 从已提交的主键索引选出有序前缀，只保留 limit 个键和槽号。
++  std::vector<std::pair<int64_t, uint32_t>> orderedPrimaryKeys(size_t limit, bool desc) const {
++    std::vector<std::pair<int64_t, uint32_t>> result(std::min(limit, rowCount()));
++    const auto before = [desc](const auto &a, const auto &b) {
++      return desc ? a.first > b.first : a.first < b.first;
++    };
++    std::partial_sort_copy(id_to_slot_.begin(), id_to_slot_.end(),
++                           result.begin(), result.end(), before);
++    return result;
+   }
+ 
+   // 事务提交：先写 WAL 并 fsync，再应用到行文件。
